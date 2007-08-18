@@ -28,6 +28,8 @@ HTML tags (like <div> and <table> as well).
 
 __version_info__ = (1, 0, 1, 0) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
+__revision__ = "$Id$"
+__author__ = "Trent Mick"
 
 import os
 import sys
