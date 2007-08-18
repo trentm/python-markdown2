@@ -4,7 +4,9 @@
         - submit a Markdown.py fix based on revision 1895
     - try to pass the adv inline HTML MarkdownTest failure
 - add equivalent "safe_mode" for compat with markdown.py
-- announce
+- try giving reports to Yuri again (on sf.net markdown site)
+- googlecode site: Why another Python impl? Test report. Perf report.
+- announce: blog, python-annoucne, markdown list
 - ask about remaining two MarkdownTest test failures
 - put in recipes site
 - do perf comparison with the other Markdown impls (if compare horribly then
