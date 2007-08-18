@@ -1,0 +1,15 @@
+- pass all test cases:
+    - try to pass some of the PHPMarkdown tests (not all of them are worth
+      it)
+        - submit a Markdown.py fix based on revision 1895
+    - try to pass the adv inline HTML MarkdownTest failure
+- add equivalent "safe_mode" for compat with markdown.py
+- put on Google Code
+- announce
+- ask about remaining two MarkdownTest test failures
+- put in recipes site
+- do perf comparison with the other Markdown impls (if compare horribly then
+  do something about it)
+- "code-safe" option
+- see about using html5lib (for speed and/or for better raw HTML handling)
+- see about plugins (SmartyPants, others available)

@@ -1,0 +1,9 @@
+This implementation of Markdown is licensed under the MIT License.
+
+Note that some of the test cases directories:
+
+    test/php-markdown-cases
+    test/php-markdown-extra-cases
+
+are licensed under the GPL (they are from the MDTest package announced here:
+http://six.pairlist.net/pipermail/markdown-discuss/2007-July/000674.html).
