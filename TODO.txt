@@ -4,7 +4,6 @@
         - submit a Markdown.py fix based on revision 1895
     - try to pass the adv inline HTML MarkdownTest failure
 - add equivalent "safe_mode" for compat with markdown.py
-- put on Google Code
 - announce
 - ask about remaining two MarkdownTest test failures
 - put in recipes site
