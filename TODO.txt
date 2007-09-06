@@ -1,3 +1,5 @@
+- add tm-cases\blog.markdown test case, I think there may be a prob with
+  double <p><p> with the "What this means..." para.
 - pass all test cases:
     - try to pass some of the PHPMarkdown tests (not all of them are worth
       it)
