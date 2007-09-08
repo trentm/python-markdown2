@@ -397,7 +397,11 @@ class Markdown(object):
           # Match tail of: [text](/url/) or [text](/url/ "title")
           \(            # literal paren
             [ \t]*
-            <?(?P<url>.*?)>?    # \1
+            (?P<url>            # \1
+                <.*?>
+                |
+                .*?
+            )
             [ \t]*
             (                   # \2
               (['"])            # quote char = \3
@@ -480,6 +484,8 @@ class Markdown(object):
                         start_idx -= 1
 
                     url, title = match.group("url"), match.group("title")
+                    if url and url[0] == '<':
+                        url = url[1:-1]  # '<url>' -> 'url'
                     # We've got to encode these to avoid conflicting
                     # with italics/bold.
                     url = url.replace('*', g_escape_table['*']) \
