@@ -119,7 +119,11 @@ class _MarkdownTestCase(unittest.TestCase):
 
             tags_path = splitext(text_path)[0] + ".tags"
             if exists(tags_path):
-                tags = open(tags_path).read().split()
+                tags = []
+                for line in open(tags_path):
+                    if '#' in line: # allow comments in .tags files
+                        line = line[:line.index('#')]
+                    tags += line.split()
                 test_func.tags = tags
 
             name = splitext(basename(text_path))[0]
