@@ -351,13 +351,17 @@ class Markdown(object):
     
         return text
 
-    _html_tokenize_re = re.compile(r"""
+    # "Sorta" because auto-links are identified as "tag" tokens.
+    _sorta_html_tokenize_re = re.compile(r"""
         (
             # tag
             </?         
             (?:\w+)                                     # tag name
             (?:\s+(?:[\w-]+:)?[\w-]+=(?:".*?"|'.*?'))*  # attributes
             \s*/?>
+            |
+            # auto-link (e.g., <http://www.activestate.com/>)
+            <\w+[^>]*>
             |
             <!--.*?-->      # comment
             |
@@ -370,21 +374,23 @@ class Markdown(object):
         # that in Markdown.pl, hence the behaviour for subtle cases can
         # differ (I believe the tokenizer here does a better job because
         # it isn't susceptible to unmatched '<' and '>' in HTML tags).
+        # Note, however, that '>' is not allowed in an auto-link URL
+        # here.
         escaped = []
-        is_tag = False
-        for token in self._html_tokenize_re.split(text):
-            if is_tag:
-                # Within tags, encode * and _ so they don't conflict
-                # with their use in Markdown for italics and strong.
-                # We're replacing each such character with its
-                # corresponding MD5 checksum value; this is likely
-                # overkill, but it should prevent us from colliding
-                # with the escape values by accident.
+        is_html_markup = False
+        for token in self._sorta_html_tokenize_re.split(text):
+            if is_html_markup:
+                # Within tags/HTML-comments/auto-links, encode * and _
+                # so they don't conflict with their use in Markdown for
+                # italics and strong.  We're replacing each such
+                # character with its corresponding MD5 checksum value;
+                # this is likely overkill, but it should prevent us from
+                # colliding with the escape values by accident.
                 escaped.append(token.replace('*', g_escape_table['*'])
                                     .replace('_', g_escape_table['_']))
             else:
                 escaped.append(self._encode_backslash_escapes(token))
-            is_tag = not is_tag
+            is_html_markup = not is_html_markup
         return ''.join(escaped)
 
     _tail_of_inline_link_re = re.compile(r'''
