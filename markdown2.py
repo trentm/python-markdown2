@@ -137,7 +137,7 @@ class Markdown(object):
 
     # Cribbed from a post by Bart Lateur:
     # <http://www.nntp.perl.org/group/perl.macperl.anyperl/154>
-    _detab_re = re.compile(r'^(.*?)\t', re.M)
+    _detab_re = re.compile(r'(.*?)\t', re.M)
     def _detab_sub(self, match):
         g1 = match.group(1)
         return g1 + (' ' * (self.tab_width - len(g1) % self.tab_width))
@@ -156,7 +156,7 @@ class Markdown(object):
             >>> m._detab("  foo\n\tbar\tblam")
             '  foo\n    bar blam'
         """
-        return self._detab_re.sub(self._detab_sub, text)
+        return self._detab_re.subn(self._detab_sub, text)[0]
 
     def _hash_html_block_sub(self, match):
         g1 = match.group(1)
