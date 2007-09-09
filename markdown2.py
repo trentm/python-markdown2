@@ -496,11 +496,7 @@ class Markdown(object):
                     # with italics/bold.
                     url = url.replace('*', g_escape_table['*']) \
                              .replace('_', g_escape_table['_'])
-                    if title or is_img:
-                        if is_img and title is None:
-                            # Markdown.pl includes title='' on image
-                            # links. Not *sure* this is intended.
-                            title = ""
+                    if title:
                         title_str = ' title="%s"' \
                             % title.replace('*', g_escape_table['*']) \
                                    .replace('_', g_escape_table['_']) \
