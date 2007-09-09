@@ -11,6 +11,7 @@ import re
 from glob import glob
 import unittest
 import subprocess
+import codecs
 import difflib
 
 from testlib import TestError, TestSkipped, tag
@@ -44,15 +45,15 @@ class _MarkdownTestCase(unittest.TestCase):
             %s""") % (close_though, _display(text), 
                       _display(python_html), _display(perl_html)))
 
-    _xml_escape_re = re.compile(r'&#(x[0-9A-Fa-f]{2}|[0-9]{2,3});')
+    _xml_escape_re = re.compile(r'&#(x[0-9A-Fa-f]{2,3}|[0-9]{2,3});')
     def _xml_escape_sub(self, match):
         escape = match.group(1)
         if escape[0] == 'x':
-            return chr(int('0'+escape, base=16))
+            return unichr(int('0'+escape, base=16))
         else:
-            return chr(int(escape))
+            return unichr(int(escape))
 
-    _markdown_email_link_re = re.compile(r'<a href="(.*?&#.*?)">(.*?)</a>')
+    _markdown_email_link_re = re.compile(ur'<a href="(.*?&#.*?)">(.*?)</a>', re.U)
     def _markdown_email_link_sub(self, match):
         href, text = match.groups()
         href = self._xml_escape_re.sub(self._xml_escape_sub, href)
@@ -68,10 +69,10 @@ class _MarkdownTestCase(unittest.TestCase):
         return self._markdown_email_link_re.sub(
             self._markdown_email_link_sub, html)
 
-    def _assertMarkdownPath(self, text_path):
-        text = open(text_path).read()
+    def _assertMarkdownPath(self, text_path, encoding="utf-8"):
+        text = codecs.open(text_path, 'r', encoding=encoding).read()
         html_path = splitext(text_path)[0] + ".html"
-        html = open(html_path).read()
+        html = codecs.open(html_path, 'r', encoding=encoding).read()
         self._assertMarkdown(text, html, text_path, html_path)
 
     def _assertMarkdown(self, text, html, text_path=None, html_path=None):
@@ -97,8 +98,7 @@ class _MarkdownTestCase(unittest.TestCase):
                     html_path,
                     "markdown2 "+text_path)
             diff = ''.join(diff)
-        self.assertEqual(python_norm_html, norm_html, 
-            _dedent("""\
+        errmsg = _dedent(u"""\
             markdown2.py didn't produce the expected HTML%s:
               ---- text (escaping: .=space, \\n=newline) ----
             %s  ---- Python markdown2.py HTML (escaping: .=space, \\n=newline) ----
@@ -106,7 +106,9 @@ class _MarkdownTestCase(unittest.TestCase):
             %s  ---- diff ----
             %s""") % (close_though, _display(text), 
                       _display(python_html), _display(html),
-                      _indent(diff)))
+                      _indent(diff))
+        self.assertEqual(python_norm_html, norm_html, 
+                         errmsg.encode('ascii', 'replace'))
 
     @classmethod
     def generate_tests(cls):

@@ -39,6 +39,7 @@ import logging
 import md5
 import optparse
 from random import random
+import codecs
 
 
 #---- globals
@@ -69,8 +70,9 @@ class MarkdownError(Exception):
 
 #---- public api
 
-def markdown_path(path, html4tags=False, tab_width=DEFAULT_TAB_WIDTH):
-    text = open(path, 'r').read()
+def markdown_path(path, encoding="utf-8",
+                  html4tags=False, tab_width=DEFAULT_TAB_WIDTH):
+    text = codecs.open(path, 'r', encoding).read()
     return Markdown(html4tags=html4tags, tab_width=tab_width).convert(text)
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH):
@@ -889,16 +891,16 @@ class Markdown(object):
         g1 = match.group(1)
         return '<a href="%s">%s</a>' % (g1, g1)
 
-    _auto_email_link_re = re.compile(r"""
+    _auto_email_link_re = re.compile(ur"""
           <
            (?:mailto:)?
           (
               [-.\w]+
               \@
-              [-a-z0-9]+(\.[-a-z0-9]+)*\.[a-z]+
+              [-\w]+(\.[-\w]+)*\.[a-zA-Z]+
           )
           >
-        """, re.I | re.X)
+        """, re.I | re.X | re.U)
     def _auto_email_link_sub(self, match):
         return self._encode_email_address(
             self._unescape_special_chars(match.group(1)))
@@ -975,7 +977,9 @@ def main(argv=sys.argv):
                       help="run self-tests")
     parser.add_option("--compare", action="store_true",
                       help="run against Markdown.pl as well (for testing)")
-    parser.set_defaults(log_level=logging.INFO, compare=False)
+    parser.add_option("--encoding",
+                      help="specify encoding of text content")
+    parser.set_defaults(log_level=logging.INFO, compare=False, encoding="utf-8")
     opts, paths = parser.parse_args()
     log.setLevel(opts.log_level)
 
@@ -989,7 +993,9 @@ def main(argv=sys.argv):
             print "-- Markdown.pl"
             os.system('perl %s "%s"' % (markdown_pl, path))
             print "-- markdown2.py"
-        sys.stdout.write(markdown_path(path, html4tags=opts.html4tags))
+        html = markdown_path(path, encoding=opts.encoding,
+                             html4tags=opts.html4tags)
+        sys.stdout.write(html)
 
 
 if __name__ == "__main__":
