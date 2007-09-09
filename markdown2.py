@@ -49,7 +49,13 @@ log = logging.getLogger("markdown")
 DEFAULT_TAB_WIDTH = 4
 
 # Table of hash values for escaped characters:
-g_escape_table = dict((ch, md5.md5(ch).hexdigest())
+def _escape_hash(ch):
+    # Lame attempt to avoid possible collision with someone actually
+    # using the MD5 hexdigest of one of these chars in there text.
+    # Other ideas: random.random(), uuid.uuid()
+    #return md5.md5(ch).hexdigest()         # Markdown.pl does this
+    return '!'+md5.md5(ch).hexdigest()+'!'
+g_escape_table = dict((ch, _escape_hash(ch))
                       for ch in '\\`*_{}[]()>#+-.!')
 
 
@@ -160,7 +166,7 @@ class Markdown(object):
 
     def _hash_html_block_sub(self, match):
         g1 = match.group(1)
-        key = md5.md5(g1).hexdigest()
+        key = '!'+md5.md5(g1).hexdigest()+'!' # see _escape_hash() above
         self.html_blocks[key] = g1
         return "\n\n" + key + "\n\n"
 
