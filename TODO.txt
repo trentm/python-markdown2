@@ -1,7 +1,4 @@
 - pass all test cases:
-    - try to pass some of the PHPMarkdown tests (not all of them are worth
-      it)
-        - submit a Markdown.py fix based on revision 1895
     - try to pass the adv inline HTML MarkdownTest failure
 - add equivalent "safe_mode" for compat with markdown.py
 - try giving reports to Yuri again (on sf.net markdown site)
@@ -13,5 +10,6 @@
 - do perf comparison with the other Markdown impls (if compare horribly then
   do something about it)
 - "code-safe" option
+- submit a Markdown.py fix based on revision 1895 (on tm svn)
 - see about using html5lib (for speed and/or for better raw HTML handling)
 - see about plugins (SmartyPants, others available)
