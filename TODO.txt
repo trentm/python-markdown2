@@ -1,7 +1,6 @@
-- pass all test cases:
-    - try to pass the adv inline HTML MarkdownTest failure
 - add equivalent "safe_mode" for compat with markdown.py
-- try giving reports to Yuri again (on sf.net markdown site)
+- try giving reports to Yuri again (on sf.net markdown site, ask on markdown
+  list)
 - googlecode site: Why another Python impl? Test report. Perf report.
 - package up a release
 - announce: blog, python-annoucne, markdown list
