@@ -1,5 +1,18 @@
 #!/usr/bin/env python
 
+"""
+Run some performance numbers.
+
+Usage: 
+    python perf.py [all|markdown.py|markdown2.py|Markdown.pl] [cases-dir]
+
+where <cases-dir> is a directory with a number of "*.text" files to process.
+
+Example:
+    python gen_perf_cases.py    # generate a couple cases dirs
+    python perf.py all tmp-test-cases
+"""
+
 import os
 import sys
 import timeit
@@ -10,8 +23,7 @@ from glob import glob
 from util import hotshotit
 
 
-DEFAULT_REPEAT = 3
-DEFAULT_CASES_DIR = "test-cases"
+DEFAULT_REPEAT = 1
 
 clock = sys.platform == "win32" and time.clock or time.time
 
@@ -35,9 +47,9 @@ def time_markdown_py(cases_dir, repeat=DEFAULT_REPEAT):
                 pass
         end = clock()
         times.append(end - start)
-    print "time_markdown_py: best of %d: %.3fs" % (repeat, min(times))
+    print "  markdown.py: best of %d: %.3fs" % (repeat, min(times))
 
-#@hotshotit
+@hotshotit
 def time_markdown2_py(cases_dir, repeat=DEFAULT_REPEAT):
     sys.path.insert(0, "..")
     import markdown2
@@ -53,7 +65,7 @@ def time_markdown2_py(cases_dir, repeat=DEFAULT_REPEAT):
             markdowner.convert(content)
         end = clock()
         times.append(end - start)
-    print "time_markdown2_py: best of %d: %.3fs" % (repeat, min(times))
+    print "  markdown2.py: best of %d: %.3fs" % (repeat, min(times))
 
 def time_markdown_pl(cases_dir, repeat=DEFAULT_REPEAT):
     times = []
@@ -62,7 +74,7 @@ def time_markdown_pl(cases_dir, repeat=DEFAULT_REPEAT):
         os.system('perl time_markdown_pl.pl "%s"' % cases_dir)
         end = clock()
         times.append(end - start)
-    print "time_markdown_pl: best of %d: %.3fs" % (repeat, min(times))
+    print "  Markdown.pl: best of %d: %.3fs" % (repeat, min(times))
 
 def time_all(cases_dir, repeat=DEFAULT_REPEAT):
     time_markdown_pl(cases_dir, repeat=repeat)
@@ -70,12 +82,21 @@ def time_all(cases_dir, repeat=DEFAULT_REPEAT):
     time_markdown2_py(cases_dir, repeat=repeat)
 
 if __name__ == "__main__":
-    # Usage: $0 [all|markdown.py|markdown2.py|Markdown.pl]
-    selector = len(sys.argv) > 1 and sys.argv[1] or "all"
+    if len(sys.argv) != 3:
+        sys.stderr.write("error: incorrect number of args\n")
+        sys.stderr.write(__doc__)
+        sys.exit(1)
+
+    script, selector, cases_dir = sys.argv
     timer_name = "time_%s" % selector.lower().replace('.', '_')
     d = sys.modules[__name__].__dict__
     if timer_name not in d:
         raise ValueError("no '%s' timer function" % timer_name)
     timer = d[timer_name]
-    timer(DEFAULT_CASES_DIR)
+    if not exists(cases_dir):
+        raise OSError("cases dir `%s' does not exist: use "
+                      "gen_perf_cases.py to generate some cases dirs" 
+                      % cases_dir)
+    print "Time conversion of %s%s*.text:" % (cases_dir, os.path.sep)
+    timer(cases_dir)
 
