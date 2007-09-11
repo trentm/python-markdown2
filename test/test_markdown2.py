@@ -69,19 +69,22 @@ class _MarkdownTestCase(unittest.TestCase):
         return self._markdown_email_link_re.sub(
             self._markdown_email_link_sub, html)
 
-    def _assertMarkdownPath(self, text_path, encoding="utf-8"):
+    def _assertMarkdownPath(self, text_path, encoding="utf-8", opts=None):
         text = codecs.open(text_path, 'r', encoding=encoding).read()
         html_path = splitext(text_path)[0] + ".html"
         html = codecs.open(html_path, 'r', encoding=encoding).read()
-        self._assertMarkdown(text, html, text_path, html_path)
+        self._assertMarkdown(text, html, text_path, html_path, opts=opts)
 
-    def _assertMarkdown(self, text, html, text_path=None, html_path=None):
+    def _assertMarkdown(self, text, html, text_path=None, html_path=None,
+                        opts=None):
         """Assert that markdown2.py produces the expected HTML."""
         if text_path is None: text_path = "<text content>"
         if html_path is None: html_path = "<html content>"
+        if opts is None:
+            opts = {}
 
         norm_html = self._normalize(html)
-        python_html = markdown2.markdown(text)
+        python_html = markdown2.markdown(text, **opts)
         python_norm_html = self._normalize(python_html)
 
         close_though = ""
@@ -117,7 +120,20 @@ class _MarkdownTestCase(unittest.TestCase):
         """
         cases_pat = join(dirname(__file__), cls.cases_dir, "*.text")
         for text_path in glob(cases_pat):
-            test_func = lambda self, t=text_path: self._assertMarkdownPath(t)
+            # Load an options (`*.opts` file, if any).
+            # It must be a Python dictionary. It will be passed as
+            # kwargs to the markdown function.
+            opts = {}
+            opts_path = splitext(text_path)[0] + ".opts"
+            if exists(opts_path):
+                try:
+                    opts = eval(open(opts_path, 'r').read())
+                except Exception, ex:
+                    print "WARNING: couldn't load `%s' opts file: %s" \
+                          % (opts_path, ex)
+
+            test_func = lambda self, t=text_path, o=opts: \
+                self._assertMarkdownPath(t, opts=o)
 
             tags_path = splitext(text_path)[0] + ".tags"
             if exists(tags_path):

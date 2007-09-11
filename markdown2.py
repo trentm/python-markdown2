@@ -48,6 +48,7 @@ DEBUG = False
 log = logging.getLogger("markdown")
 
 DEFAULT_TAB_WIDTH = 4
+HTML_REMOVED_TEXT = "[HTML_REMOVED]"  # for compat with markdown.py
 
 # Table of hash values for escaped characters:
 def _escape_hash(ch):
@@ -71,12 +72,16 @@ class MarkdownError(Exception):
 #---- public api
 
 def markdown_path(path, encoding="utf-8",
-                  html4tags=False, tab_width=DEFAULT_TAB_WIDTH):
+                  html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
+                  safe_mode=False):
     text = codecs.open(path, 'r', encoding).read()
-    return Markdown(html4tags=html4tags, tab_width=tab_width).convert(text)
+    return Markdown(html4tags=html4tags, tab_width=tab_width,
+                    safe_mode=safe_mode).convert(text)
 
-def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH):
-    return Markdown(html4tags=html4tags, tab_width=tab_width).convert(text)
+def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
+             safe_mode=False):
+    return Markdown(html4tags=html4tags, tab_width=tab_width,
+                    safe_mode=safe_mode).convert(text)
 
 class Markdown(object):
     urls = None
@@ -89,12 +94,13 @@ class Markdown(object):
 
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
-    def __init__(self, html4tags=False, tab_width=4):
+    def __init__(self, html4tags=False, tab_width=4, safe_mode=False):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
             self.empty_element_suffix = " />"
         self.tab_width = tab_width
+        self.safe_mode = safe_mode
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
     def reset(self):
@@ -133,7 +139,6 @@ class Markdown(object):
 
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text)
-        #print "XXX ----\n", text, "----"
 
         # Strip link definitions, store in hashes.
         text = self._strip_link_definitions(text)
@@ -388,14 +393,17 @@ class Markdown(object):
         is_html_markup = False
         for token in self._sorta_html_tokenize_re.split(text):
             if is_html_markup:
-                # Within tags/HTML-comments/auto-links, encode * and _
-                # so they don't conflict with their use in Markdown for
-                # italics and strong.  We're replacing each such
-                # character with its corresponding MD5 checksum value;
-                # this is likely overkill, but it should prevent us from
-                # colliding with the escape values by accident.
-                escaped.append(token.replace('*', g_escape_table['*'])
-                                    .replace('_', g_escape_table['_']))
+                if self.safe_mode:
+                    escaped.append(HTML_REMOVED_TEXT)
+                else:
+                    # Within tags/HTML-comments/auto-links, encode * and _
+                    # so they don't conflict with their use in Markdown for
+                    # italics and strong.  We're replacing each such
+                    # character with its corresponding MD5 checksum value;
+                    # this is likely overkill, but it should prevent us from
+                    # colliding with the escape values by accident.
+                    escaped.append(token.replace('*', g_escape_table['*'])
+                                        .replace('_', g_escape_table['_']))
             else:
                 escaped.append(self._encode_backslash_escapes(token))
             is_html_markup = not is_html_markup
@@ -858,7 +866,10 @@ class Markdown(object):
         for i, graf in enumerate(grafs):
             if graf in self.html_blocks:
                 # Unhashify HTML blocks
-               grafs[i] = self.html_blocks[graf] 
+                if self.safe_mode:
+                    grafs[i] = HTML_REMOVED_TEXT
+                else:
+                    grafs[i] = self.html_blocks[graf] 
             else:
                 # Wrap <p> tags.
                 graf = self._run_span_gamut(graf)
