@@ -19,16 +19,19 @@ import timeit
 import time
 from os.path import *
 from glob import glob
+import optparse
 
 from util import hotshotit
 
 
-DEFAULT_REPEAT = 1
-
 clock = sys.platform == "win32" and time.clock or time.time
 
 
-def time_markdown_py(cases_dir, repeat=DEFAULT_REPEAT):
+@hotshotit
+def hotshot_markdown_py(cases_dir, repeat):
+    time_markdown_py(cases_dir, repeat)
+
+def time_markdown_py(cases_dir, repeat):
     sys.path.insert(0, join("..", "test"))
     import markdown
     del sys.path[0]
@@ -50,7 +53,10 @@ def time_markdown_py(cases_dir, repeat=DEFAULT_REPEAT):
     print "  markdown.py: best of %d: %.3fs" % (repeat, min(times))
 
 @hotshotit
-def time_markdown2_py(cases_dir, repeat=DEFAULT_REPEAT):
+def hotshot_markdown2_py(cases_dir, repeat):
+    time_markdown2_py(cases_dir, repeat)
+
+def time_markdown2_py(cases_dir, repeat):
     sys.path.insert(0, "..")
     import markdown2
     del sys.path[0]
@@ -67,7 +73,7 @@ def time_markdown2_py(cases_dir, repeat=DEFAULT_REPEAT):
         times.append(end - start)
     print "  markdown2.py: best of %d: %.3fs" % (repeat, min(times))
 
-def time_markdown_pl(cases_dir, repeat=DEFAULT_REPEAT):
+def time_markdown_pl(cases_dir, repeat):
     times = []
     for i in range(repeat):
         start = clock()
@@ -76,27 +82,80 @@ def time_markdown_pl(cases_dir, repeat=DEFAULT_REPEAT):
         times.append(end - start)
     print "  Markdown.pl: best of %d: %.3fs" % (repeat, min(times))
 
-def time_all(cases_dir, repeat=DEFAULT_REPEAT):
+def time_all(cases_dir, repeat):
     time_markdown_pl(cases_dir, repeat=repeat)
     time_markdown_py(cases_dir, repeat=repeat)
     time_markdown2_py(cases_dir, repeat=repeat)
 
+def time_not_markdown_py(cases_dir, repeat):
+    time_markdown_pl(cases_dir, repeat=repeat)
+    time_markdown2_py(cases_dir, repeat=repeat)
+
+
+#---- mainline
+
+class _NoReflowFormatter(optparse.IndentedHelpFormatter):
+    """An optparse formatter that does NOT reflow the description."""
+    def format_description(self, description):
+        return description or ""
+
+def main(args=sys.argv):
+    usage = "usage: %prog [OPTIONS...]"
+    parser = optparse.OptionParser(prog="perf", usage=usage,
+        description=__doc__, formatter=_NoReflowFormatter())
+    parser.add_option("-r", "--repeat", type="int",
+        help="number of times to repeat timing cycle (default 3)")
+    parser.add_option("-i", "--implementation",
+        help="Markdown implementation(s) to run: all (default), "
+             "markdown.py, markdown2.py, Markdown.pl, not-markdown.py")
+    parser.add_option("--hotshot", "--profile", dest="hotshot",
+        action="store_true",
+        help="profile and dump stats about a single run (not supported "
+             "for Markdown.pl)")
+    parser.set_defaults(implementation="all", hotshot=False, repeat=3)
+    opts, args = parser.parse_args()
+ 
+    if len(args) != 1:
+        sys.stderr.write("error: incorrect number of args\n")
+        sys.stderr.write(__doc__)
+        return 1
+    cases_dir = args[0]
+    if not exists(cases_dir):
+        raise OSError("cases dir `%s' does not exist: use "
+                      "gen_perf_cases.py to generate some cases dirs" 
+                      % cases_dir)
+
+    if opts.hotshot:
+        assert opts.implementation in ("markdown.py", "markdown2.py")
+        timer_name = "hotshot_%s" \
+            % opts.implementation.lower().replace('.', '_').replace('-', '_')
+        d = sys.modules[__name__].__dict__
+        if timer_name not in d:
+            raise ValueError("no '%s' timer function" % timer_name)
+        timer = d[timer_name]
+        print "Profile conversion of %s (%s):" \
+              % (os.path.join(cases_dir, "*.text"), sys.platform)
+        timer(cases_dir, repeat=1) # always only one cycle for hotshotting
+        print
+        os.system("python show_stats.py %s.prof" % timer_name)
+
+    else:
+        timer_name = "time_%s" \
+            % opts.implementation.lower().replace('.', '_').replace('-', '_')
+
+        d = sys.modules[__name__].__dict__
+        if timer_name not in d:
+            raise ValueError("no '%s' timer function" % timer_name)
+        timer = d[timer_name]
+        print "Time conversion of %s (%s):" \
+              % (os.path.join(cases_dir, "*.text"), sys.platform)
+        timer(cases_dir, repeat=opts.repeat)
+    
 if __name__ == "__main__":
+    sys.exit( main(sys.argv) )
     if len(sys.argv) != 3:
         sys.stderr.write("error: incorrect number of args\n")
         sys.stderr.write(__doc__)
         sys.exit(1)
 
-    script, selector, cases_dir = sys.argv
-    timer_name = "time_%s" % selector.lower().replace('.', '_')
-    d = sys.modules[__name__].__dict__
-    if timer_name not in d:
-        raise ValueError("no '%s' timer function" % timer_name)
-    timer = d[timer_name]
-    if not exists(cases_dir):
-        raise OSError("cases dir `%s' does not exist: use "
-                      "gen_perf_cases.py to generate some cases dirs" 
-                      % cases_dir)
-    print "Time conversion of %s%s*.text:" % (cases_dir, os.path.sep)
-    timer(cases_dir)
 

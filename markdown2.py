@@ -169,7 +169,37 @@ class Markdown(object):
             >>> m._detab("  foo\n\tbar\tblam")
             '  foo\n    bar blam'
         """
+        if '\t' not in text:
+            return text
         return self._detab_re.subn(self._detab_sub, text)[0]
+
+    _block_tags_a = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math|ins|del'
+    _strict_tag_block_re = re.compile(r"""
+        (                       # save in \1
+            ^                   # start of line  (with re.M)
+            <(%s)               # start tag = \2
+            \b                  # word break
+            (.*\n)*?            # any number of lines, minimally matching
+            </\2>               # the matching end tag
+            [ \t]*              # trailing spaces/tabs
+            (?=\n+|\Z)          # followed by a newline or end of document
+        )
+        """ % _block_tags_a,
+        re.X | re.M)
+
+    _block_tags_b = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math'
+    _liberal_tag_block_re = re.compile(r"""
+        (                       # save in \1
+            ^                   # start of line  (with re.M)
+            <(%s)               # start tag = \2
+            \b                  # word break
+            (.*\n)*?            # any number of lines, minimally matching
+            .*</\2>             # the matching end tag
+            [ \t]*              # trailing spaces/tabs
+            (?=\n+|\Z)          # followed by a newline or end of document
+        )
+        """ % _block_tags_b,
+        re.X | re.M)
 
     def _hash_html_block_sub(self, match):
         g1 = match.group(1)
@@ -178,16 +208,14 @@ class Markdown(object):
         return "\n\n" + key + "\n\n"
 
     def _hash_html_blocks(self, text):
-        less_than_tab = self.tab_width - 1
-
         # Hashify HTML blocks:
         # We only want to do this for block-level HTML tags, such as headers,
         # lists, and tables. That's because we still want to wrap <p>s around
         # "paragraphs" that are wrapped in non-block-level tags, such as anchors,
         # phrase emphasis, and spans. The list of tags we're looking for is
-        # hard-coded:
-        block_tags_a = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math|ins|del'
-        block_tags_b = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math'
+        # hard-coded.
+        if '<' not in text:
+            return text
 
         # First, look for nested blocks, e.g.:
         #   <div>
@@ -200,74 +228,21 @@ class Markdown(object):
         # the inner nested divs must be indented.
         # We need to do this before the next, more liberal match, because the next
         # match will start at the first `<div>` and stop at the first `</div>`.
-        _strict_tag_block_re = re.compile(r"""
-            (                       # save in \1
-                ^                   # start of line  (with re.M)
-                <(%s)               # start tag = \2
-                \b                  # word break
-                (.*\n)*?            # any number of lines, minimally matching
-                </\2>               # the matching end tag
-                [ \t]*              # trailing spaces/tabs
-                (?=\n+|\Z)          # followed by a newline or end of document
-            )
-            """ % block_tags_a,
-            re.X | re.M)
-        text = _strict_tag_block_re.sub(self._hash_html_block_sub, text)
+        text = self._strict_tag_block_re.sub(self._hash_html_block_sub, text)
 
         # Now match more liberally, simply from `\n<tag>` to `</tag>\n`
-        _liberal_tag_block_re = re.compile(r"""
-            (                       # save in \1
-                ^                   # start of line  (with re.M)
-                <(%s)               # start tag = \2
-                \b                  # word break
-                (.*\n)*?            # any number of lines, minimally matching
-                .*</\2>             # the matching end tag
-                [ \t]*              # trailing spaces/tabs
-                (?=\n+|\Z)          # followed by a newline or end of document
-            )
-            """ % block_tags_b,
-            re.X | re.M)
-        text = _liberal_tag_block_re.sub(self._hash_html_block_sub, text)
+        text = self._liberal_tag_block_re.sub(self._hash_html_block_sub, text)
 
         # Special case just for <hr />. It was easier to make a special
         # case than to make the other regex more complicated.   
-        _hr_tag_re = re.compile(r"""
-            (?:
-                (?<=\n\n)       # Starting after a blank line
-                |               # or
-                \A\n?           # the beginning of the doc
-            )
-            (                       # save in \1
-                [ ]{0,%d}
-                <(hr)               # start tag = \2
-                \b                  # word break
-                ([^<>])*?           # 
-                /?>                 # the matching end tag
-                [ \t]*
-                (?=\n{2,}|\Z)       # followed by a blank line or end of document
-            )
-            """ % less_than_tab, re.X)
-        text = _hr_tag_re.sub(self._hash_html_block_sub, text)
+        if "<hr" in text:
+            _hr_tag_re = _hr_tag_re_from_tab_width(self.tab_width)
+            text = _hr_tag_re.sub(self._hash_html_block_sub, text)
 
         # Special case for standalone HTML comments:
-        _html_comment_re = re.compile(r"""
-            (?:
-                (?<=\n\n)       # Starting after a blank line
-                |               # or
-                \A\n?           # the beginning of the doc
-            )
-            (                       # save in $1
-                [ ]{0,%d}
-                (?:
-                    <!
-                    (--.*?--\s*)+
-                    >
-                )
-                [ \t]*
-                (?=\n{2,}|\Z)       # followed by a blank line or end of document
-            )
-            """ % less_than_tab, re.X | re.S)
-        text = _html_comment_re.sub(self._hash_html_block_sub, text)
+        if "<!--" in text:
+            _html_comment_re = _html_comment_re_from_tab_width(self.tab_width)
+            text = _html_comment_re.sub(self._hash_html_block_sub, text)
 
         return text
 
@@ -854,6 +829,8 @@ class Markdown(object):
         return "<blockquote>\n%s\n</blockquote>\n\n" % bq
 
     def _do_block_quotes(self, text):
+        if '>' not in text:
+            return text
         return self._block_quote_re.sub(self._block_quote_sub, text)
 
 
@@ -951,7 +928,74 @@ class Markdown(object):
     def _outdent(self, text):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
+
+
+#---- internal support functions
     
+class _memoized(object):
+   """Decorator that caches a function's return value each time it is called.
+   If called later with the same arguments, the cached value is returned, and
+   not re-evaluated.
+
+   http://wiki.python.org/moin/PythonDecoratorLibrary
+   """
+   def __init__(self, func):
+      self.func = func
+      self.cache = {}
+   def __call__(self, *args):
+      try:
+         return self.cache[args]
+      except KeyError:
+         self.cache[args] = value = self.func(*args)
+         return value
+      except TypeError:
+         # uncachable -- for instance, passing a list as an argument.
+         # Better to not cache than to blow up entirely.
+         return self.func(*args)
+   def __repr__(self):
+      """Return the function's docstring."""
+      return self.func.__doc__
+
+
+@_memoized
+def _html_comment_re_from_tab_width(tab_width):
+    return re.compile(r"""
+        (?:
+            (?<=\n\n)       # Starting after a blank line
+            |               # or
+            \A\n?           # the beginning of the doc
+        )
+        (                       # save in $1
+            [ ]{0,%d}
+            (?:
+                <!
+                (--.*?--\s*)+
+                >
+            )
+            [ \t]*
+            (?=\n{2,}|\Z)       # followed by a blank line or end of document
+        )
+        """ % (tab_width - 1), re.X | re.S)
+
+@_memoized
+def _hr_tag_re_from_tab_width(tab_width):
+     return re.compile(r"""
+        (?:
+            (?<=\n\n)       # Starting after a blank line
+            |               # or
+            \A\n?           # the beginning of the doc
+        )
+        (                       # save in \1
+            [ ]{0,%d}
+            <(hr)               # start tag = \2
+            \b                  # word break
+            ([^<>])*?           # 
+            /?>                 # the matching end tag
+            [ \t]*
+            (?=\n{2,}|\Z)       # followed by a blank line or end of document
+        )
+        """ % (tab_width - 1), re.X)
+
 
 def _xml_encode_email_char_at_random(ch):
     r = random()
@@ -966,7 +1010,13 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % ord(ch)
 
 
+
 #---- mainline
+
+class _NoReflowFormatter(optparse.IndentedHelpFormatter):
+    """An optparse formatter that does NOT reflow the description."""
+    def format_description(self, description):
+        return description or ""
 
 def _test():
     import doctest
@@ -976,26 +1026,30 @@ def main(argv=sys.argv):
     usage = "usage: %prog [OPTIONS...]"
     version = "%prog "+__version__
     parser = optparse.OptionParser(prog="markdown2", usage=usage,
-                                   version=version,
-                                   description=__doc__)
-    parser.format_description = lambda self, d: d
+        version=version, description=__doc__,
+        formatter=_NoReflowFormatter())
     parser.add_option("-v", "--verbose", dest="log_level",
                       action="store_const", const=logging.DEBUG,
                       help="more verbose output")
-    parser.add_option("--html4tags", action="store_true", default=False, 
-                      help="use HTML 4 style for empty element tags")
-    parser.add_option("--self-test", action="store_true",
-                      help="run self-tests")
-    parser.add_option("--compare", action="store_true",
-                      help="run against Markdown.pl as well (for testing)")
     parser.add_option("--encoding",
                       help="specify encoding of text content")
+    parser.add_option("--html4tags", action="store_true", default=False, 
+                      help="use HTML 4 style for empty element tags")
+    parser.add_option("--code-safe", action="store_true", default=False,
+                      help="drop some Markdown syntax to make it more "
+                           "convenient for source code")
+    parser.add_option("--self-test", action="store_true",
+                      help="run internal self-tests (some doctests)")
+    parser.add_option("--compare", action="store_true",
+                      help="run against Markdown.pl as well (for testing)")
     parser.set_defaults(log_level=logging.INFO, compare=False, encoding="utf-8")
     opts, paths = parser.parse_args()
     log.setLevel(opts.log_level)
 
     if opts.self_test:
         return _test()
+    if opts.code_safe:
+        raise MarkdownError("--code-safe is not yet implemented")
 
     from os.path import join, dirname
     markdown_pl = join(dirname(__file__), "test", "Markdown.pl")
