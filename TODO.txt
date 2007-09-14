@@ -1,4 +1,3 @@
-- "code-safe" option (started, just opt processing)
 - try giving reports to Yuri again (on sf.net markdown site, ask on markdown
   list)
 - googlecode site: Why another Python impl? Test report. Perf report.

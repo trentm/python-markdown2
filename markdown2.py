@@ -73,15 +73,15 @@ class MarkdownError(Exception):
 
 def markdown_path(path, encoding="utf-8",
                   html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-                  safe_mode=False):
+                  safe_mode=False, code_safe=False):
     text = codecs.open(path, 'r', encoding).read()
     return Markdown(html4tags=html4tags, tab_width=tab_width,
-                    safe_mode=safe_mode).convert(text)
+                    safe_mode=safe_mode, code_safe=code_safe).convert(text)
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-             safe_mode=False):
+             safe_mode=False, code_safe=False):
     return Markdown(html4tags=html4tags, tab_width=tab_width,
-                    safe_mode=safe_mode).convert(text)
+                    safe_mode=safe_mode, code_safe=code_safe).convert(text)
 
 class Markdown(object):
     urls = None
@@ -94,13 +94,15 @@ class Markdown(object):
 
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
-    def __init__(self, html4tags=False, tab_width=4, safe_mode=False):
+    def __init__(self, html4tags=False, tab_width=4, safe_mode=False,
+                 code_safe=False):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
             self.empty_element_suffix = " />"
         self.tab_width = tab_width
         self.safe_mode = safe_mode
+        self.code_safe = code_safe
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
     def reset(self):
@@ -793,10 +795,16 @@ class Markdown(object):
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
+    _code_safe_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
+    _code_safe_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
     def _do_italics_and_bold(self, text):
         # <strong> must go first:
-        text = self._strong_re.sub(r"<strong>\2</strong>", text)
-        text = self._em_re.sub(r"<em>\2</em>", text)
+        if self.code_safe:
+            text = self._code_safe_strong_re.sub(r"<strong>\1</strong>", text)
+            text = self._code_safe_em_re.sub(r"<em>\1</em>", text)
+        else:
+            text = self._strong_re.sub(r"<strong>\2</strong>", text)
+            text = self._em_re.sub(r"<em>\2</em>", text)
         return text
     
 
@@ -1048,8 +1056,6 @@ def main(argv=sys.argv):
 
     if opts.self_test:
         return _test()
-    if opts.code_safe:
-        raise MarkdownError("--code-safe is not yet implemented")
 
     from os.path import join, dirname
     markdown_pl = join(dirname(__file__), "test", "Markdown.pl")
@@ -1059,7 +1065,8 @@ def main(argv=sys.argv):
             os.system('perl %s "%s"' % (markdown_pl, path))
             print "-- markdown2.py"
         html = markdown_path(path, encoding=opts.encoding,
-                             html4tags=opts.html4tags)
+                             html4tags=opts.html4tags,
+                             code_safe=opts.code_safe)
         sys.stdout.write(html)
 
 
