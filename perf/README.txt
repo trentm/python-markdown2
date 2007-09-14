@@ -23,11 +23,10 @@
 
 # TODO
 
-- strip out the .txt cases that markdown.py blows up on? (encoding problems)
+- strip out the .text cases that markdown.py blows up on? (encoding problems)
 - add some larger perf suites (perhaps those test case files that all
   Markdown implementations pass)
 - add markdown.php timing
-- speed markdown2.py up!
 
 
 

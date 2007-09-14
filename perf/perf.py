@@ -104,7 +104,8 @@ def main(args=sys.argv):
     parser = optparse.OptionParser(prog="perf", usage=usage,
         description=__doc__, formatter=_NoReflowFormatter())
     parser.add_option("-r", "--repeat", type="int",
-        help="number of times to repeat timing cycle (default 3)")
+        help="number of times to repeat timing cycle (default 3 if timing, "
+             "1 if profiling)")
     parser.add_option("-i", "--implementation",
         help="Markdown implementation(s) to run: all (default), "
              "markdown.py, markdown2.py, Markdown.pl, not-markdown.py")
@@ -112,7 +113,7 @@ def main(args=sys.argv):
         action="store_true",
         help="profile and dump stats about a single run (not supported "
              "for Markdown.pl)")
-    parser.set_defaults(implementation="all", hotshot=False, repeat=3)
+    parser.set_defaults(implementation="all", hotshot=False, repeat=None)
     opts, args = parser.parse_args()
  
     if len(args) != 1:
@@ -124,6 +125,8 @@ def main(args=sys.argv):
         raise OSError("cases dir `%s' does not exist: use "
                       "gen_perf_cases.py to generate some cases dirs" 
                       % cases_dir)
+    if opts.repeat is None:
+        opts.repeat = opts.hotshot and 1 or 3
 
     if opts.hotshot:
         assert opts.implementation in ("markdown.py", "markdown2.py")
@@ -133,9 +136,9 @@ def main(args=sys.argv):
         if timer_name not in d:
             raise ValueError("no '%s' timer function" % timer_name)
         timer = d[timer_name]
-        print "Profile conversion of %s (%s):" \
+        print "Profile conversion of %s (plat=%s):" \
               % (os.path.join(cases_dir, "*.text"), sys.platform)
-        timer(cases_dir, repeat=1) # always only one cycle for hotshotting
+        timer(cases_dir, repeat=opts.repeat)
         print
         os.system("python show_stats.py %s.prof" % timer_name)
 
@@ -147,7 +150,7 @@ def main(args=sys.argv):
         if timer_name not in d:
             raise ValueError("no '%s' timer function" % timer_name)
         timer = d[timer_name]
-        print "Time conversion of %s (%s):" \
+        print "Time conversion of %s (plat=%s):" \
               % (os.path.join(cases_dir, "*.text"), sys.platform)
         timer(cases_dir, repeat=opts.repeat)
     
