@@ -2,6 +2,7 @@
   list)
 - googlecode site: Why another Python impl? Test info. Usage/Features page.
 - package up a release
+- get on http://en.wikipedia.org/wiki/Markdown
 - announce: blog, python-annoucne, markdown list
 - ask about remaining two MarkdownTest test failures
 - put in recipes site
