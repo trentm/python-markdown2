@@ -1,3 +1,7 @@
+- fix EOL issues with test cases (problems on Windows)
+- test.py tm img_in_link (and, once fixed, let oleg know about markdown2)
+- take a look at other examples/test-cases from
+  http://adlcommunity.net/help.php?file=advanced_markdown.html
 - try giving reports to Yuri again (on sf.net markdown site, ask on markdown
   list)
 - googlecode site: Why another Python impl? Test info. Usage/Features page.
