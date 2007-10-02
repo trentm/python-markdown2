@@ -423,6 +423,11 @@ class Markdown(object):
         """
         MAX_LINK_TEXT_SENTINEL = 300
 
+        # `anchor_allowed_pos` is used to support img links inside
+        # anchors, but not anchors inside anchors. An anchor's start
+        # pos must be `>= anchor_allowed_pos`.
+        anchor_allowed_pos = 0
+
         curr_pos = 0
         while True: # Handle the next link.
             # The next '[' is the start of:
@@ -495,13 +500,18 @@ class Markdown(object):
                             % (url, link_text.replace('"', '&quot;'),
                                title_str, self.empty_element_suffix)
                         curr_pos = start_idx + len(result)
-                    else:
+                        text = text[:start_idx] + result + text[match.end():]
+                    elif start_idx >= anchor_allowed_pos:
                         result_head = '<a href="%s"%s>' % (url, title_str)
                         result = '%s%s</a>' % (result_head, link_text)
-                        # `len(result_head)` to allow a link inside the
-                        # link (test: img_in_link).
+                        # <img> allowed from curr_pos on, <a> from
+                        # anchor_allowed_pos on.
                         curr_pos = start_idx + len(result_head)
-                    text = text[:start_idx] + result + text[match.end():]
+                        anchor_allowed_pos = start_idx + len(result)
+                        text = text[:start_idx] + result + text[match.end():]
+                    else:
+                        # Anchor not allowed here.
+                        curr_pos = start_idx + 1
                     continue
 
             # Reference anchor or img?
@@ -533,15 +543,20 @@ class Markdown(object):
                                 % (url, link_text.replace('"', '&quot;'),
                                    title_str, self.empty_element_suffix)
                             curr_pos = start_idx + len(result)
-                        else:
+                            text = text[:start_idx] + result + text[match.end():]
+                        elif start_idx >= anchor_allowed_pos:
                             result = '<a href="%s"%s>%s</a>' \
                                 % (url, title_str, link_text)
                             result_head = '<a href="%s"%s>' % (url, title_str)
                             result = '%s%s</a>' % (result_head, link_text)
-                            # `len(result_head)` to allow a link inside the
-                            # link (test: img_in_link).
+                            # <img> allowed from curr_pos on, <a> from
+                            # anchor_allowed_pos on.
                             curr_pos = start_idx + len(result_head)
-                        text = text[:start_idx] + result + text[match.end():]
+                            anchor_allowed_pos = start_idx + len(result)
+                            text = text[:start_idx] + result + text[match.end():]
+                        else:
+                            # Anchor not allowed here.
+                            curr_pos = start_idx + 1
                     else:
                         # This id isn't defined, leave the markup alone.
                         curr_pos = match.end()
