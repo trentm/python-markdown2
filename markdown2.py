@@ -494,11 +494,14 @@ class Markdown(object):
                         result = '<img src="%s" alt="%s"%s%s' \
                             % (url, link_text.replace('"', '&quot;'),
                                title_str, self.empty_element_suffix)
+                        curr_pos = start_idx + len(result)
                     else:
-                        result = '<a href="%s"%s>%s</a>' \
-                                 % (url, title_str, link_text)
+                        result_head = '<a href="%s"%s>' % (url, title_str)
+                        result = '%s%s</a>' % (result_head, link_text)
+                        # `len(result_head)` to allow a link inside the
+                        # link (test: img_in_link).
+                        curr_pos = start_idx + len(result_head)
                     text = text[:start_idx] + result + text[match.end():]
-                    curr_pos = start_idx + len(result)
                     continue
 
             # Reference anchor or img?
@@ -529,11 +532,16 @@ class Markdown(object):
                             result = '<img src="%s" alt="%s"%s%s' \
                                 % (url, link_text.replace('"', '&quot;'),
                                    title_str, self.empty_element_suffix)
+                            curr_pos = start_idx + len(result)
                         else:
                             result = '<a href="%s"%s>%s</a>' \
                                 % (url, title_str, link_text)
+                            result_head = '<a href="%s"%s>' % (url, title_str)
+                            result = '%s%s</a>' % (result_head, link_text)
+                            # `len(result_head)` to allow a link inside the
+                            # link (test: img_in_link).
+                            curr_pos = start_idx + len(result_head)
                         text = text[:start_idx] + result + text[match.end():]
-                        curr_pos = start_idx + len(result)
                     else:
                         # This id isn't defined, leave the markup alone.
                         curr_pos = match.end()
