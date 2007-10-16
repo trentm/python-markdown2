@@ -1,27 +1,56 @@
 #!/usr/bin/env python
 # Copyright (c) 2007 ActiveState Corp.
 
-"""Another Python implementation of Markdown
+"""A fast and complete Python implementation of Markdown.
 
-Markdown is "a text-to-HTML conversion tool for web writers"
-(http://daringfireball.net/projects/markdown/).  There is already a
-Python markdown processor
-(http://www.freewisdom.org/projects/python-markdown/) but (1) I've run
-into a number of problems with it (improper Markdown processing) and (2)
-emails to the author's given contact address have bounced.
+[from http://daringfireball.net/projects/markdown/]
+> Markdown is a text-to-HTML filter; it translates an easy-to-read /
+> easy-to-write structured text format into HTML.  Markdown's text
+> format is most similar to that of plain text email, and supports
+> features such as headers, *emphasis*, code blocks, blockquotes, and
+> links.
+>
+> Markdown's syntax is designed not as a generic markup language, but
+> specifically to serve as a front-end to (X)HTML. You can use span-level
+> HTML tags anywhere in a Markdown document, and you can use block level
+> HTML tags (like <div> and <table> as well).
 
-[from Markdown.pl] Markdown is a text-to-HTML filter; it translates an
-easy-to-read / easy-to-write structured text format into HTML.
-Markdown's text format is most similar to that of plain text email, and
-supports features such as headers, *emphasis*, code blocks, blockquotes,
-and links.
+Module usage:
 
-Markdown's syntax is designed not as a generic markup language, but
-specifically to serve as a front-end to (X)HTML. You can  use span-level
-HTML tags anywhere in a Markdown document, and you can use block level
-HTML tags (like <div> and <table> as well).
+    >>> import markdown2
+    >>> html = markdown2.markdown_path(path, ...)
+    >>> markdown2.markdown("*boo!*", ...)
+    <em>boo!</em>
+
+    >>> markdowner = Markdown(...)
+    >>> markdowner.convert("*boo!*")
+    <em>boo!</em>
+    >>> markdowner.convert("**boom!**")
+    <strong>boom!</strong>
+
+This implementation of Markdown implements the full "core" syntax plus the
+following extra features (pass these strings as arguments to the
+"extras" list to turn them on):
+
+    code-friendly   Disable the use of leading and trailing '_' and '__'
+                    for emphasis and strong. These can easily get in the
+                    way when writing docs about source code with
+                    variable_list_this and when one is not careful about
+                    quoting.
+    footnotes       TODO: suuport for footnotes from patch
+    syntax-color    Syntax coloring of <code> blocks using Pygments.
+                    (TODO: patch)
 """
-#Dev Notes:
+
+cmdln_desc = """A fast and complete Python implementation of Markdown, a
+text-to-HTML conversion tool for web writers.
+"""
+
+# Dev Notes:
+# - There is already a Python markdown processor
+#   (http://www.freewisdom.org/projects/python-markdown/) but (1) I've run
+#   into a number of problems with it (improper Markdown processing) and (2)
+#   emails to the author's given contact address have bounced.
 # - Python's regex syntax doesn't have '\z', so I'm using '\Z'. I'm
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
@@ -73,15 +102,15 @@ class MarkdownError(Exception):
 
 def markdown_path(path, encoding="utf-8",
                   html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-                  safe_mode=False, code_safe=False):
+                  safe_mode=False, extras=None):
     text = codecs.open(path, 'r', encoding).read()
     return Markdown(html4tags=html4tags, tab_width=tab_width,
-                    safe_mode=safe_mode, code_safe=code_safe).convert(text)
+                    safe_mode=safe_mode, extras=extras).convert(text)
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-             safe_mode=False, code_safe=False):
+             safe_mode=False, extras=None):
     return Markdown(html4tags=html4tags, tab_width=tab_width,
-                    safe_mode=safe_mode, code_safe=code_safe).convert(text)
+                    safe_mode=safe_mode, extras=extras).convert(text)
 
 class Markdown(object):
     urls = None
@@ -95,14 +124,14 @@ class Markdown(object):
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
     def __init__(self, html4tags=False, tab_width=4, safe_mode=False,
-                 code_safe=False):
+                 extras=None):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
             self.empty_element_suffix = " />"
         self.tab_width = tab_width
         self.safe_mode = safe_mode
-        self.code_safe = code_safe
+        self.extras = extras and set(extras) or set()
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
     def reset(self):
@@ -818,13 +847,13 @@ class Markdown(object):
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
-    _code_safe_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
-    _code_safe_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
+    _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
+    _code_friendly_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
     def _do_italics_and_bold(self, text):
         # <strong> must go first:
-        if self.code_safe:
-            text = self._code_safe_strong_re.sub(r"<strong>\1</strong>", text)
-            text = self._code_safe_em_re.sub(r"<em>\1</em>", text)
+        if "code-friendly" in self.extras:
+            text = self._code_friendly_strong_re.sub(r"<strong>\1</strong>", text)
+            text = self._code_friendly_em_re.sub(r"<em>\1</em>", text)
         else:
             text = self._strong_re.sub(r"<strong>\2</strong>", text)
             text = self._em_re.sub(r"<em>\2</em>", text)
@@ -1054,10 +1083,10 @@ def _test():
     doctest.testmod()
 
 def main(argv=sys.argv):
-    usage = "usage: %prog [OPTIONS...]"
+    usage = "usage: %prog [PATHS...]"
     version = "%prog "+__version__
     parser = optparse.OptionParser(prog="markdown2", usage=usage,
-        version=version, description=__doc__,
+        version=version, description=cmdln_desc,
         formatter=_NoReflowFormatter())
     parser.add_option("-v", "--verbose", dest="log_level",
                       action="store_const", const=logging.DEBUG,
@@ -1066,9 +1095,11 @@ def main(argv=sys.argv):
                       help="specify encoding of text content")
     parser.add_option("--html4tags", action="store_true", default=False, 
                       help="use HTML 4 style for empty element tags")
-    parser.add_option("--code-safe", action="store_true", default=False,
-                      help="drop some Markdown syntax to make it more "
-                           "convenient for source code")
+    parser.add_option("--extras", action="append",
+                      help="Turn on specific extra features (not part of "
+                           "the core Markdown spec). Supported values: "
+                           "'code-friendly' disables _/__ for emphasis; "
+                           "'footnotes' add the footnotes syntax.")
     parser.add_option("--self-test", action="store_true",
                       help="run internal self-tests (some doctests)")
     parser.add_option("--compare", action="store_true",
@@ -1082,6 +1113,10 @@ def main(argv=sys.argv):
 
     from os.path import join, dirname
     markdown_pl = join(dirname(__file__), "test", "Markdown.pl")
+    extras = []
+    for s in opt.extras:
+        extras += re.compile("[,;: ]+").split(s)
+    extras = extras and set(extras) or None
     for path in paths:
         if opts.compare:
             print "-- Markdown.pl"
@@ -1089,7 +1124,7 @@ def main(argv=sys.argv):
             print "-- markdown2.py"
         html = markdown_path(path, encoding=opts.encoding,
                              html4tags=opts.html4tags,
-                             code_safe=opts.code_safe)
+                             extras=extras)
         sys.stdout.write(html)
 
 
