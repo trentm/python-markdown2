@@ -1,3 +1,10 @@
+- wiki/Extras.wiki
+- fix test link_defn_alt_title_delims
+- update MDTest 1.1? (see
+  http://six.pairlist.net/pipermail/markdown-discuss/2007-September/000815.html)
+- I see ref to Markdown.pl 1.0.2
+  (http://six.pairlist.net/pipermail/markdown-discuss/2007-August/000756.html)
+  Update to that? Yes. Copy, at least, in showdown package.
 - fix EOL issues with test cases (problems on Windows)
 - take a look at other examples/test-cases from
   http://adlcommunity.net/help.php?file=advanced_markdown.html
@@ -14,4 +21,8 @@
 - submit a Markdown.py fix based on revision 1895 (on tm svn)
 - see about using html5lib (for speed and/or for better raw HTML handling)
 - see about plugins (SmartyPants, others available)
+- perf: compare to showdown (JS markdown impl)
+- perf: compare to Maruku
+  (http://six.pairlist.net/pipermail/markdown-discuss/2007-August/000758.html)
 - add profiling info for Markdown.pl using PDK7 to the wiki perf page
+
