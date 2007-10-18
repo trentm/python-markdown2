@@ -55,7 +55,7 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 0) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 1) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __revision__ = "$Id$"
 __author__ = "Trent Mick"
@@ -139,6 +139,9 @@ class Markdown(object):
         self.titles = {}
         self.html_blocks = {}
         self.list_level = 0
+        if "footnotes" in self.extras:
+            self.footnotes = {}
+            self.footnote_ids = []
 
     def convert(self, text):
         """Convert the given text."""
@@ -172,11 +175,20 @@ class Markdown(object):
         text = self._hash_html_blocks(text)
 
         # Strip link definitions, store in hashes.
+        if "footnotes" in self.extras:
+            # Must do footnotes first because an unlucky footnote defn
+            # looks like a link defn:
+            #   [^4]: this "looks like a link defn"
+            text = self._strip_footnote_definitions(text)
         text = self._strip_link_definitions(text)
 
         text = self._run_block_gamut(text)
 
         text = self._unescape_special_chars(text)
+
+        if "footnotes" in self.extras:
+            text = self._add_footnotes(text)
+
         return text + "\n"
 
     # Cribbed from a post by Bart Lateur:
@@ -277,7 +289,6 @@ class Markdown(object):
 
         return text
 
-
     def _strip_link_definitions(self, text):
         # Strips link definitions from text, stores the URLs and titles in
         # hash references.
@@ -311,6 +322,48 @@ class Markdown(object):
         if title:
             self.titles[key] = title.replace('"', '&quot;')
         return ""
+
+    def _extract_footnote_def_sub(self, match):
+        id, text = match.groups()
+        text = _dedent(text, skip_first_line=not text.startswith('\n')).strip()
+        normed_id = re.sub(r'\W', '-', id)
+        self.footnotes[normed_id] \
+            = self._encode_amps_and_angles(text).split('\n\n')
+        return ""
+
+    def _strip_footnote_definitions(self, text):
+        """A footnote definition looks like this:
+
+            [^note-id]: Text of the note.
+
+                May include one or more indented paragraphs.
+
+        Where,
+        - The 'note-id' can be pretty much anything, though typically it
+          is the number of the footnote.
+        - The first paragraph may start on the next line, like so:
+            
+            [^note-id]:
+                Text of the note.
+        """
+        less_than_tab = self.tab_width - 1
+        footnote_def_re = re.compile(r'''
+            ^[ ]{0,%d}\[\^(.+)\]:   # id = \1
+            [ \t]*
+            (                       # footnote text = \2
+              # First line need not start with the spaces.
+              (?:\s*.*\n+)
+              (?:
+                (?:[ ]{%d} | \t)  # Subsequent lines must be indented.
+                .*\n+
+              )*
+            )
+            # Lookahead for non-space at line-start, or end of doc.
+            (?:(?=^[ ]{0,%d}\S)|\Z)
+            ''' % (less_than_tab, self.tab_width, self.tab_width),
+            re.X | re.M)
+        return footnote_def_re.sub(self._extract_footnote_def_sub, text)
+
 
     _hr_res = [
         re.compile(r"^[ ]{0,2}([ ]?\*[ ]?){3,}[ \t]*$", re.M),
@@ -464,6 +517,12 @@ class Markdown(object):
             # - a reference anchor: [text][id]
             # - an inline img:      ![text](url "title")
             # - a reference img:    ![text][id]
+            # - a footnote ref:     [^id]
+            #   (Only if 'footnotes' extra enabled)
+            # - a footnote defn:    [^id]: ...
+            #   (Only if 'footnotes' extra enabled) These have already
+            #   been stripped in _strip_footnote_definitions() so no
+            #   need to watch for them.
             # - a link definition:  [id]: url "title"
             #   These have already been stripped in
             #   _strip_link_definitions() so no need to watch for them.
@@ -481,7 +540,7 @@ class Markdown(object):
             # regard.
             bracket_depth = 0
             for p in range(start_idx+1, min(start_idx+MAX_LINK_TEXT_SENTINEL, 
-                                            text_length-1)):
+                                            text_length)):
                 ch = text[p]
                 if ch == ']':
                     bracket_depth -= 1
@@ -496,7 +555,17 @@ class Markdown(object):
                 continue
             link_text = text[start_idx+1:p]
 
-            # Now determine what this in by the remainder.
+            # Possibly a footnote ref?
+            if "footnotes" in self.extras and link_text.startswith("^"):
+                normed_id = re.sub(r'\W', '-', link_text[1:].lower())
+                self.footnote_ids.append(normed_id)
+                result = '<sup class="footnote-ref" id="fnref-%s">' \
+                         '<a href="#fn-%s">%s</a></sup>' \
+                         % (normed_id, normed_id, len(self.footnote_ids))
+                text = text[:start_idx] + result + text[p+1:]
+                continue
+
+            # Now determine what this is by the remainder.
             p += 1
             if p == text_length:
                 return text
@@ -914,6 +983,33 @@ class Markdown(object):
 
         return "\n\n".join(grafs)
 
+    def _add_footnotes(self, text):
+        if self.footnotes:
+            footer = [
+                '<div class="footnotes">',
+                '<hr' + self.empty_element_suffix,
+                '<ol>',
+            ]
+            for i, id in enumerate(self.footnote_ids):
+                #TODO: test when there are mismatched refs and defns
+                paras = self.footnotes[id]
+                if i != 0:
+                    footer.append('')
+                footer.append('<li id="fn-%s">' % id)
+                for j, para in enumerate(paras):
+                    if j == len(paras) - 1: # last paragraph
+                        footer.append('<p>%s'
+                            '&nbsp;<a href="#fnref-%s" '
+                            'class="footnoteBackLink" '
+                            'title="Jump back to footnote %d in the text.">'
+                            '&#8617;</a></p>' % (para, id, i+1))
+                    else:
+                        footer.append('<p>%s</p>' % para)
+                footer.append('</li>')
+            footer.append('</ol>')
+            footer.append('</div>')
+
+        return text + '\n\n' + '\n'.join(footer)
 
     # Ampersand-encoding based entirely on Nat Irons's Amputator MT plugin:
     #   http://bumppo.net/projects/amputator/
@@ -991,7 +1087,94 @@ class Markdown(object):
 
 
 #---- internal support functions
+
+# Recipe: dedent (0.1.2)
+def _dedentlines(lines, tabsize=8, skip_first_line=False):
+    """_dedentlines(lines, tabsize=8, skip_first_line=False) -> dedented lines
     
+        "lines" is a list of lines to dedent.
+        "tabsize" is the tab width to use for indent width calculations.
+        "skip_first_line" is a boolean indicating if the first line should
+            be skipped for calculating the indent width and for dedenting.
+            This is sometimes useful for docstrings and similar.
+    
+    Same as dedent() except operates on a sequence of lines. Note: the
+    lines list is modified **in-place**.
+    """
+    DEBUG = False
+    if DEBUG: 
+        print "dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
+              % (tabsize, skip_first_line)
+    indents = []
+    margin = None
+    for i, line in enumerate(lines):
+        if i == 0 and skip_first_line: continue
+        indent = 0
+        for ch in line:
+            if ch == ' ':
+                indent += 1
+            elif ch == '\t':
+                indent += tabsize - (indent % tabsize)
+            elif ch in '\r\n':
+                continue # skip all-whitespace lines
+            else:
+                break
+        else:
+            continue # skip all-whitespace lines
+        if DEBUG: print "dedent: indent=%d: %r" % (indent, line)
+        if margin is None:
+            margin = indent
+        else:
+            margin = min(margin, indent)
+    if DEBUG: print "dedent: margin=%r" % margin
+
+    if margin is not None and margin > 0:
+        for i, line in enumerate(lines):
+            if i == 0 and skip_first_line: continue
+            removed = 0
+            for j, ch in enumerate(line):
+                if ch == ' ':
+                    removed += 1
+                elif ch == '\t':
+                    removed += tabsize - (removed % tabsize)
+                elif ch in '\r\n':
+                    if DEBUG: print "dedent: %r: EOL -> strip up to EOL" % line
+                    lines[i] = lines[i][j:]
+                    break
+                else:
+                    raise ValueError("unexpected non-whitespace char %r in "
+                                     "line %r while removing %d-space margin"
+                                     % (ch, line, margin))
+                if DEBUG:
+                    print "dedent: %r: %r -> removed %d/%d"\
+                          % (line, ch, removed, margin)
+                if removed == margin:
+                    lines[i] = lines[i][j+1:]
+                    break
+                elif removed > margin:
+                    lines[i] = ' '*(removed-margin) + lines[i][j+1:]
+                    break
+            else:
+                if removed:
+                    lines[i] = lines[i][removed:]
+    return lines
+
+def _dedent(text, tabsize=8, skip_first_line=False):
+    """_dedent(text, tabsize=8, skip_first_line=False) -> dedented text
+
+        "text" is the text to dedent.
+        "tabsize" is the tab width to use for indent width calculations.
+        "skip_first_line" is a boolean indicating if the first line should
+            be skipped for calculating the indent width and for dedenting.
+            This is sometimes useful for docstrings and similar.
+    
+    textwrap.dedent(s), but don't expand tabs to spaces
+    """
+    lines = text.splitlines(1)
+    _dedentlines(lines, tabsize=tabsize, skip_first_line=skip_first_line)
+    return ''.join(lines)
+
+
 class _memoized(object):
    """Decorator that caches a function's return value each time it is called.
    If called later with the same arguments, the cached value is returned, and
@@ -1095,7 +1278,7 @@ def main(argv=sys.argv):
                       help="specify encoding of text content")
     parser.add_option("--html4tags", action="store_true", default=False, 
                       help="use HTML 4 style for empty element tags")
-    parser.add_option("--extras", action="append",
+    parser.add_option("-x", "--extras", action="append",
                       help="Turn on specific extra features (not part of "
                            "the core Markdown spec). Supported values: "
                            "'code-friendly' disables _/__ for emphasis; "
@@ -1111,12 +1294,15 @@ def main(argv=sys.argv):
     if opts.self_test:
         return _test()
 
+    if opts.extras:
+        extras = set()
+        for s in opts.extras:
+            extras.update( re.compile("[,;: ]+").split(s) )
+    else:
+        extras = None
+
     from os.path import join, dirname
     markdown_pl = join(dirname(__file__), "test", "Markdown.pl")
-    extras = []
-    for s in opt.extras:
-        extras += re.compile("[,;: ]+").split(s)
-    extras = extras and set(extras) or None
     for path in paths:
         if opts.compare:
             print "-- Markdown.pl"

@@ -1,0 +1,18 @@
+# python-markdown2 Changelog
+
+## python-markdown2 v1.0.1.1
+
+- Added "footnotes" extra: adds support for footnotes syntax. See
+  <http://code.google.com/p/python-markdown2/wiki/Extras> for details.
+
+## python-markdown2 v1.0.1.0
+
+- Added "code-friendly" extra: disables the use of leading and trailing '_'
+  and '__' for emphasis and strong. These can easily get in the way when
+  writing docs about source code with variable_list_this and when one is not
+  careful about quoting.
+- Full basic Markdown syntax.
+
+
+(Started maintaining this log 15 Oct 2007. At that point there had been no
+releases of python-markdown2.)
