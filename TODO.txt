@@ -1,6 +1,5 @@
 - allow extras attr setting on a *subclass* to be used in addition to that
   passed in with __init__
-- see TODOs for footnotes in markdown2.py
 - fix test link_defn_alt_title_delims
 - update MDTest 1.1? (see
   http://six.pairlist.net/pipermail/markdown-discuss/2007-September/000815.html)
@@ -18,6 +17,30 @@
 - announce: blog, python-annoucne, markdown list
 - ask about remaining two MarkdownTest test failures
 - put in recipes site
+- perhaps some extras from Maruku and PHP Markdown extra
+  (http://maruku.rubyforge.org/maruku.html#extra)
+    - tables (tho I don't really like the syntax, prefer google codes, see
+      below)
+    - markdown inside literal HTML (if 'markdown="1|true"' attr)
+    - automatic toc generation (wanted that anyway, no a fan of maruku syntax
+      for this)
+    - weird markup in headers and links (does markdown2.py handle this?)
+    - meta-data syntax? One example of this is ids for headers. How about
+      automatically assigning header ids from the name (a la rest)?
+    - at-the-top email-style headers?
+    - maruku's footnote links are 'fn:1' and 'fnref:1' for a footnote id of
+      'blah'. If this is the PHP Markdown Extras way, then should follow
+      that.
+- googlecode wiki markup ideas?
+  (http://code.google.com/p/support/wiki/WikiSyntax)
+    - ~~strikeout~~
+    - ||tables||simple||syntax||
+- <http://daringfireball.net/2004/12/markdown_licensing> at bottom has a wish
+  list:
+    - simple "cite" for blockquote. How about:
+        [Zaphod Breeblebrox]
+        > blah blah
+        > blah
 - do perf comparison with the other Markdown impls (if compare horribly then
   do something about it)
 - submit a Markdown.py fix based on revision 1895 (on tm svn)
