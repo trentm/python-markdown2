@@ -558,11 +558,15 @@ class Markdown(object):
             # Possibly a footnote ref?
             if "footnotes" in self.extras and link_text.startswith("^"):
                 normed_id = re.sub(r'\W', '-', link_text[1:].lower())
-                self.footnote_ids.append(normed_id)
-                result = '<sup class="footnote-ref" id="fnref-%s">' \
-                         '<a href="#fn-%s">%s</a></sup>' \
-                         % (normed_id, normed_id, len(self.footnote_ids))
-                text = text[:start_idx] + result + text[p+1:]
+                if normed_id in self.footnotes:
+                    self.footnote_ids.append(normed_id)
+                    result = '<sup class="footnote-ref" id="fnref-%s">' \
+                             '<a href="#fn-%s">%s</a></sup>' \
+                             % (normed_id, normed_id, len(self.footnote_ids))
+                    text = text[:start_idx] + result + text[p+1:]
+                else:
+                    # This id isn't defined, leave the markup alone.
+                    curr_pos = p+1
                 continue
 
             # Now determine what this is by the remainder.
