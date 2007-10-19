@@ -1,3 +1,5 @@
+- Extras.wiki desc of code-color option. Not sure I love the ":::name"
+  markup for the lexer name.
 - allow extras attr setting on a *subclass* to be used in addition to that
   passed in with __init__
 - fix test link_defn_alt_title_delims

@@ -37,9 +37,9 @@ following extra features (pass these strings as arguments to the
                     way when writing docs about source code with
                     variable_list_this and when one is not careful about
                     quoting.
-    footnotes       TODO: suuport for footnotes from patch
-    syntax-color    Syntax coloring of <code> blocks using Pygments.
-                    (TODO: patch)
+    footnotes       Footnotes syntax support.
+    code-color      Syntax coloring of <code> blocks. Requires 'pygments'
+                    python library.
 """
 
 cmdln_desc = """A fast and complete Python implementation of Markdown, a
@@ -57,7 +57,6 @@ text-to-HTML conversion tool for web writers.
 
 __version_info__ = (1, 0, 1, 1) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
-__revision__ = "$Id$"
 __author__ = "Trent Mick"
 
 import os
@@ -829,13 +828,54 @@ class Markdown(object):
         self.list_level -= 1
         return list_str
 
+    def _get_pygments_lexer(self, lexer_name):
+        try:
+            from pygments import lexers, util
+        except ImportError:
+            return None
+        try:
+            return lexers.get_lexer_by_name(lexer_name)
+        except util.ClassNotFound:
+            return None
+
+    def _color_with_pygments(self, codeblock, lexer):
+        import pygments
+        import pygments.formatters
+
+        class HtmlCodeFormatter(pygments.formatters.HtmlFormatter):
+            def _wrap_code(self, inner):
+                """A function for use in a Pygments Formatter which
+                wraps in <code> tags.
+                """
+                yield 0, "<code>"
+                for tup in inner:
+                    yield tup 
+                yield 0, "</code>"
+
+            def wrap(self, source, outfile):
+                """Return the source with a code, pre, and div."""
+                return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
+
+        formatter = HtmlCodeFormatter(cssclass="codehilite")
+        return pygments.highlight(codeblock, lexer, formatter)
 
     def _code_block_sub(self, match):
         codeblock = match.group(1)
-        codeblock = self._encode_code(self._outdent(codeblock))
+        codeblock = self._outdent(codeblock)
         codeblock = self._detab(codeblock)
         codeblock = codeblock.lstrip('\n')  # trim leading newlines
         codeblock = codeblock.rstrip()      # trim trailing whitespace
+
+        if "code-color" in self.extras and codeblock.startswith(":::"):
+            lexer_name, rest = codeblock.split('\n', 1)
+            lexer_name = lexer_name[3:].strip()
+            lexer = self._get_pygments_lexer(lexer_name)
+            codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
+            if lexer:
+                return "\n\n%s\n\n" \
+                       % self._color_with_pygments(codeblock, lexer)
+
+        codeblock = self._encode_code(codeblock)
         return "\n\n<pre><code>%s\n</code></pre>\n\n" % codeblock
 
     def _do_code_blocks(self, text):
@@ -995,7 +1035,6 @@ class Markdown(object):
                 '<ol>',
             ]
             for i, id in enumerate(self.footnote_ids):
-                #TODO: test when there are mismatched refs and defns
                 paras = self.footnotes[id]
                 if i != 0:
                     footer.append('')
@@ -1286,7 +1325,8 @@ def main(argv=sys.argv):
                       help="Turn on specific extra features (not part of "
                            "the core Markdown spec). Supported values: "
                            "'code-friendly' disables _/__ for emphasis; "
-                           "'footnotes' add the footnotes syntax.")
+                           "'code-color' adds code-block syntax coloring; "
+                           "'footnotes' adds the footnotes syntax.")
     parser.add_option("--self-test", action="store_true",
                       help="run internal self-tests (some doctests)")
     parser.add_option("--compare", action="store_true",
