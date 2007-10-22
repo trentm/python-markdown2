@@ -1,3 +1,5 @@
+- add some module-level doctests:
+    - test MarkdownWithExtras
 - Extras.wiki desc of code-color option. Not sure I love the ":::name"
   markup for the lexer name.
 - allow extras attr setting on a *subclass* to be used in addition to that
@@ -5,6 +7,8 @@
 - fix test link_defn_alt_title_delims
 - update MDTest 1.1? (see
   http://six.pairlist.net/pipermail/markdown-discuss/2007-September/000815.html)
+- extras idea: "special-patterns", e.g. mapping "bug NNN" to a moz or ko bug
+  or something, etc.
 - I see ref to Markdown.pl 1.0.2
   (http://six.pairlist.net/pipermail/markdown-discuss/2007-August/000756.html)
   Update to that? Yes. Copy, at least, in showdown package.

@@ -2,6 +2,12 @@
 
 ## python-markdown2 v1.0.1.1
 
+- Add a "MarkdownWithExtras" class that enables all extras (except
+  "code-friendly"):
+    >>> import markdown2
+    >>> converter = markdown2.MarkdownWithExtras()
+    >>> converter.convert('...TEXT...')
+    ...HTML...
 - [Issue 1] Added "code-color" extra: pygments-based (TODO: link) syntax
   coloring of code blocks. Requires the pygments Python library on sys.path.
   See <http://code.google.com/p/python-markdown2/wiki/Extras> for details.

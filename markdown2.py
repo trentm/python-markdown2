@@ -112,6 +112,10 @@ def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
                     safe_mode=safe_mode, extras=extras).convert(text)
 
 class Markdown(object):
+    # The set of "extras" to enable in processing. This can be set
+    # via (a) subclassing and (b) the constructor "extras" argument.
+    extras = None
+
     urls = None
     titles = None
     html_blocks = None
@@ -130,7 +134,12 @@ class Markdown(object):
             self.empty_element_suffix = " />"
         self.tab_width = tab_width
         self.safe_mode = safe_mode
-        self.extras = extras and set(extras) or set()
+        if self.extras is None:
+            self.extras = set()
+        elif not isinstance(self.extras, set):
+            self.extras = set(self.extras)
+        if extras:
+            self.extras.update(extras)
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
     def reset(self):
@@ -1051,8 +1060,9 @@ class Markdown(object):
                 footer.append('</li>')
             footer.append('</ol>')
             footer.append('</div>')
-
-        return text + '\n\n' + '\n'.join(footer)
+            return text + '\n\n' + '\n'.join(footer)
+        else:
+            return text
 
     # Ampersand-encoding based entirely on Nat Irons's Amputator MT plugin:
     #   http://bumppo.net/projects/amputator/
@@ -1127,6 +1137,15 @@ class Markdown(object):
     def _outdent(self, text):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
+
+
+class MarkdownWithExtras(Markdown):
+    """A markdowner class that enables all optional extras
+    *except* the "code-friendly" extra.
+
+    The latter is excluded because it *disables* part of the syntax.
+    """
+    extras = ["footnotes", "code-color"]
 
 
 #---- internal support functions
