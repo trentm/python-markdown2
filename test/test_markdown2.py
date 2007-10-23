@@ -13,6 +13,7 @@ import unittest
 import subprocess
 import codecs
 import difflib
+import doctest
 
 from testlib import TestError, TestSkipped, tag
 
@@ -172,6 +173,7 @@ class PHPMarkdownExtraTestCase(_MarkdownTestCase):
     __tags__ = ["knownfailure"]
     cases_dir = "php-markdown-extra-cases"
 
+
 class DirectTestCase(_MarkdownTestCase):
     """These are specific test that I found were broken in
     Python-markdown (markdown.py).
@@ -196,6 +198,12 @@ class DirectTestCase(_MarkdownTestCase):
                 #!/usr/bin/python
                 print "hi"'''),
             '<p>some starter text</p>\n\n<pre><code>#!/usr/bin/python\nprint "hi"\n</code></pre>\n')
+
+
+class DocTestsTestCase(unittest.TestCase):
+    def test_api(self):
+        test = doctest.DocFileTest("api.doctests")
+        test.runTest()
 
 
 
@@ -409,4 +417,5 @@ def test_cases():
     PHPMarkdownExtraTestCase.generate_tests()
     yield PHPMarkdownExtraTestCase
     yield DirectTestCase
+    yield DocTestsTestCase
 

@@ -314,9 +314,9 @@ class Markdown(object):
               [ \t]*
             (?:
                 (?<=\s)         # lookbehind for whitespace
-                ["(]
+                ['"(]
                 (.+?)           # title = \3
-                [")]
+                ['")]
                 [ \t]*
             )?  # title is optional
             (?:\n+|\Z)

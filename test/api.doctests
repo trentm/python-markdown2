@@ -1,0 +1,18 @@
+
+>>> import markdown2
+>>> hasattr(markdown2, "__version__")
+True
+>>> hasattr(markdown2, "__version_info__")
+True
+
+>>> markdown2.markdown("*boo*")
+'<p><em>boo</em></p>\n'
+
+>>> m = markdown2.Markdown()
+>>> m.convert("*boo*")
+'<p><em>boo</em></p>\n'
+
+>>> m = markdown2.MarkdownWithExtras()
+>>> m.convert("*boo*")
+'<p><em>boo</em></p>\n'
+
