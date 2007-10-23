@@ -21,6 +21,11 @@ class bugs(Task):
     def make(self):
         webbrowser.open("http://code.google.com/p/python-markdown2/issues/list")
 
+class test(Task):
+    """Run all tests (except known failures)."""
+    def make(self):
+        run_in_dir("python test.py -- -knownfailure", join(self.dir, "test"))
+
 class todo(Task):
     """Print out todo's and xxx's in the docs area."""
     def make(self):
