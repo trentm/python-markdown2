@@ -2,7 +2,7 @@
   markup for the lexer name.
 - update MDTest 1.1? (see
   http://six.pairlist.net/pipermail/markdown-discuss/2007-September/000815.html)
-- extras idea: "special-patterns", e.g. mapping "bug NNN" to a moz or ko bug
+- extras idea: "link-patterns", e.g. mapping "bug NNN" to a moz or ko bug
   or something, etc.
 - I see ref to Markdown.pl 1.0.2
   (http://six.pairlist.net/pipermail/markdown-discuss/2007-August/000756.html)
