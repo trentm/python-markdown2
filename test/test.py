@@ -15,7 +15,14 @@ testdir_from_ns = {
     None: os.curdir,
 }
 
+def setup():
+    externals_dir = join(dirname(dirname(abspath(__file__))), "externals")
+    pygments_dir = join(externals_dir, "pygments")
+    if exists(pygments_dir):
+        sys.path.insert(0, pygments_dir)
+
 if __name__ == "__main__":
-    retval = testlib.harness(testdir_from_ns=testdir_from_ns)
+    retval = testlib.harness(testdir_from_ns=testdir_from_ns,
+                             setup_func=setup)
     sys.exit(retval)
 

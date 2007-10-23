@@ -7,7 +7,7 @@ See `mk -h' for options.
 """
 
 import os
-from os.path import join, dirname, normpath, abspath
+from os.path import join, dirname, normpath, abspath, exists, basename
 import re
 import webbrowser
 
@@ -41,6 +41,22 @@ class todo(Task):
 
     def _dump_pattern_in_path(self, pattern, path):
         os.system("grep -nH '%s' '%s'" % (pattern, path))
+
+class pygments(Task):
+    """Get a copy of pygments in externals/pygments.
+
+    This will be used by the test suite.
+    """
+    def make(self):
+        pygments_dir = join(self.dir, "externals", "pygments")
+        if exists(pygments_dir):
+            run_in_dir("hg update", pygments_dir, self.log.info)
+        else:
+            if not exists(dirname(pygments_dir)):
+                os.makedirs(dirname(pygments_dir))
+            run_in_dir("hg clone http://dev.pocoo.org/hg/pygments-main %s"
+                        % basename(pygments_dir),
+                       dirname(pygments_dir), self.log.info)
 
 
 
