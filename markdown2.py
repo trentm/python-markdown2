@@ -101,15 +101,17 @@ class MarkdownError(Exception):
 
 def markdown_path(path, encoding="utf-8",
                   html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-                  safe_mode=False, extras=None):
+                  safe_mode=False, extras=None, link_patterns=None):
     text = codecs.open(path, 'r', encoding).read()
     return Markdown(html4tags=html4tags, tab_width=tab_width,
-                    safe_mode=safe_mode, extras=extras).convert(text)
+                    safe_mode=safe_mode, extras=extras,
+                    link_patterns=link_patterns).convert(text)
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-             safe_mode=False, extras=None):
+             safe_mode=False, extras=None, link_patterns=None):
     return Markdown(html4tags=html4tags, tab_width=tab_width,
-                    safe_mode=safe_mode, extras=extras).convert(text)
+                    safe_mode=safe_mode, extras=extras,
+                    link_patterns=link_patterns).convert(text)
 
 class Markdown(object):
     # The set of "extras" to enable in processing. This can be set
@@ -127,7 +129,7 @@ class Markdown(object):
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
     def __init__(self, html4tags=False, tab_width=4, safe_mode=False,
-                 extras=None):
+                 extras=None, link_patterns=None):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
@@ -140,6 +142,7 @@ class Markdown(object):
             self.extras = set(self.extras)
         if extras:
             self.extras.update(extras)
+        self.link_patterns = link_patterns
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
     def reset(self):
@@ -421,6 +424,9 @@ class Markdown(object):
         # Must come after _do_links(), because you can use < and >
         # delimiters in inline links like [this](<url>).
         text = self._do_auto_links(text)
+
+        if "link-patterns" in self.extras:
+            text = self._do_link_patterns(text)
     
         text = self._encode_amps_and_angles(text)
     
@@ -1106,7 +1112,7 @@ class Markdown(object):
         text = self._auto_link_re.sub(self._auto_link_sub, text)
         text = self._auto_email_link_re.sub(self._auto_email_link_sub, text)
         return text
-    
+
     def _encode_email_address(self, addr):
         #  Input: an email address, e.g. "foo@example.com"
         #
@@ -1127,6 +1133,22 @@ class Markdown(object):
                % (''.join(chars), ''.join(chars[7:]))
         return addr
     
+    def _do_link_patterns(self, text):
+        """Caveat emptor: there isn't much guarding against links being
+        formed inside other links, e.g. inside a [link def][like this].
+
+        Dev Notes: *Could* consider prefixing regexes with a negative
+        lookbehind assertion to attempt to guard against this.
+        """
+        for regex, href in self.link_patterns:
+            replacements = []
+            for match in regex.finditer(text):
+                replacements.append((match.span(), match.expand(href)))
+            for (start, end), href in reversed(replacements):
+                escaped_href = href.replace('"', '&quot;')
+                link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
+                text = text[:start] + link + text[end:]
+        return text
     
     def _unescape_special_chars(self, text):
         # Swap back in all the special characters we've hidden.
@@ -1149,6 +1171,35 @@ class MarkdownWithExtras(Markdown):
 
 
 #---- internal support functions
+
+# Recipe: regex_from_encoded_pattern (1.0)
+def _regex_from_encoded_pattern(s):
+    """'foo'    -> re.compile(re.escape('foo'))
+       '/foo/'  -> re.compile('foo')
+       '/foo/i' -> re.compile('foo', re.I)
+    """
+    if s.startswith('/') and s.rfind('/') != 0:
+        # Parse it: /PATTERN/FLAGS
+        idx = s.rfind('/')
+        pattern, flags_str = s[1:idx], s[idx+1:]
+        flag_from_char = {
+            "i": re.IGNORECASE,
+            "l": re.LOCALE,
+            "s": re.DOTALL,
+            "m": re.MULTILINE,
+            "u": re.UNICODE,
+        }
+        flags = 0
+        for char in flags_str:
+            try:
+                flags |= flag_from_char[char]
+            except KeyError:
+                raise ValueError("unsupported regex flag: '%s' in '%s' "
+                                 "(must be one of '%s')"
+                                 % (char, s, ''.join(flag_from_char.keys())))
+        return re.compile(s[1:idx], flags)
+    else: # not an encoded regex
+        return re.compile(re.escape(s))
 
 # Recipe: dedent (0.1.2)
 def _dedentlines(lines, tabsize=8, skip_first_line=False):
@@ -1345,7 +1396,10 @@ def main(argv=sys.argv):
                            "the core Markdown spec). Supported values: "
                            "'code-friendly' disables _/__ for emphasis; "
                            "'code-color' adds code-block syntax coloring; "
+                           "'link-patterns' adds auto-linking based on patterns; "
                            "'footnotes' adds the footnotes syntax.")
+    parser.add_option("--link-patterns-file",
+                      help="path to a link pattern file")
     parser.add_option("--self-test", action="store_true",
                       help="run internal self-tests (some doctests)")
     parser.add_option("--compare", action="store_true",
@@ -1364,6 +1418,25 @@ def main(argv=sys.argv):
     else:
         extras = None
 
+    if opts.link_patterns_file:
+        link_patterns = []
+        f = open(opts.link_patterns_file)
+        try:
+            for i, line in enumerate(f.readlines()):
+                if not line.strip(): continue
+                if line.lstrip().startswith("#"): continue
+                try:
+                    pat, href = line.rstrip().rsplit(' ', 1)
+                except ValueError:
+                    raise MarkdownError("%s:%d: invalid link pattern line: %r"
+                                        % (opts.link_patterns_file, i+1, line))
+                link_patterns.append(
+                    (_regex_from_encoded_pattern(pat), href))
+        finally:
+            f.close()
+    else:
+        link_patterns = None
+
     from os.path import join, dirname
     markdown_pl = join(dirname(__file__), "test", "Markdown.pl")
     for path in paths:
@@ -1373,7 +1446,7 @@ def main(argv=sys.argv):
             print "-- markdown2.py"
         html = markdown_path(path, encoding=opts.encoding,
                              html4tags=opts.html4tags,
-                             extras=extras)
+                             extras=extras, link_patterns=link_patterns)
         sys.stdout.write(html)
 
 

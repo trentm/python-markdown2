@@ -2,6 +2,12 @@
 
 ## python-markdown2 v1.0.1.1
 
+- Add "link-patterns" extra: allows one to specify a list of regexes that
+  should be automatically made into links. For example, one can define a
+  mapping for things like "Mozilla Bug 1234":
+        regex:  mozilla\s+bug\s+(\d+)
+        href:   http://bugzilla.mozilla.org/show_bug.cgi?id=\1
+  See <http://code.google.com/p/python-markdown2/wiki/Extras> for details.
 - Add a "MarkdownWithExtras" class that enables all extras (except
   "code-friendly"):
     >>> import markdown2

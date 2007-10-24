@@ -2,8 +2,6 @@
   markup for the lexer name.
 - update MDTest 1.1? (see
   http://six.pairlist.net/pipermail/markdown-discuss/2007-September/000815.html)
-- extras idea: "link-patterns", e.g. mapping "bug NNN" to a moz or ko bug
-  or something, etc.
 - I see ref to Markdown.pl 1.0.2
   (http://six.pairlist.net/pipermail/markdown-discuss/2007-August/000756.html)
   Update to that? Yes. Copy, at least, in showdown package.
@@ -13,7 +11,8 @@
 - try giving reports to Yuri again (on sf.net markdown site, ask on markdown
   list)
 - googlecode site: Why another Python impl? Test info. Usage/Features page.
-- package up a release
+- package up a release:
+    - setup.py, easy_install (ick), pypi
 - get on http://en.wikipedia.org/wiki/Markdown
 - announce: blog, python-annoucne, markdown list
 - ask about remaining two MarkdownTest test failures
@@ -44,7 +43,7 @@
         > blah
 - do perf comparison with the other Markdown impls (if compare horribly then
   do something about it)
-- submit a Markdown.py fix based on revision 1895 (on tm svn)
+- submit a Markdown.py (or .pl?) fix based on revision 1895 (on tm svn)
 - see about using html5lib (for speed and/or for better raw HTML handling)
 - see about plugins (SmartyPants, others available)
 - perf: compare to showdown (JS markdown impl)
