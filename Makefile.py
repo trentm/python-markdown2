@@ -21,6 +21,11 @@ class bugs(Task):
     def make(self):
         webbrowser.open("http://code.google.com/p/python-markdown2/issues/list")
 
+class site(Task):
+    """Open the Google Code project page."""
+    def make(self):
+        webbrowser.open("http://code.google.com/p/python-markdown2/")
+
 class test(Task):
     """Run all tests (except known failures)."""
     def make(self):
