@@ -1134,20 +1134,30 @@ class Markdown(object):
         return addr
     
     def _do_link_patterns(self, text):
-        """Caveat emptor: there isn't much guarding against links being
-        formed inside other links, e.g. inside a [link def][like this].
+        """Caveat emptor: there isn't much guarding against link
+        patterns being formed inside other standard Markdown links, e.g.
+        inside a [link def][like this].
 
         Dev Notes: *Could* consider prefixing regexes with a negative
         lookbehind assertion to attempt to guard against this.
         """
+        link_from_hash = {}
         for regex, href in self.link_patterns:
             replacements = []
             for match in regex.finditer(text):
                 replacements.append((match.span(), match.expand(href)))
             for (start, end), href in reversed(replacements):
-                escaped_href = href.replace('"', '&quot;')
+                escaped_href = (
+                    href.replace('"', '&quot;')  # b/c of attr quote
+                        # To avoid markdown <em> and <strong>:
+                        .replace('*', g_escape_table['*'])
+                        .replace('_', g_escape_table['_']))
                 link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
-                text = text[:start] + link + text[end:]
+                hash = md5.md5(link).hexdigest()
+                link_from_hash[hash] = link
+                text = text[:start] + hash + text[end:]
+        for hash, link in link_from_hash.items():
+            text = text.replace(hash, link)
         return text
     
     def _unescape_special_chars(self, text):

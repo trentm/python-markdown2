@@ -1,9 +1,3 @@
-- Work on _do_link_patterns to protect against double hits. The way it
-  stands now there is no way to safely have both of these:
-    /mozilla\s+bug\s+(\d+)/      http://bugzilla.mozilla.org/show_bug.cgi?id=\1
-    /(?:komodo\s+)?bug\s+(\d+)/  http://bugs.activestate.com/show_bug.cgi?id=\1
-  It'll double link.
-  Add a test case for this.
 - Extras.wiki desc of code-color option. Not sure I love the ":::name"
   markup for the lexer name.
 - update MDTest 1.1? (see
