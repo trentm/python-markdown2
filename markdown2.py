@@ -1401,6 +1401,9 @@ def main(argv=sys.argv):
                       help="specify encoding of text content")
     parser.add_option("--html4tags", action="store_true", default=False, 
                       help="use HTML 4 style for empty element tags")
+    parser.add_option("--safe-mode", action="store_true", default=False, 
+                      help="replace literal HTML with '[HTML_REMOVED]' "
+                           "(for compat with markdown.py)")
     parser.add_option("-x", "--extras", action="append",
                       help="Turn on specific extra features (not part of "
                            "the core Markdown spec). Supported values: "
@@ -1456,6 +1459,7 @@ def main(argv=sys.argv):
             print "-- markdown2.py"
         html = markdown_path(path, encoding=opts.encoding,
                              html4tags=opts.html4tags,
+                             safe_mode=opts.safe_mode,
                              extras=extras, link_patterns=link_patterns)
         sys.stdout.write(html)
 
