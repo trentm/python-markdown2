@@ -1401,7 +1401,8 @@ def main(argv=sys.argv):
                       help="specify encoding of text content")
     parser.add_option("--html4tags", action="store_true", default=False, 
                       help="use HTML 4 style for empty element tags")
-    parser.add_option("-s", "--safe", action="store_true", default=False, 
+    parser.add_option("-s", "--safe", action="store_true", dest="safe_mode",
+                      default=False, 
                       help="replace literal HTML with '[HTML_REMOVED]' "
                            "(for compat with markdown.py)")
     parser.add_option("-x", "--extras", action="append",
@@ -1417,7 +1418,8 @@ def main(argv=sys.argv):
                       help="run internal self-tests (some doctests)")
     parser.add_option("--compare", action="store_true",
                       help="run against Markdown.pl as well (for testing)")
-    parser.set_defaults(log_level=logging.INFO, compare=False, encoding="utf-8")
+    parser.set_defaults(log_level=logging.INFO, compare=False,
+                        encoding="utf-8", safe_mode=False)
     opts, paths = parser.parse_args()
     log.setLevel(opts.log_level)
 
