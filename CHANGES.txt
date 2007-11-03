@@ -2,8 +2,8 @@
 
 ## python-markdown2 v1.0.1.1
 
-- Add "--safe-mode" command-line option to set "safe_mode" conversion
-  boolean.
+- Add "-s|--safe" command-line option to set "safe_mode" conversion
+  boolean. This option is mainly for compat with markdown.py.
 - Add "link-patterns" extra: allows one to specify a list of regexes that
   should be automatically made into links. For example, one can define a
   mapping for things like "Mozilla Bug 1234":
