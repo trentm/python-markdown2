@@ -2,6 +2,10 @@
 
 ## python-markdown2 v1.0.1.1
 
+- Make the "safe_mode" replacement test overridable via subclassing: change
+  `Markdown.html_removed_text`.
+- [Issue 2] Fix problems with "safe_mode" removing generated HTML, instead of
+  just raw HTML in the text.
 - Add "-s|--safe" command-line option to set "safe_mode" conversion
   boolean. This option is mainly for compat with markdown.py.
 - Add "link-patterns" extra: allows one to specify a list of regexes that

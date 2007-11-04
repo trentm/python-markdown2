@@ -76,7 +76,6 @@ DEBUG = False
 log = logging.getLogger("markdown")
 
 DEFAULT_TAB_WIDTH = 4
-HTML_REMOVED_TEXT = "[HTML_REMOVED]"  # for compat with markdown.py
 
 # Table of hash values for escaped characters:
 def _escape_hash(ch):
@@ -121,6 +120,7 @@ class Markdown(object):
     urls = None
     titles = None
     html_blocks = None
+    html_removed_text = "[HTML_REMOVED]"  # for compat with markdown.py
 
     # Used to track when we're inside an ordered or unordered list
     # (see _ProcessListItems() for details):
@@ -136,6 +136,8 @@ class Markdown(object):
             self.empty_element_suffix = " />"
         self.tab_width = tab_width
         self.safe_mode = safe_mode
+        if safe_mode:
+            self._html_removed_hash = _escape_hash(self.html_removed_text)
         if self.extras is None:
             self.extras = set()
         elif not isinstance(self.extras, set):
@@ -183,7 +185,7 @@ class Markdown(object):
         text = self._ws_only_line_re.sub("", text)
 
         # Turn block-level HTML blocks into hash entries
-        text = self._hash_html_blocks(text)
+        text = self._hash_html_blocks(text, raw=True)
 
         # Strip link definitions, store in hashes.
         if "footnotes" in self.extras:
@@ -197,6 +199,8 @@ class Markdown(object):
 
         text = self._unescape_special_chars(text)
 
+        if self.safe_mode:
+            text = text.replace(self._html_removed_hash, self.html_removed_text)
         if "footnotes" in self.extras:
             text = self._add_footnotes(text)
 
@@ -255,21 +259,29 @@ class Markdown(object):
         """ % _block_tags_b,
         re.X | re.M)
 
-    def _hash_html_block_sub(self, match):
+    def _hash_html_block_sub(self, match, raw=False):
         g1 = match.group(1)
         key = '!'+md5.md5(g1).hexdigest()+'!' # see _escape_hash() above
-        self.html_blocks[key] = g1
+        self.html_blocks[key] = (g1, raw)
         return "\n\n" + key + "\n\n"
 
-    def _hash_html_blocks(self, text):
-        # Hashify HTML blocks:
-        # We only want to do this for block-level HTML tags, such as headers,
-        # lists, and tables. That's because we still want to wrap <p>s around
-        # "paragraphs" that are wrapped in non-block-level tags, such as anchors,
-        # phrase emphasis, and spans. The list of tags we're looking for is
-        # hard-coded.
+    def _hash_html_blocks(self, text, raw=False):
+        """Hashify HTML blocks
+
+        We only want to do this for block-level HTML tags, such as headers,
+        lists, and tables. That's because we still want to wrap <p>s around
+        "paragraphs" that are wrapped in non-block-level tags, such as anchors,
+        phrase emphasis, and spans. The list of tags we're looking for is
+        hard-coded.
+
+        @param raw {boolean} indicates if these are raw HTML blocks in
+            the original source. It makes a difference in "safe" mode.
+        """
         if '<' not in text:
             return text
+
+        # Pass `raw` value into our calls to self._hash_html_block_sub.
+        hash_html_block_sub = _curry(self._hash_html_block_sub, raw=raw)
 
         # First, look for nested blocks, e.g.:
         #   <div>
@@ -282,21 +294,21 @@ class Markdown(object):
         # the inner nested divs must be indented.
         # We need to do this before the next, more liberal match, because the next
         # match will start at the first `<div>` and stop at the first `</div>`.
-        text = self._strict_tag_block_re.sub(self._hash_html_block_sub, text)
+        text = self._strict_tag_block_re.sub(hash_html_block_sub, text)
 
         # Now match more liberally, simply from `\n<tag>` to `</tag>\n`
-        text = self._liberal_tag_block_re.sub(self._hash_html_block_sub, text)
+        text = self._liberal_tag_block_re.sub(hash_html_block_sub, text)
 
         # Special case just for <hr />. It was easier to make a special
         # case than to make the other regex more complicated.   
         if "<hr" in text:
             _hr_tag_re = _hr_tag_re_from_tab_width(self.tab_width)
-            text = _hr_tag_re.sub(self._hash_html_block_sub, text)
+            text = _hr_tag_re.sub(hash_html_block_sub, text)
 
         # Special case for standalone HTML comments:
         if "<!--" in text:
             _html_comment_re = _html_comment_re_from_tab_width(self.tab_width)
-            text = _html_comment_re.sub(self._hash_html_block_sub, text)
+            text = _html_comment_re.sub(hash_html_block_sub, text)
 
         return text
 
@@ -467,7 +479,7 @@ class Markdown(object):
         for token in self._sorta_html_tokenize_re.split(text):
             if is_html_markup:
                 if self.safe_mode:
-                    escaped.append(HTML_REMOVED_TEXT)
+                    escaped.append(self._html_removed_hash)
                 else:
                     # Within tags/HTML-comments/auto-links, encode * and _
                     # so they don't conflict with their use in Markdown for
@@ -1031,10 +1043,11 @@ class Markdown(object):
         for i, graf in enumerate(grafs):
             if graf in self.html_blocks:
                 # Unhashify HTML blocks
-                if self.safe_mode:
-                    grafs[i] = HTML_REMOVED_TEXT
+                html_block, raw = self.html_blocks[graf]
+                if self.safe_mode and raw:
+                    grafs[i] = self._html_removed_hash
                 else:
-                    grafs[i] = self.html_blocks[graf] 
+                    grafs[i] = html_block
             else:
                 # Wrap <p> tags.
                 graf = self._run_span_gamut(graf)
@@ -1181,6 +1194,15 @@ class MarkdownWithExtras(Markdown):
 
 
 #---- internal support functions
+
+# From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52549
+def _curry(*args, **kwargs):
+    function, args = args[0], args[1:]
+    def result(*rest, **kwrest):
+        combined = kwargs.copy()
+        combined.update(kwrest)
+        return function(*args + rest, **combined)
+    return result
 
 # Recipe: regex_from_encoded_pattern (1.0)
 def _regex_from_encoded_pattern(s):
