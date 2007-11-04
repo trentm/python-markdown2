@@ -199,6 +199,12 @@ class DirectTestCase(_MarkdownTestCase):
                 print "hi"'''),
             '<p>some starter text</p>\n\n<pre><code>#!/usr/bin/python\nprint "hi"\n</code></pre>\n')
 
+    @tag("unicode", "issue3")
+    def test_russian(self):
+        ko = u'\u043b\u0449' # 'ko' on russian keyboard
+        self._assertMarkdown(u"## %s" % ko,
+            u'<h2>%s</h2>' % ko)
+
 
 class DocTestsTestCase(unittest.TestCase):
     def test_api(self):
