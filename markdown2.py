@@ -1491,7 +1491,7 @@ def main(argv=sys.argv):
                 if not line.strip(): continue
                 if line.lstrip().startswith("#"): continue
                 try:
-                    pat, href = line.rstrip().rsplit(' ', 1)
+                    pat, href = line.rstrip().rsplit(None, 1)
                 except ValueError:
                     raise MarkdownError("%s:%d: invalid link pattern line: %r"
                                         % (opts.link_patterns_file, i+1, line))
