@@ -6,6 +6,7 @@ ${common_task_list}
 See `mk -h' for options.
 """
 
+import sys
 import os
 from os.path import join, dirname, normpath, abspath, exists, basename
 import re
@@ -29,7 +30,30 @@ class site(Task):
 class test(Task):
     """Run all tests (except known failures)."""
     def make(self):
-        run_in_dir("python test.py -- -knownfailure", join(self.dir, "test"))
+        for ver, python in self._gen_pythons():
+            print "-- test with Python %s (%s)" % (ver, python)
+            assert ' ' not in python
+            run_in_dir("%s test.py -- -knownfailure" % python,
+                       join(self.dir, "test"))
+            break #XXX
+
+    def _python_ver_from_python(self, python):
+        assert ' ' not in python
+        o = os.popen('''%s -c "import sys; print '.'.join(sys.version.split('.',2)[:2])"'''
+                     % python)
+        return o.read().strip()
+
+    def _gen_pythons(self):
+        sys.path.insert(0, join(self.dir, "externals", "which"))
+        import which
+        python_from_ver = {}
+        for python in which.whichall("python"):
+            ver = self._python_ver_from_python(python)
+            if ver not in python_from_ver:
+                python_from_ver[ver] = python
+        for ver, python in sorted(python_from_ver.items()):
+            yield ver, python
+        
 
 class todo(Task):
     """Print out todo's and xxx's in the docs area."""

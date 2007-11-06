@@ -11,7 +11,6 @@ import re
 from glob import glob
 from pprint import pprint
 import unittest
-import subprocess
 import codecs
 import difflib
 import doctest
@@ -124,7 +123,6 @@ class _MarkdownTestCase(unittest.TestCase):
         self.assertEqual(python_norm_html, norm_html, 
                          errmsg.encode('ascii', 'charreprreplace'))
 
-    @classmethod
     def generate_tests(cls):
         """Add test methods to this class for each test file in
         `cls.cases_dir'.
@@ -161,6 +159,7 @@ class _MarkdownTestCase(unittest.TestCase):
             name = re.sub("[(),]", "", name)
             test_name = "test_%s" % name
             setattr(cls, test_name, test_func)
+    generate_tests = classmethod(generate_tests)
 
 class TMTestCase(_MarkdownTestCase):
     cases_dir = "tm-cases"
@@ -189,17 +188,17 @@ class DirectTestCase(_MarkdownTestCase):
     Python-markdown (markdown.py).
     """
 
-    @tag("code", "strong")
     def test_code_in_strong(self):
         self._assertMarkdown(
             '**look at `this code` call**',
             '<p><strong>look at <code>this code</code> call</strong></p>\n')
+    test_code_in_strong.tags = ["code", "strong"]
 
-    @tag("pre", "recipes")
     def test_starter_pre(self):
         self._assertMarkdown(
             _indent('#!/usr/bin/python\nprint "hi"'),
             '<pre><code>#!/usr/bin/python\nprint "hi"\n</code></pre>\n')
+    test_starter_pre.tags = ["pre", "recipes"]
 
     def test_pre(self):
         self._assertMarkdown(_dedent('''\
@@ -209,11 +208,11 @@ class DirectTestCase(_MarkdownTestCase):
                 print "hi"'''),
             '<p>some starter text</p>\n\n<pre><code>#!/usr/bin/python\nprint "hi"\n</code></pre>\n')
 
-    @tag("unicode", "issue3")
     def test_russian(self):
         ko = u'\u043b\u0449' # 'ko' on russian keyboard
         self._assertMarkdown(u"## %s" % ko,
             u'<h2>%s</h2>\n' % ko)
+    test_russian.tags = ["unicode", "issue3"]
 
 
 class DocTestsTestCase(unittest.TestCase):
