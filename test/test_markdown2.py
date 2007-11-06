@@ -217,6 +217,8 @@ class DirectTestCase(_MarkdownTestCase):
 
 class DocTestsTestCase(unittest.TestCase):
     def test_api(self):
+        if sys.version_info[:2] < (2,4):
+            raise TestSkipped("no DocFileTest in Python <=2.3")
         test = doctest.DocFileTest("api.doctests")
         test.runTest()
 
@@ -389,7 +391,12 @@ def _escaped_text_from_text(text, escapes="eol"):
     # Sort longer replacements first to allow, e.g. '\r\n' to beat '\r' and
     # '\n'.
     escapes_keys = escapes.keys()
-    escapes_keys.sort(key=lambda a: len(a), reverse=True)
+    try:
+        escapes_keys.sort(key=lambda a: len(a), reverse=True)
+    except TypeError:
+        # Python 2.3 support: sort() takes no keyword arguments
+        escapes_keys.sort(lambda a,b: cmp(len(a), len(b)))
+        escapes_keys.reverse()
     def repl(match):
         val = escapes[match.group(0)]
         return val

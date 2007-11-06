@@ -70,6 +70,21 @@ from random import random
 import codecs
 
 
+
+#---- Python version compat
+
+if sys.version_info[:2] < (2,4):
+    from sets import Set as set
+    def reversed(sequence):
+        for i in sequence[::-1]:
+            yield i
+    def _unicode_decode(s, encoding, errors='xmlcharrefreplace'):
+        return unicode(s, encoding, errors)
+else:
+    def _unicode_decode(s, encoding, errors='strict'):
+        return s.decode(encoding, errors)
+
+
 #---- globals
 
 DEBUG = False
@@ -84,8 +99,8 @@ def _escape_hash(ch):
     # Other ideas: random.random(), uuid.uuid()
     #return md5.md5(ch).hexdigest()         # Markdown.pl does this
     return '!'+md5.md5(ch).hexdigest()+'!'
-g_escape_table = dict((ch, _escape_hash(ch))
-                      for ch in '\\`*_{}[]()>#+-.!')
+g_escape_table = dict([(ch, _escape_hash(ch))
+                       for ch in '\\`*_{}[]()>#+-.!'])
 
 
 
@@ -213,7 +228,7 @@ class Markdown(object):
         text += "\n"
 
         if input_was_unicode:
-            text = text.decode("utf-8")
+            text = _unicode_decode(text, "utf-8")
         return text
 
     # Cribbed from a post by Bart Lateur:
@@ -909,8 +924,11 @@ class Markdown(object):
             lexer = self._get_pygments_lexer(lexer_name)
             codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
             if lexer:
-                return "\n\n%s\n\n" \
-                       % self._color_with_pygments(codeblock, lexer)
+                colored = self._color_with_pygments(codeblock, lexer)
+                # HACK for issue3: drop this when/if use unicode for all
+                # processing.
+                colored = colored.encode("utf-8")
+                return "\n\n%s\n\n" % colored
 
         codeblock = self._encode_code(codeblock)
         return "\n\n<pre><code>%s\n</code></pre>\n\n" % codeblock
@@ -1117,7 +1135,7 @@ class Markdown(object):
         g1 = match.group(1)
         return '<a href="%s">%s</a>' % (g1, g1)
 
-    _auto_email_link_re = re.compile(ur"""
+    _auto_email_link_re = re.compile(r"""
           <
            (?:mailto:)?
           (
@@ -1355,7 +1373,6 @@ class _memoized(object):
       return self.func.__doc__
 
 
-@_memoized
 def _html_comment_re_from_tab_width(tab_width):
     return re.compile(r"""
         (?:
@@ -1374,8 +1391,8 @@ def _html_comment_re_from_tab_width(tab_width):
             (?=\n{2,}|\Z)       # followed by a blank line or end of document
         )
         """ % (tab_width - 1), re.X | re.S)
+_html_comment_re_from_tab_width = _memoized(_html_comment_re_from_tab_width)
 
-@_memoized
 def _hr_tag_re_from_tab_width(tab_width):
      return re.compile(r"""
         (?:
@@ -1393,6 +1410,7 @@ def _hr_tag_re_from_tab_width(tab_width):
             (?=\n{2,}|\Z)       # followed by a blank line or end of document
         )
         """ % (tab_width - 1), re.X)
+_hr_tag_re_from_tab_width = _memoized(_hr_tag_re_from_tab_width)
 
 
 def _xml_encode_email_char_at_random(ch):

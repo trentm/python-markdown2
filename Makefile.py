@@ -33,9 +33,9 @@ class test(Task):
         for ver, python in self._gen_pythons():
             print "-- test with Python %s (%s)" % (ver, python)
             assert ' ' not in python
-            run_in_dir("%s test.py -- -knownfailure" % python,
+            #TODO: re-add email_auto_links when issue5 is fixed
+            run_in_dir("%s test.py -- -knownfailure -email_auto_links" % python,
                        join(self.dir, "test"))
-            break #XXX
 
     def _python_ver_from_python(self, python):
         assert ' ' not in python
