@@ -163,6 +163,12 @@ class Markdown(object):
         # _EscapeSpecialChars(), so that any *'s or _'s in the <a>
         # and <img> tags get encoded.
 
+        if isinstance(text, unicode):
+            input_was_unicode = True
+            text = text.encode("utf-8")
+        else:
+            input_was_unicode = False
+
         # Clear the global hashes. If we don't clear these, you get conflicts
         # from other articles when generating a page which contains more than
         # one article (e.g. an index page that shows the N most recent
@@ -204,7 +210,11 @@ class Markdown(object):
         if "footnotes" in self.extras:
             text = self._add_footnotes(text)
 
-        return text + "\n"
+        text += "\n"
+
+        if input_was_unicode:
+            text = text.decode("utf-8")
+        return text
 
     # Cribbed from a post by Bart Lateur:
     # <http://www.nntp.perl.org/group/perl.macperl.anyperl/154>

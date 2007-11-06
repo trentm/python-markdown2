@@ -9,6 +9,7 @@ import sys
 from os.path import join, dirname, abspath, exists, splitext, basename
 import re
 from glob import glob
+from pprint import pprint
 import unittest
 import subprocess
 import codecs
@@ -38,7 +39,7 @@ class _MarkdownTestCase(unittest.TestCase):
                 == perl_html.replace('\n', '')):
             close_though = " (close though -- all but EOLs match)"
 
-        self.assertEqual(python_html, perl_html, _dedent("""\
+        self.assertEqual(python_html, perl_html, _dedent(u"""\
             markdown2.py didn't produce the same output as Markdown.pl%s:
               ---- text ----
             %s  ---- Python markdown2.py HTML ----
@@ -94,14 +95,14 @@ class _MarkdownTestCase(unittest.TestCase):
                 == norm_html.replace('\n', '')):
             close_though = " (close though -- all but EOLs match)"
 
-        diff = ''
+        diff = u''
         if python_norm_html != norm_html:
             diff = difflib.unified_diff(
                     norm_html.splitlines(1), 
                     python_norm_html.splitlines(1),
                     html_path,
                     "markdown2 "+text_path)
-            diff = ''.join(diff)
+            diff = u''.join(diff)
         errmsg = _dedent(u"""\
             markdown2.py didn't produce the expected HTML%s:
               ---- text (escaping: .=space, \\n=newline) ----
@@ -111,8 +112,17 @@ class _MarkdownTestCase(unittest.TestCase):
             %s""") % (close_though, _display(text), 
                       _display(python_html), _display(html),
                       _indent(diff))
+
+        def charreprreplace(exc):
+            if not isinstance(exc, UnicodeEncodeError):
+                raise TypeError("don't know how to handle %r" % exc)
+            # repr -> remote "u'" and "'"
+            obj_repr = repr(exc.object[exc.start:exc.end])[2:-1]
+            return (unicode(obj_repr), exc.end)
+        codecs.register_error("charreprreplace", charreprreplace)
+
         self.assertEqual(python_norm_html, norm_html, 
-                         errmsg.encode('ascii', 'replace'))
+                         errmsg.encode('ascii', 'charreprreplace'))
 
     @classmethod
     def generate_tests(cls):
@@ -203,7 +213,7 @@ class DirectTestCase(_MarkdownTestCase):
     def test_russian(self):
         ko = u'\u043b\u0449' # 'ko' on russian keyboard
         self._assertMarkdown(u"## %s" % ko,
-            u'<h2>%s</h2>' % ko)
+            u'<h2>%s</h2>\n' % ko)
 
 
 class DocTestsTestCase(unittest.TestCase):
@@ -217,9 +227,11 @@ class DocTestsTestCase(unittest.TestCase):
 
 def _display(s):
     """Markup the given string for useful display."""
+    if not isinstance(s, unicode):
+        s = s.decode("utf-8")
     s = _indent(_escaped_text_from_text(s, "whitespace"), 4)
     if not s.endswith('\n'):
-        s += '\n'
+        s += u'\n'
     return s
 
 def _markdown_with_perl(text):

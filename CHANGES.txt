@@ -2,6 +2,7 @@
 
 ## python-markdown2 v1.0.1.1
 
+- Fix conversion of unicode strings (issue3).
 - Make the "safe_mode" replacement test overridable via subclassing: change
   `Markdown.html_removed_text`.
 - [Issue 2] Fix problems with "safe_mode" removing generated HTML, instead of
