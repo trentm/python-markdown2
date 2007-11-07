@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 
-"""
-Run some performance numbers.
-
-Usage: 
-    python perf.py [all|markdown.py|markdown2.py|Markdown.pl] [cases-dir]
-
-where <cases-dir> is a directory with a number of "*.text" files to process.
+"""Run some performance numbers.  <cases-dir> is a directory with a
+number of "*.text" files to process.
 
 Example:
     python gen_perf_cases.py    # generate a couple cases dirs
@@ -100,7 +95,7 @@ class _NoReflowFormatter(optparse.IndentedHelpFormatter):
         return description or ""
 
 def main(args=sys.argv):
-    usage = "usage: %prog [OPTIONS...]"
+    usage = "python perf.py [-i all|markdown.py|markdown2.py|Markdown.pl] [cases-dir]"
     parser = optparse.OptionParser(prog="perf", usage=usage,
         description=__doc__, formatter=_NoReflowFormatter())
     parser.add_option("-r", "--repeat", type="int",
@@ -156,9 +151,5 @@ def main(args=sys.argv):
     
 if __name__ == "__main__":
     sys.exit( main(sys.argv) )
-    if len(sys.argv) != 3:
-        sys.stderr.write("error: incorrect number of args\n")
-        sys.stderr.write(__doc__)
-        sys.exit(1)
 
 
