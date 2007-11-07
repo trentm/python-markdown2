@@ -31,7 +31,11 @@ class test(Task):
     """Run all tests (except known failures)."""
     def make(self):
         for ver, python in self._gen_pythons():
-            print "-- test with Python %s (%s)" % (ver, python)
+            if ver < (2,3):
+                # Don't support Python < 2.3.
+                continue
+            ver_str = "%s.%s" % ver
+            print "-- test with Python %s (%s)" % (ver_str, python)
             assert ' ' not in python
             run_in_dir("%s test.py -- -knownfailure" % python,
                        join(self.dir, "test"))
@@ -40,7 +44,9 @@ class test(Task):
         assert ' ' not in python
         o = os.popen('''%s -c "import sys; print '.'.join(sys.version.split('.',2)[:2])"'''
                      % python)
-        return o.read().strip()
+        ver_str = o.read().strip()
+        ver = tuple(map(int, ver_str.split('.')))
+        return ver
 
     def _gen_pythons(self):
         sys.path.insert(0, join(self.dir, "externals", "which"))
