@@ -33,8 +33,7 @@ class test(Task):
         for ver, python in self._gen_pythons():
             print "-- test with Python %s (%s)" % (ver, python)
             assert ' ' not in python
-            #TODO: re-add email_auto_links when issue5 is fixed
-            run_in_dir("%s test.py -- -knownfailure -email_auto_links" % python,
+            run_in_dir("%s test.py -- -knownfailure" % python,
                        join(self.dir, "test"))
 
     def _python_ver_from_python(self, python):

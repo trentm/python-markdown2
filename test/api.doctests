@@ -5,14 +5,14 @@ True
 >>> hasattr(markdown2, "__version_info__")
 True
 
->>> markdown2.markdown("*boo*")
-'<p><em>boo</em></p>\n'
+>>> markdown2.markdown(u"*boo*")
+u'<p><em>boo</em></p>\n'
 
 >>> m = markdown2.Markdown()
->>> m.convert("*boo*")
-'<p><em>boo</em></p>\n'
+>>> m.convert(u"*boo*")
+u'<p><em>boo</em></p>\n'
 
 >>> m = markdown2.MarkdownWithExtras()
->>> m.convert("*boo*")
-'<p><em>boo</em></p>\n'
+>>> m.convert(u"*boo*")
+u'<p><em>boo</em></p>\n'
 
