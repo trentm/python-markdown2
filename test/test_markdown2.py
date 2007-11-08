@@ -66,9 +66,14 @@ class _MarkdownTestCase(unittest.TestCase):
 
         Part of Markdown'ing involves obfuscating email links with
         randomize encoding. Undo that obfuscation.
+        
+        Also normalize EOLs.
         """
-        return self._markdown_email_link_re.sub(
+        html = self._markdown_email_link_re.sub(
             self._markdown_email_link_sub, html)
+        if sys.platform == "win32":
+            html = html.replace('\r\n', '\n')
+        return html
 
     def _assertMarkdownPath(self, text_path, encoding="utf-8", opts=None):
         text = codecs.open(text_path, 'r', encoding=encoding).read()
