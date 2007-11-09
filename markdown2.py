@@ -603,7 +603,7 @@ class Markdown(object):
 
             # Possibly a footnote ref?
             if "footnotes" in self.extras and link_text.startswith("^"):
-                normed_id = re.sub(r'\W', '-', link_text[1:].lower())
+                normed_id = re.sub(r'\W', '-', link_text[1:])
                 if normed_id in self.footnotes:
                     self.footnote_ids.append(normed_id)
                     result = '<sup class="footnote-ref" id="fnref-%s">' \
