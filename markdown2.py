@@ -55,7 +55,7 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 1) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 2) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -202,6 +202,9 @@ class Markdown(object):
         # match consecutive blank lines with /\n+/ instead of something
         # contorted like /[ \t]*\n+/ .
         text = self._ws_only_line_re.sub("", text)
+
+        if self.safe_mode:
+            text = self._remove_literal_html(text)
 
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
@@ -498,21 +501,38 @@ class Markdown(object):
         is_html_markup = False
         for token in self._sorta_html_tokenize_re.split(text):
             if is_html_markup:
-                if self.safe_mode:
-                    escaped.append(self._html_removed_hash)
-                else:
-                    # Within tags/HTML-comments/auto-links, encode * and _
-                    # so they don't conflict with their use in Markdown for
-                    # italics and strong.  We're replacing each such
-                    # character with its corresponding MD5 checksum value;
-                    # this is likely overkill, but it should prevent us from
-                    # colliding with the escape values by accident.
-                    escaped.append(token.replace('*', g_escape_table['*'])
-                                        .replace('_', g_escape_table['_']))
+                # Within tags/HTML-comments/auto-links, encode * and _
+                # so they don't conflict with their use in Markdown for
+                # italics and strong.  We're replacing each such
+                # character with its corresponding MD5 checksum value;
+                # this is likely overkill, but it should prevent us from
+                # colliding with the escape values by accident.
+                escaped.append(token.replace('*', g_escape_table['*'])
+                                    .replace('_', g_escape_table['_']))
             else:
                 escaped.append(self._encode_backslash_escapes(token))
             is_html_markup = not is_html_markup
         return ''.join(escaped)
+
+    def _remove_literal_html(self, text):
+        # Used for safe_mode=True.
+
+        def _is_auto_link(s):
+            if ':' in s and self._auto_link_re.match(s):
+                return True
+            elif '@' in s and self._auto_email_link_re.match(s):
+                return True
+            return False
+
+        tokens = []
+        is_html_markup = False
+        for token in self._sorta_html_tokenize_re.split(text):
+            if is_html_markup and not _is_auto_link(token):
+                tokens.append(self._html_removed_hash)
+            else:
+                tokens.append(token)
+            is_html_markup = not is_html_markup
+        return ''.join(tokens)
 
     _tail_of_inline_link_re = re.compile(r'''
           # Match tail of: [text](/url/) or [text](/url/ "title")
