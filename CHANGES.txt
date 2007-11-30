@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.2
+
+- [Issue 6] Fix problem with footnotes if the reference string had uppercase
+  letters.
+
 ## python-markdown2 v1.0.1.1
 
 - [Issue 3] Fix conversion of unicode strings.
