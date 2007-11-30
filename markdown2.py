@@ -159,6 +159,7 @@ class Markdown(object):
             self.extras = set(self.extras)
         if extras:
             self.extras.update(extras)
+        self._instance_extra = self.extras.copy()
         self.link_patterns = link_patterns
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
@@ -167,6 +168,7 @@ class Markdown(object):
         self.titles = {}
         self.html_blocks = {}
         self.list_level = 0
+        self.extras = self._instance_extra.copy()
         if "footnotes" in self.extras:
             self.footnotes = {}
             self.footnote_ids = []
@@ -187,6 +189,12 @@ class Markdown(object):
         if not isinstance(text, unicode):
             #TODO: perhaps shouldn't presume UTF-8 for string input?
             text = unicode(text, 'utf-8')
+
+        # Look for emacs-style local variable hints.
+        emacs_vars = self._get_emacs_vars(text)
+        if "markdown-extras" in emacs_vars:
+            splitter = re.compile("[ ,]+")
+            self.extras.update(splitter.split(emacs_vars["markdown-extras"]))
 
         # Standardize line endings:
         text = re.sub("\r\n|\r", "\n", text)
@@ -228,6 +236,123 @@ class Markdown(object):
 
         text += "\n"
         return text
+
+    _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
+    # This regular expression is intended to match blocks like this:
+    #    PREFIX Local Variables: SUFFIX
+    #    PREFIX mode: Tcl SUFFIX
+    #    PREFIX End: SUFFIX
+    # Some notes:
+    # - "[ \t]" is used instead of "\s" to specifically exclude newlines
+    # - "(\r\n|\n|\r)" is used instead of "$" because the sre engine does
+    #   not like anything other than Unix-style line terminators.
+    _emacs_local_vars_pat = re.compile(r"""^
+        (?P<prefix>(?:[^\r\n|\n|\r])*?)
+        [\ \t]*Local\ Variables:[\ \t]*
+        (?P<suffix>.*?)(?:\r\n|\n|\r)
+        (?P<content>.*?\1End:)
+        """, re.IGNORECASE | re.MULTILINE | re.DOTALL | re.VERBOSE)
+
+    def _get_emacs_vars(self, text):
+        """Return a dictionary of emacs-style local variables.
+
+        Parsing is done loosely according to this spec (and according to
+        some in-practice deviations from this):
+        http://www.gnu.org/software/emacs/manual/html_node/emacs/Specifying-File-Variables.html#Specifying-File-Variables
+        """
+        emacs_vars = {}
+        SIZE = pow(2, 13) # 8kB
+
+        # Search near the start for a '-*-'-style one-liner of variables.
+        head = text[:SIZE]
+        if "-*-" in head:
+            match = self._emacs_oneliner_vars_pat.search(head)
+            if match:
+                emacs_vars_str = match.group(1)
+                assert '\n' not in emacs_vars_str
+                emacs_var_strs = [s.strip() for s in emacs_vars_str.split(';')
+                                  if s.strip()]
+                if len(emacs_var_strs) == 1 and ':' not in emacs_var_strs[0]:
+                    # While not in the spec, this form is allowed by emacs:
+                    #   -*- Tcl -*-
+                    # where the implied "variable" is "mode". This form
+                    # is only allowed if there are no other variables.
+                    emacs_vars["mode"] = emacs_var_strs[0].strip()
+                else:
+                    for emacs_var_str in emacs_var_strs:
+                        try:
+                            variable, value = emacs_var_str.strip().split(':', 1)
+                        except ValueError:
+                            log.debug("emacs variables error: malformed -*- "
+                                      "line: %r", emacs_var_str)
+                            continue
+                        # Lowercase the variable name because Emacs allows "Mode"
+                        # or "mode" or "MoDe", etc.
+                        emacs_vars[variable.lower()] = value.strip()
+
+        tail = text[-SIZE:]
+        if "Local Variables" in tail:
+            match = self._emacs_local_vars_pat.search(tail)
+            if match:
+                prefix = match.group("prefix")
+                suffix = match.group("suffix")
+                lines = match.group("content").splitlines(0)
+                #print "prefix=%r, suffix=%r, content=%r, lines: %s"\
+                #      % (prefix, suffix, match.group("content"), lines)
+
+                # Validate the Local Variables block: proper prefix and suffix
+                # usage.
+                for i, line in enumerate(lines):
+                    if not line.startswith(prefix):
+                        log.debug("emacs variables error: line '%s' "
+                                  "does not use proper prefix '%s'"
+                                  % (line, prefix))
+                        return {}
+                    # Don't validate suffix on last line. Emacs doesn't care,
+                    # neither should we.
+                    if i != len(lines)-1 and not line.endswith(suffix):
+                        log.debug("emacs variables error: line '%s' "
+                                  "does not use proper suffix '%s'"
+                                  % (line, suffix))
+                        return {}
+
+                # Parse out one emacs var per line.
+                continued_for = None
+                for line in lines[:-1]: # no var on the last line ("PREFIX End:")
+                    if prefix: line = line[len(prefix):] # strip prefix
+                    if suffix: line = line[:-len(suffix)] # strip suffix
+                    line = line.strip()
+                    if continued_for:
+                        variable = continued_for
+                        if line.endswith('\\'):
+                            line = line[:-1].rstrip()
+                        else:
+                            continued_for = None
+                        emacs_vars[variable] += ' ' + line
+                    else:
+                        try:
+                            variable, value = line.split(':', 1)
+                        except ValueError:
+                            log.debug("local variables error: missing colon "
+                                      "in local variables entry: '%s'" % line)
+                            continue
+                        # Do NOT lowercase the variable name, because Emacs only
+                        # allows "mode" (and not "Mode", "MoDe", etc.) in this block.
+                        value = value.strip()
+                        if value.endswith('\\'):
+                            value = value[:-1].rstrip()
+                            continued_for = variable
+                        else:
+                            continued_for = None
+                        emacs_vars[variable] = value
+
+        # Unquote values.
+        for var, val in emacs_vars.items():
+            if len(val) > 1 and (val.startswith('"') and val.endswith('"')
+               or val.startswith('"') and val.endswith('"')):
+                emacs_vars[var] = val[1:-1]
+
+        return emacs_vars
 
     # Cribbed from a post by Bart Lateur:
     # <http://www.nntp.perl.org/group/perl.macperl.anyperl/154>
