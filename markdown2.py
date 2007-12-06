@@ -498,8 +498,9 @@ class Markdown(object):
         id, text = match.groups()
         text = _dedent(text, skip_first_line=not text.startswith('\n')).strip()
         normed_id = re.sub(r'\W', '-', id)
-        self.footnotes[normed_id] \
-            = self._encode_amps_and_angles(text).split('\n\n')
+        # Ensure footnote text ends with a couple newlines (for some
+        # block gamut matches).
+        self.footnotes[normed_id] = text + "\n\n"
         return ""
 
     def _strip_footnote_definitions(self, text):
@@ -1231,19 +1232,19 @@ class Markdown(object):
                 '<ol>',
             ]
             for i, id in enumerate(self.footnote_ids):
-                paras = self.footnotes[id]
                 if i != 0:
                     footer.append('')
                 footer.append('<li id="fn-%s">' % id)
-                for j, para in enumerate(paras):
-                    if j == len(paras) - 1: # last paragraph
-                        footer.append('<p>%s'
-                            '&nbsp;<a href="#fnref-%s" '
-                            'class="footnoteBackLink" '
-                            'title="Jump back to footnote %d in the text.">'
-                            '&#8617;</a></p>' % (para, id, i+1))
-                    else:
-                        footer.append('<p>%s</p>' % para)
+                footer.append(self._run_block_gamut(self.footnotes[id]))
+                backlink = ('<a href="#fnref-%s" '
+                    'class="footnoteBackLink" '
+                    'title="Jump back to footnote %d in the text.">'
+                    '&#8617;</a>' % (id, i+1))
+                if footer[-1].endswith("</p>"):
+                    footer[-1] = footer[-1][:-len("</p>")] \
+                        + '&nbsp;' + backlink + "</p>"
+                else:
+                    footer.append("\n<p>%s</p>" % backlink)
                 footer.append('</li>')
             footer.append('</ol>')
             footer.append('</div>')
