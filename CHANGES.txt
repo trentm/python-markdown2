@@ -2,6 +2,11 @@
 
 ## python-markdown2 v1.0.1.2
 
+- [Issue 8, **incompatible change**] The "-s|--safe" command line option and
+  the equivalent "safe_mode" option has changed semantics to be a string
+  instead of a boolean. Legal values of the string are "replace" (the old
+  behaviour: literal HTML is replaced with "[HTML_REMOVED]") and "escape"
+  (meta chars in literal HTML is escaped).
 - [Issue 11] Process markup in footnote definition bodies.
 - Add support for `-*- markdown-extras: ... -*-` emacs-style local variables
   (typically in an XML comment) to set "extras" for the markdown conversion.

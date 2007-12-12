@@ -28,18 +28,9 @@ Module usage:
     >>> markdowner.convert("**boom!**")
     <strong>boom!</strong>
 
-This implementation of Markdown implements the full "core" syntax plus the
-following extra features (pass these strings as arguments to the
-"extras" list to turn them on):
-
-    code-friendly   Disable the use of leading and trailing '_' and '__'
-                    for emphasis and strong. These can easily get in the
-                    way when writing docs about source code with
-                    variable_list_this and when one is not careful about
-                    quoting.
-    footnotes       Footnotes syntax support.
-    code-color      Syntax coloring of <code> blocks. Requires 'pygments'
-                    python library.
+This implementation of Markdown implements the full "core" syntax plus a
+number of extras (e.g., code syntax coloring, footnotes) as described on
+<http://code.google.com/p/python-markdown2/wiki/Extras>.
 """
 
 cmdln_desc = """A fast and complete Python implementation of Markdown, a
@@ -93,12 +84,12 @@ log = logging.getLogger("markdown")
 DEFAULT_TAB_WIDTH = 4
 
 # Table of hash values for escaped characters:
-def _escape_hash(ch):
+def _escape_hash(s):
     # Lame attempt to avoid possible collision with someone actually
     # using the MD5 hexdigest of one of these chars in there text.
     # Other ideas: random.random(), uuid.uuid()
-    #return md5.md5(ch).hexdigest()         # Markdown.pl does this
-    return '!'+md5.md5(ch).hexdigest()+'!'
+    #return md5.md5(s).hexdigest()   # Markdown.pl effectively does this.
+    return '!'+md5.md5(s).hexdigest()+'!'
 g_escape_table = dict([(ch, _escape_hash(ch))
                        for ch in '\\`*_{}[]()>#+-.!'])
 
@@ -115,14 +106,14 @@ class MarkdownError(Exception):
 
 def markdown_path(path, encoding="utf-8",
                   html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-                  safe_mode=False, extras=None, link_patterns=None):
+                  safe_mode=None, extras=None, link_patterns=None):
     text = codecs.open(path, 'r', encoding).read()
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns).convert(text)
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-             safe_mode=False, extras=None, link_patterns=None):
+             safe_mode=None, extras=None, link_patterns=None):
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns).convert(text)
@@ -135,6 +126,7 @@ class Markdown(object):
     urls = None
     titles = None
     html_blocks = None
+    html_spans = None
     html_removed_text = "[HTML_REMOVED]"  # for compat with markdown.py
 
     # Used to track when we're inside an ordered or unordered list
@@ -143,7 +135,7 @@ class Markdown(object):
 
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
-    def __init__(self, html4tags=False, tab_width=4, safe_mode=False,
+    def __init__(self, html4tags=False, tab_width=4, safe_mode=None,
                  extras=None, link_patterns=None):
         if html4tags:
             self.empty_element_suffix = ">"
@@ -151,8 +143,6 @@ class Markdown(object):
             self.empty_element_suffix = " />"
         self.tab_width = tab_width
         self.safe_mode = safe_mode
-        if safe_mode:
-            self._html_removed_hash = _escape_hash(self.html_removed_text)
         if self.extras is None:
             self.extras = set()
         elif not isinstance(self.extras, set):
@@ -167,6 +157,7 @@ class Markdown(object):
         self.urls = {}
         self.titles = {}
         self.html_blocks = {}
+        self.html_spans = {}
         self.list_level = 0
         self.extras = self._instance_extra.copy()
         if "footnotes" in self.extras:
@@ -212,7 +203,7 @@ class Markdown(object):
         text = self._ws_only_line_re.sub("", text)
 
         if self.safe_mode:
-            text = self._remove_literal_html(text)
+            text = self._hash_html_spans(text)
 
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
@@ -229,10 +220,11 @@ class Markdown(object):
 
         text = self._unescape_special_chars(text)
 
-        if self.safe_mode:
-            text = text.replace(self._html_removed_hash, self.html_removed_text)
         if "footnotes" in self.extras:
             text = self._add_footnotes(text)
+
+        if self.safe_mode:
+            text = self._unhash_html_spans(text)
 
         text += "\n"
         return text
@@ -408,9 +400,11 @@ class Markdown(object):
         re.X | re.M)
 
     def _hash_html_block_sub(self, match, raw=False):
-        g1 = match.group(1)
-        key = '!'+md5.md5(g1.encode('utf-8')).hexdigest()+'!' # see _escape_hash() above
-        self.html_blocks[key] = (g1, raw)
+        html = match.group(1)
+        if raw and self.safe_mode:
+            html = self._sanitize_html(html)
+        key = _hash_text(html)
+        self.html_blocks[key] = html
         return "\n\n" + key + "\n\n"
 
     def _hash_html_blocks(self, text, raw=False):
@@ -640,8 +634,8 @@ class Markdown(object):
             is_html_markup = not is_html_markup
         return ''.join(escaped)
 
-    def _remove_literal_html(self, text):
-        # Used for safe_mode=True.
+    def _hash_html_spans(self, text):
+        # Used for safe_mode.
 
         def _is_auto_link(s):
             if ':' in s and self._auto_link_re.match(s):
@@ -654,11 +648,35 @@ class Markdown(object):
         is_html_markup = False
         for token in self._sorta_html_tokenize_re.split(text):
             if is_html_markup and not _is_auto_link(token):
-                tokens.append(self._html_removed_hash)
+                sanitized = self._sanitize_html(token)
+                key = _hash_text(sanitized)
+                self.html_spans[key] = sanitized
+                tokens.append(key)
             else:
                 tokens.append(token)
             is_html_markup = not is_html_markup
         return ''.join(tokens)
+
+    def _unhash_html_spans(self, text):
+        for key, sanitized in self.html_spans.items():
+            text = text.replace(key, sanitized)
+        return text
+
+    def _sanitize_html(self, s):
+        if self.safe_mode == "replace":
+            return self.html_removed_text
+        elif self.safe_mode == "escape":
+            replacements = [
+                ('&', '&amp;'),
+                ('<', '&lt;'),
+                ('>', '&gt;'),
+            ]
+            for before, after in replacements:
+                s = s.replace(before, after)
+            return s
+        else:
+            raise MarkdownError("invalid value for 'safe_mode': %r (must be "
+                                "'escape' or 'replace')" % self.safe_mode)
 
     _tail_of_inline_link_re = re.compile(r'''
           # Match tail of: [text](/url/) or [text](/url/ "title")
@@ -1202,7 +1220,6 @@ class Markdown(object):
             return text
         return self._block_quote_re.sub(self._block_quote_sub, text)
 
-
     def _form_paragraphs(self, text):
         # Strip leading and trailing lines:
         text = text.strip('\n')
@@ -1212,11 +1229,7 @@ class Markdown(object):
         for i, graf in enumerate(grafs):
             if graf in self.html_blocks:
                 # Unhashify HTML blocks
-                html_block, raw = self.html_blocks[graf]
-                if self.safe_mode and raw:
-                    grafs[i] = self._html_removed_hash
-                else:
-                    grafs[i] = html_block
+                grafs[i] = self.html_blocks[graf]
             else:
                 # Wrap <p> tags.
                 graf = self._run_span_gamut(graf)
@@ -1566,6 +1579,8 @@ def _xml_encode_email_char_at_random(ch):
     else:
         return '&#%s;' % ord(ch)
 
+def _hash_text(text):
+    return '!'+md5.md5(text.encode("utf-8")).hexdigest()+'!'
 
 
 #---- mainline
@@ -1592,10 +1607,10 @@ def main(argv=sys.argv):
                       help="specify encoding of text content")
     parser.add_option("--html4tags", action="store_true", default=False, 
                       help="use HTML 4 style for empty element tags")
-    parser.add_option("-s", "--safe", action="store_true", dest="safe_mode",
-                      default=False, 
-                      help="replace literal HTML with '[HTML_REMOVED]' "
-                           "(for compat with markdown.py)")
+    parser.add_option("-s", "--safe", metavar="MODE", dest="safe_mode",
+                      help="sanitize literal HTML: 'escape' escapes "
+                           "HTML meta chars, 'replace' replaces with an "
+                           "[HTML_REMOVED] note")
     parser.add_option("-x", "--extras", action="append",
                       help="Turn on specific extra features (not part of "
                            "the core Markdown spec). Supported values: "
@@ -1610,7 +1625,7 @@ def main(argv=sys.argv):
     parser.add_option("--compare", action="store_true",
                       help="run against Markdown.pl as well (for testing)")
     parser.set_defaults(log_level=logging.INFO, compare=False,
-                        encoding="utf-8", safe_mode=False)
+                        encoding="utf-8", safe_mode=None)
     opts, paths = parser.parse_args()
     log.setLevel(opts.log_level)
 

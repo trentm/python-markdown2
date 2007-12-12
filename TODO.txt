@@ -1,3 +1,4 @@
+- test safe_mode on HTML in footnotes
 - markdown2.py on trentm.com/projects
 - setup.py stuff from Yannick.
 - http://support.googlecode.com/svn/trunk/scripts/googlecode_distutils_upload.py
