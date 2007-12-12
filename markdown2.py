@@ -1367,10 +1367,11 @@ class Markdown(object):
 
 
 class MarkdownWithExtras(Markdown):
-    """A markdowner class that enables all optional extras
-    *except* the "code-friendly" extra.
+    """A markdowner class that enables all optional extras except:
 
-    The latter is excluded because it *disables* part of the syntax.
+    - code-friendly: because it *disables* part of the syntax
+    - link-patterns: because you need to specify some actual
+      link-patterns anyway
     """
     extras = ["footnotes", "code-color"]
 
