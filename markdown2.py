@@ -142,7 +142,15 @@ class Markdown(object):
         else:
             self.empty_element_suffix = " />"
         self.tab_width = tab_width
-        self.safe_mode = safe_mode
+
+        # For compatibility with earlier markdown2.py and with
+        # markdown.py's safe_mode being a boolean, 
+        #   safe_mode == True -> "replace"
+        if safe_mode is True:
+            self.safe_mode = "replace"
+        else:
+            self.safe_mode = safe_mode
+
         if self.extras is None:
             self.extras = set()
         elif not isinstance(self.extras, set):

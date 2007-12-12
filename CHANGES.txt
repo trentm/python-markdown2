@@ -2,6 +2,9 @@
 
 ## python-markdown2 v1.0.1.2
 
+- [Issue 8] Alleviate some of the incompat of the last change by allowing (at
+  the Python module level) the usage of `safe_mode=True` to mean what it used
+  to -- i.e. "replace" safe mode.
 - [Issue 8, **incompatible change**] The "-s|--safe" command line option and
   the equivalent "safe_mode" option has changed semantics to be a string
   instead of a boolean. Legal values of the string are "replace" (the old
