@@ -1092,9 +1092,6 @@ class Markdown(object):
             codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
             if lexer:
                 colored = self._color_with_pygments(codeblock, lexer)
-                # HACK for issue3: drop this when/if use unicode for all
-                # processing.
-                colored = colored.encode("utf-8")
                 return "\n\n%s\n\n" % colored
 
         codeblock = self._encode_code(codeblock)

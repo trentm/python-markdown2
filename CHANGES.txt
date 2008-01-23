@@ -1,5 +1,11 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.3
+
+- [Issue 3] Drop the code-color extra hack added *for* issue3 that was
+  causing the a unicode error with unicode in a code-colored block,
+  <http://code.google.com/p/python-markdown2/issues/detail?id=3#c8>
+
 ## python-markdown2 v1.0.1.2
 
 - [Issue 8] Alleviate some of the incompat of the last change by allowing (at
