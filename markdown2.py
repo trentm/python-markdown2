@@ -1678,7 +1678,8 @@ def main(argv=sys.argv):
                              html4tags=opts.html4tags,
                              safe_mode=opts.safe_mode,
                              extras=extras, link_patterns=link_patterns)
-        sys.stdout.write(html)
+        sys.stdout.write(
+            html.encode(sys.stdout.encoding, 'xmlcharrefreplace'))
 
 
 if __name__ == "__main__":
