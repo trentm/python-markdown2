@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Copyright (c) 2007 ActiveState Corp.
 
-"""A fast and complete Python implementation of Markdown.
+r"""A fast and complete Python implementation of Markdown.
 
 [from http://daringfireball.net/projects/markdown/]
 > Markdown is a text-to-HTML filter; it translates an easy-to-read /
@@ -18,15 +18,14 @@
 Module usage:
 
     >>> import markdown2
-    >>> html = markdown2.markdown_path(path, ...)
-    >>> markdown2.markdown("*boo!*", ...)
-    <em>boo!</em>
+    >>> markdown2.markdown("*boo!*")  # or use `html = markdown_path(PATH)`
+    u'<p><em>boo!</em></p>\n'
 
-    >>> markdowner = Markdown(...)
+    >>> markdowner = Markdown()
     >>> markdowner.convert("*boo!*")
-    <em>boo!</em>
+    u'<p><em>boo!</em></p>\n'
     >>> markdowner.convert("**boom!**")
-    <strong>boom!</strong>
+    u'<p><strong>boom!</strong></p>\n'
 
 This implementation of Markdown implements the full "core" syntax plus a
 number of extras (e.g., code syntax coloring, footnotes) as described on

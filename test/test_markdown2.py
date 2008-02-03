@@ -227,6 +227,9 @@ class DocTestsTestCase(unittest.TestCase):
         test = doctest.DocFileTest("api.doctests")
         test.runTest()
 
+    def test_internal(self):
+        doctest.testmod(markdown2)
+
 
 
 #---- internal support stuff
