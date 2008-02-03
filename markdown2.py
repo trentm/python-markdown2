@@ -46,7 +46,7 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 2) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 3) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -106,17 +106,21 @@ class MarkdownError(Exception):
 
 def markdown_path(path, encoding="utf-8",
                   html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-                  safe_mode=None, extras=None, link_patterns=None):
+                  safe_mode=None, extras=None, link_patterns=None,
+                  use_file_vars=False):
     text = codecs.open(path, 'r', encoding).read()
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
-                    link_patterns=link_patterns).convert(text)
+                    link_patterns=link_patterns,
+                    use_file_vars=use_file_vars).convert(text)
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-             safe_mode=None, extras=None, link_patterns=None):
+             safe_mode=None, extras=None, link_patterns=None,
+             use_file_vars=False):
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
-                    link_patterns=link_patterns).convert(text)
+                    link_patterns=link_patterns,
+                    use_file_vars=use_file_vars).convert(text)
 
 class Markdown(object):
     # The set of "extras" to enable in processing. This can be set
@@ -136,7 +140,7 @@ class Markdown(object):
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
     def __init__(self, html4tags=False, tab_width=4, safe_mode=None,
-                 extras=None, link_patterns=None):
+                 extras=None, link_patterns=None, use_file_vars=False):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
@@ -159,6 +163,7 @@ class Markdown(object):
             self.extras.update(extras)
         self._instance_extra = self.extras.copy()
         self.link_patterns = link_patterns
+        self.use_file_vars = use_file_vars
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
     def reset(self):
@@ -189,11 +194,12 @@ class Markdown(object):
             #TODO: perhaps shouldn't presume UTF-8 for string input?
             text = unicode(text, 'utf-8')
 
-        # Look for emacs-style local variable hints.
-        emacs_vars = self._get_emacs_vars(text)
-        if "markdown-extras" in emacs_vars:
-            splitter = re.compile("[ ,]+")
-            self.extras.update(splitter.split(emacs_vars["markdown-extras"]))
+        if self.use_file_vars:
+            # Look for emacs-style file variable hints.
+            emacs_vars = self._get_emacs_vars(text)
+            if "markdown-extras" in emacs_vars:
+                splitter = re.compile("[ ,]+")
+                self.extras.update(splitter.split(emacs_vars["markdown-extras"]))
 
         # Standardize line endings:
         text = re.sub("\r\n|\r", "\n", text)
@@ -1624,6 +1630,10 @@ def main(argv=sys.argv):
                            "'code-color' adds code-block syntax coloring; "
                            "'link-patterns' adds auto-linking based on patterns; "
                            "'footnotes' adds the footnotes syntax.")
+    parser.add_option("--use-file-vars",
+                      help="Look for and use Emacs-style 'markdown-extras' "
+                           "file var to turn on extras. See "
+                           "<http://code.google.com/p/python-markdown2/wiki/Extras>.")
     parser.add_option("--link-patterns-file",
                       help="path to a link pattern file")
     parser.add_option("--self-test", action="store_true",
@@ -1631,7 +1641,7 @@ def main(argv=sys.argv):
     parser.add_option("--compare", action="store_true",
                       help="run against Markdown.pl as well (for testing)")
     parser.set_defaults(log_level=logging.INFO, compare=False,
-                        encoding="utf-8", safe_mode=None)
+                        encoding="utf-8", safe_mode=None, use_file_vars=False)
     opts, paths = parser.parse_args()
     log.setLevel(opts.log_level)
 
@@ -1674,7 +1684,8 @@ def main(argv=sys.argv):
         html = markdown_path(path, encoding=opts.encoding,
                              html4tags=opts.html4tags,
                              safe_mode=opts.safe_mode,
-                             extras=extras, link_patterns=link_patterns)
+                             extras=extras, link_patterns=link_patterns,
+                             use_file_vars=use_file_vars)
         sys.stdout.write(
             html.encode(sys.stdout.encoding, 'xmlcharrefreplace'))
 
