@@ -1,5 +1,12 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.4
+
+- [Issue 15] Fix some edge cases with backslash-escapes.
+- Fix this error that broken command-line usage:
+
+        NameError: global name 'use_file_vars' is not defined
+
 ## python-markdown2 v1.0.1.3
 
 - Make the use of the `-*- markdown-extras: ... -*-` emacs-style files
@@ -9,8 +16,6 @@
 - [Issue 3] Drop the code-color extra hack added *for* issue3 that was
   causing the a unicode error with unicode in a code-colored block,
   <http://code.google.com/p/python-markdown2/issues/detail?id=3#c8>
-
-Emacs-style file vars to 
 
 ## python-markdown2 v1.0.1.2
 

@@ -1,3 +1,11 @@
+- to bring up on markdown-discuss:
+    - the trailing '#' escaping in DoHeaders (provide a patch for this)
+    - the discussion of backticks and backslash-escapes in code spans:
+        also bring in python-markdown-discuss on this
+    - The link for backslash escapes doesn't mention '>', but I believe it
+      should -- viz Markdown.pl's `%g_escape_table` which *does* include '>'.
+      TODO: bring this up on markdown-discuss list.
+
 - test safe_mode on HTML in footnotes
 - markdown2.py on trentm.com/projects
 - setup.py stuff from Yannick.

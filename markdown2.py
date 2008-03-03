@@ -45,7 +45,7 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 3) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 4) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -88,7 +88,7 @@ def _escape_hash(s):
     # using the MD5 hexdigest of one of these chars in there text.
     # Other ideas: random.random(), uuid.uuid()
     #return md5.md5(s).hexdigest()   # Markdown.pl effectively does this.
-    return '!'+md5.md5(s).hexdigest()+'!'
+    return 'md5:'+md5.md5(s).hexdigest()
 g_escape_table = dict([(ch, _escape_hash(ch))
                        for ch in '\\`*_{}[]()>#+-.!'])
 
@@ -904,6 +904,7 @@ class Markdown(object):
         [ \t]*
         (.+?)       # \2 = Header text
         [ \t]*
+        (?<!\\)     # ensure not an escaped trailing '#'
         \#*         # optional closing #'s (not counted)
         \n+
         ''', re.X | re.M)
@@ -1119,8 +1120,18 @@ class Markdown(object):
         return code_block_re.sub(self._code_block_sub, text)
 
 
+    # Rules for a code span:
+    # - backslash escapes are not interpreted in a code span
+    # - to include one or or a run of more backticks the delimiters must
+    #   be a longer run of backticks
+    # - cannot start or end a code span with a backtick; pad with a
+    #   space and that space will be removed in the emitted HTML
+    # See `test/tm-cases/escapes.text` for a number of edge-case
+    # examples.
     _code_span_re = re.compile(r'''
+            (?<!\\)
             (`+)        # \1 = Opening run of `
+            (?!`)       # See Note A test/tm-cases/escapes.text
             (.+?)       # \2 = The code block
             (?<!`)
             \1          # Matching closer
@@ -1591,7 +1602,7 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % ord(ch)
 
 def _hash_text(text):
-    return '!'+md5.md5(text.encode("utf-8")).hexdigest()+'!'
+    return 'md5:'+md5.md5(text.encode("utf-8")).hexdigest()
 
 
 #---- mainline
@@ -1684,9 +1695,9 @@ def main(argv=sys.argv):
                              html4tags=opts.html4tags,
                              safe_mode=opts.safe_mode,
                              extras=extras, link_patterns=link_patterns,
-                             use_file_vars=use_file_vars)
+                             use_file_vars=opts.use_file_vars)
         sys.stdout.write(
-            html.encode(sys.stdout.encoding, 'xmlcharrefreplace'))
+            html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
 
 
 if __name__ == "__main__":
