@@ -934,66 +934,72 @@ class Markdown(object):
 
 
     _marker_ul_chars  = '*+-'
-    _marker_any = '(?:[%s]|\d+[.])' % _marker_ul_chars
+    _marker_any = r'(?:[%s]|\d+\.)' % _marker_ul_chars
+    _marker_ul = '(?:[%s])' % _marker_ul_chars
+    _marker_ol = r'(?:\d+\.)'
 
     def _list_sub(self, match):
         lst = match.group(1)
         lst_type = match.group(3) in self._marker_ul_chars and "ul" or "ol"
         result = self._process_list_items(lst)
-        return "<%s>\n%s</%s>\n" % (lst_type, result, lst_type)
+        if self.list_level:
+            return "<%s>\n%s</%s>\n" % (lst_type, result, lst_type)
+        else:
+            return "<%s>\n%s</%s>\n\n" % (lst_type, result, lst_type)
 
     def _do_lists(self, text):
         # Form HTML ordered (numbered) and unordered (bulleted) lists.
 
-        # Re-usable pattern to match any entire ul or ol list:
-        less_than_tab = self.tab_width - 1
-        whole_list = r'''
-            (                   # \1 = whole list
-              (                 # \2
-                [ ]{0,%d}
-                (%s)            # \3 = first list item marker
-                [ \t]+
-              )
-              (?:.+?)
-              (                 # \4
-                  \Z
-                |
-                  \n{2,}
-                  (?=\S)
-                  (?!           # Negative lookahead for another list item marker
-                    [ \t]*
-                    %s[ \t]+
+        for marker_pat in (self._marker_ul, self._marker_ol):
+            # Re-usable pattern to match any entire ul or ol list:
+            less_than_tab = self.tab_width - 1
+            whole_list = r'''
+                (                   # \1 = whole list
+                  (                 # \2
+                    [ ]{0,%d}
+                    (%s)            # \3 = first list item marker
+                    [ \t]+
                   )
-              )
-            )
-        ''' % (less_than_tab, self._marker_any, self._marker_any)
-    
-        # We use a different prefix before nested lists than top-level lists.
-        # See extended comment in _process_list_items().
-        #
-        # Note: There's a bit of duplication here. My original implementation
-        # created a scalar regex pattern as the conditional result of the test on
-        # $g_list_level, and then only ran the $text =~ s{...}{...}egmx
-        # substitution once, using the scalar as the pattern. This worked,
-        # everywhere except when running under MT on my hosting account at Pair
-        # Networks. There, this caused all rebuilds to be killed by the reaper (or
-        # perhaps they crashed, but that seems incredibly unlikely given that the
-        # same script on the same server ran fine *except* under MT. I've spent
-        # more time trying to figure out why this is happening than I'd like to
-        # admit. My only guess, backed up by the fact that this workaround works,
-        # is that Perl optimizes the substition when it can figure out that the
-        # pattern will never change, and when this optimization isn't on, we run
-        # afoul of the reaper. Thus, the slightly redundant code to that uses two
-        # static s/// patterns rather than one conditional pattern.
+                  (?:.+?)
+                  (                 # \4
+                      \Z
+                    |
+                      \n{2,}
+                      (?=\S)
+                      (?!           # Negative lookahead for another list item marker
+                        [ \t]*
+                        %s[ \t]+
+                      )
+                  )
+                )
+            ''' % (less_than_tab, marker_pat, marker_pat)
+        
+            # We use a different prefix before nested lists than top-level lists.
+            # See extended comment in _process_list_items().
+            #
+            # Note: There's a bit of duplication here. My original implementation
+            # created a scalar regex pattern as the conditional result of the test on
+            # $g_list_level, and then only ran the $text =~ s{...}{...}egmx
+            # substitution once, using the scalar as the pattern. This worked,
+            # everywhere except when running under MT on my hosting account at Pair
+            # Networks. There, this caused all rebuilds to be killed by the reaper (or
+            # perhaps they crashed, but that seems incredibly unlikely given that the
+            # same script on the same server ran fine *except* under MT. I've spent
+            # more time trying to figure out why this is happening than I'd like to
+            # admit. My only guess, backed up by the fact that this workaround works,
+            # is that Perl optimizes the substition when it can figure out that the
+            # pattern will never change, and when this optimization isn't on, we run
+            # afoul of the reaper. Thus, the slightly redundant code to that uses two
+            # static s/// patterns rather than one conditional pattern.
 
-        if self.list_level:
-            sub_list_re = re.compile("^"+whole_list, re.X | re.M | re.S)
-            text = sub_list_re.sub(self._list_sub, text)
-        else:
-            list_re = re.compile(r"(?:(?<=\n\n)|\A\n?)"+whole_list,
-                                 re.X | re.M | re.S)
-            text = list_re.sub(self._list_sub, text)
-    
+            if self.list_level:
+                sub_list_re = re.compile("^"+whole_list, re.X | re.M | re.S)
+                text = sub_list_re.sub(self._list_sub, text)
+            else:
+                list_re = re.compile(r"(?:(?<=\n\n)|\A\n?)"+whole_list,
+                                     re.X | re.M | re.S)
+                text = list_re.sub(self._list_sub, text)
+
         return text
     
     _list_item_re = re.compile(r'''
