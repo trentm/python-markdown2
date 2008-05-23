@@ -563,6 +563,9 @@ class Markdown(object):
 
         text = self._do_lists(text)
 
+        if "pyshell" in self.extras:
+            text = self._prepare_pyshell_blocks(text)
+
         text = self._do_code_blocks(text)
 
         text = self._do_block_quotes(text)
@@ -576,6 +579,31 @@ class Markdown(object):
         text = self._form_paragraphs(text)
 
         return text
+
+    def _pyshell_block_sub(self, match):
+        lines = match.group(0).splitlines(0)
+        _dedentlines(lines)
+        indent = ' ' * self.tab_width
+        s = ('\n' # separate from possible cuddled paragraph
+             + indent + ('\n'+indent).join(lines)
+             + '\n\n')
+        return s
+        
+    def _prepare_pyshell_blocks(self, text):
+        """Ensure that Python interactive shell sessions are put in
+        code blocks -- even if not properly indented.
+        """
+        if ">>>" not in text:
+            return text
+
+        less_than_tab = self.tab_width - 1
+        _pyshell_block_re = re.compile(r"""
+            ^([ ]{0,%d})>>>[ ].*\n   # first line
+            ^(\1.*\S+.*\n)*         # any number of subsequent lines
+            ^\n                     # ends with a blank line
+            """ % less_than_tab, re.M | re.X)
+
+        return _pyshell_block_re.sub(self._pyshell_block_sub, text)
 
     def _run_span_gamut(self, text):
         # These are all the transformations that occur *within* block-level

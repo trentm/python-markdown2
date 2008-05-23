@@ -1,0 +1,17 @@
+# From Recipe 302035
+
+Some examples:
+
+>>> nprint(9876543210)
+'9 876 543 210'
+>>> nprint(987654321, period=1, delimiter=",")
+'9,8,7,6,5,4,3,2,1,0'
+
+Indented a bit:
+
+ >>> 1 + 1
+ 2
+
+Cuddled to previous para (and at end of document):
+>>> 2 + 2
+4
