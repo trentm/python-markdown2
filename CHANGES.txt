@@ -2,6 +2,7 @@
 
 ## python-markdown2 v1.0.1.4
 
+- [Issue 18] Allow spaces in the URL for link definitions.
 - [Issue 15] Fix some edge cases with backslash-escapes.
 - Fix this error that broken command-line usage:
 

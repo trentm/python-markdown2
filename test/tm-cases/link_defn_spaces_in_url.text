@@ -1,0 +1,7 @@
+This is [a link][1] and [another][2].
+
+This is a [crazy one][3] from issue18.
+
+[1]: javascript:alert("hi there"); 
+[2]: javascript:alert("hi again");  "that's twice now"
+[3]: /images/thumbs/phpThumb.php?src=/archive/img/1241/1241_10_game.jpg&w=200 ()

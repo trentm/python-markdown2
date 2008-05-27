@@ -472,25 +472,26 @@ class Markdown(object):
         # hash references.
         less_than_tab = self.tab_width - 1
     
-        # Link defs are in the form: ^[id]: url "optional title"
+        # Link defs are in the form:
+        #   [id]: url "optional title"
         _link_def_re = re.compile(r"""
             ^[ ]{0,%d}\[(.+)\]: # id = \1
               [ \t]*
               \n?               # maybe *one* newline
               [ \t]*
-            <?(\S+?)>?          # url = \2
-              [ \t]*
-              \n?               # maybe one newline
+            <?(.+?)>?           # url = \2
               [ \t]*
             (?:
+                \n?             # maybe one newline
+                [ \t]*
                 (?<=\s)         # lookbehind for whitespace
                 ['"(]
-                (.+?)           # title = \3
+                ([^\n]*)        # title = \3
                 ['")]
                 [ \t]*
             )?  # title is optional
             (?:\n+|\Z)
-            """ % less_than_tab, re.X | re.M)
+            """ % less_than_tab, re.X | re.M | re.U)
         return _link_def_re.sub(self._extract_link_def_sub, text)
 
     def _extract_link_def_sub(self, match):
