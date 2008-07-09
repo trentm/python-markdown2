@@ -45,7 +45,7 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 4) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 5) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -122,8 +122,12 @@ def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
                     use_file_vars=use_file_vars).convert(text)
 
 class Markdown(object):
-    # The set of "extras" to enable in processing. This can be set
-    # via (a) subclassing and (b) the constructor "extras" argument.
+    # The dict of "extras" to enable in processing -- a mapping of
+    # extra name to argument for the extra. Most extras do not have an
+    # argument, in which case the value is None.
+    #
+    # This can be set via (a) subclassing and (b) the constructor
+    # "extras" argument.
     extras = None
 
     urls = None
@@ -155,12 +159,15 @@ class Markdown(object):
             self.safe_mode = safe_mode
 
         if self.extras is None:
-            self.extras = set()
-        elif not isinstance(self.extras, set):
-            self.extras = set(self.extras)
+            self.extras = {}
+        elif not isinstance(self.extras, dict):
+            self.extras = dict([(e, None) for e in self.extras])
         if extras:
+            if not isinstance(extras, dict):
+                extras = dict([(e, None) for e in extras])
             self.extras.update(extras)
-        self._instance_extra = self.extras.copy()
+        assert isinstance(self.extras, dict)
+        self._instance_extras = self.extras.copy()
         self.link_patterns = link_patterns
         self.use_file_vars = use_file_vars
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
@@ -171,7 +178,7 @@ class Markdown(object):
         self.html_blocks = {}
         self.html_spans = {}
         self.list_level = 0
-        self.extras = self._instance_extra.copy()
+        self.extras = self._instance_extras.copy()
         if "footnotes" in self.extras:
             self.footnotes = {}
             self.footnote_ids = []
@@ -198,7 +205,16 @@ class Markdown(object):
             emacs_vars = self._get_emacs_vars(text)
             if "markdown-extras" in emacs_vars:
                 splitter = re.compile("[ ,]+")
-                self.extras.update(splitter.split(emacs_vars["markdown-extras"]))
+                for e in splitter.split(emacs_vars["markdown-extras"]):
+                    if '=' in e:
+                        ename, earg = e.split('=', 1)
+                        try:
+                            earg = int(earg)
+                        except ValueError:
+                            pass
+                    else:
+                        ename, earg = e, None
+                    self.extras[ename] = earg
 
         # Standardize line endings:
         text = re.sub("\r\n|\r", "\n", text)
@@ -925,6 +941,9 @@ class Markdown(object):
     _setext_h_re = re.compile(r'^(.+)[ \t]*\n(=+|-+)[ \t]*\n+', re.M)
     def _setext_h_sub(self, match):
         n = {"=": 1, "-": 2}[match.group(2)[0]]
+        demote_headers = self.extras.get("demote-headers")
+        if demote_headers:
+            n = min(n + demote_headers, 6)
         return "<h%d>%s</h%d>\n\n" \
                % (n, self._run_span_gamut(match.group(1)), n)
 
@@ -939,6 +958,9 @@ class Markdown(object):
         ''', re.X | re.M)
     def _atx_h_sub(self, match):
         n = len(match.group(1))
+        demote_headers = self.extras.get("demote-headers")
+        if demote_headers:
+            n = min(n + demote_headers, 6)
         return "<h%d>%s</h%d>\n\n" \
                % (n, self._run_span_gamut(match.group(2)), n)
 
@@ -1423,11 +1445,16 @@ class Markdown(object):
 
 
 class MarkdownWithExtras(Markdown):
-    """A markdowner class that enables all optional extras except:
+    """A markdowner class that enables most extras:
 
-    - code-friendly: because it *disables* part of the syntax
-    - link-patterns: because you need to specify some actual
-      link-patterns anyway
+    - footnotes
+    - code-color (only has effect if 'pygments' Python module on path)
+
+    These are not included:
+    - pyshell (specific to Python-related documenting)
+    - code-friendly (because it *disables* part of the syntax)
+    - link-patterns (because you need to specify some actual
+      link-patterns anyway)
     """
     extras = ["footnotes", "code-color"]
 
@@ -1674,7 +1701,8 @@ def main(argv=sys.argv):
                            "'code-friendly' disables _/__ for emphasis; "
                            "'code-color' adds code-block syntax coloring; "
                            "'link-patterns' adds auto-linking based on patterns; "
-                           "'footnotes' adds the footnotes syntax.")
+                           "'footnotes' adds the footnotes syntax;"
+                           "'pyshell' to put unindented Python interactive shell sessions in a <code> block.")
     parser.add_option("--use-file-vars",
                       help="Look for and use Emacs-style 'markdown-extras' "
                            "file var to turn on extras. See "
@@ -1694,9 +1722,19 @@ def main(argv=sys.argv):
         return _test()
 
     if opts.extras:
-        extras = set()
+        extras = {}
         for s in opts.extras:
-            extras.update( re.compile("[,;: ]+").split(s) )
+            splitter = re.compile("[,;: ]+")
+            for e in splitter.split(s):
+                if '=' in e:
+                    ename, earg = e.split('=', 1)
+                    try:
+                        earg = int(earg)
+                    except ValueError:
+                        pass
+                else:
+                    ename, earg = e, None
+                extras[ename] = earg
     else:
         extras = None
 

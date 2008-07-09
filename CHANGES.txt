@@ -1,5 +1,16 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.5
+
+- Add ability for 'extras' to have arguments. Internally the 'extras'
+  attribute of the Markdown class is a dict (it was a set).
+- Add "demote-headers" extra that will demote the markdown for, e.g., an h1
+  to h2-6 by the number of the demote-headers argument.
+      >>> markdown('# this would be an h1', extras={'demote-headers': 2})
+      u'<h3>this would be an h1</h3>\n'
+  This can be useful for user-supplied Markdown content for a sub-section of
+  a page.
+
 ## python-markdown2 v1.0.1.4
 
 - [Issue 18] Allow spaces in the URL for link definitions.
