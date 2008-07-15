@@ -10,6 +10,7 @@
 - test safe_mode on HTML in footnotes
 - markdown2.py on trentm.com/projects
 - setup.py stuff from Yannick.
+- http://www.freewisdom.org/projects/python-markdown/Available_Extensions
 - http://support.googlecode.com/svn/trunk/scripts/googlecode_distutils_upload.py
 - Extras.wiki desc of code-color option. Not sure I love the ":::name"
   markup for the lexer name.
