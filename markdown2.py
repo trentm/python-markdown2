@@ -38,14 +38,12 @@ text-to-HTML conversion tool for web writers.
 
 # Dev Notes:
 # - There is already a Python markdown processor
-#   (http://www.freewisdom.org/projects/python-markdown/) but (1) I've run
-#   into a number of problems with it (improper Markdown processing) and (2)
-#   emails to the author's given contact address have bounced.
+#   (http://www.freewisdom.org/projects/python-markdown/).
 # - Python's regex syntax doesn't have '\z', so I'm using '\Z'. I'm
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 5) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 6) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -425,6 +423,30 @@ class Markdown(object):
             \b                  # word break
             (.*\n)*?            # any number of lines, minimally matching
             .*</\2>             # the matching end tag
+            [ \t]*              # trailing spaces/tabs
+            (?=\n+|\Z)          # followed by a newline or end of document
+        )
+        """ % _block_tags_b,
+        re.X | re.M)
+    _liberal_tag_block_re = re.compile(r"""
+        (                       # save in \1
+            ^                   # start of line  (with re.M)
+            (?:
+                <(%s|\w+:\w+)   # start tag = \2
+                \b              # word break
+                (?:.*\n)*?      # any number of lines, minimally matching
+                .*</\2>         # the matching end tag
+            |
+                <(\w+:)?\w+     # single tag-start
+                \b              # word break
+                .*?             # any content on one line, minimally matching
+                />              # end of tag
+            |
+                <\?\w+          # start of processing instruction
+                \b              # word break
+                .*?             # any content on one line, minimally matching
+                \?>             # the PI end tag
+            )
             [ \t]*              # trailing spaces/tabs
             (?=\n+|\Z)          # followed by a newline or end of document
         )

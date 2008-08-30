@@ -1,0 +1,6 @@
+Third Chapter
+=============
+<?meta @notes @workinprogress?>
+Here comes the part that i'm still quite unsure about, but anyway:
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="chapter_1.md"/>
