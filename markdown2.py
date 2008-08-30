@@ -54,7 +54,10 @@ import sys
 from pprint import pprint
 import re
 import logging
-import md5
+try:
+    from hashlib import md5
+except ImportError:
+    from md5 import md5
 import optparse
 from random import random
 import codecs
@@ -87,8 +90,8 @@ def _escape_hash(s):
     # Lame attempt to avoid possible collision with someone actually
     # using the MD5 hexdigest of one of these chars in there text.
     # Other ideas: random.random(), uuid.uuid()
-    #return md5.md5(s).hexdigest()   # Markdown.pl effectively does this.
-    return 'md5:'+md5.md5(s).hexdigest()
+    #return md5(s).hexdigest()   # Markdown.pl effectively does this.
+    return 'md5:'+md5(s).hexdigest()
 g_escape_table = dict([(ch, _escape_hash(ch))
                        for ch in '\\`*_{}[]()>#+-.!'])
 
@@ -1426,7 +1429,7 @@ class Markdown(object):
                         .replace('*', g_escape_table['*'])
                         .replace('_', g_escape_table['_']))
                 link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
-                hash = md5.md5(link).hexdigest()
+                hash = md5(link).hexdigest()
                 link_from_hash[hash] = link
                 text = text[:start] + hash + text[end:]
         for hash, link in link_from_hash.items():
@@ -1664,7 +1667,7 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % ord(ch)
 
 def _hash_text(text):
-    return 'md5:'+md5.md5(text.encode("utf-8")).hexdigest()
+    return 'md5:'+md5(text.encode("utf-8")).hexdigest()
 
 
 #---- mainline

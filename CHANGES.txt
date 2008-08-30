@@ -1,5 +1,9 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.$next
+
+- Fix Python 2.6 deprecation warning about the `md5` module.
+
 ## python-markdown2 v1.0.1.5
 
 - Add ability for 'extras' to have arguments. Internally the 'extras'
