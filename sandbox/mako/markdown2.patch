@@ -1,0 +1,367 @@
+--- markdown2.py.116	2008-09-06 10:05:56.000000000 -0700
++++ markdown2.py.makowork	2008-02-03 12:30:15.000000000 -0800
+@@ -1,39 +1,38 @@
+ #!/usr/bin/env python
+ # Copyright (c) 2007 ActiveState Corp.
+ 
+-"""A fast and complete Python implementation of Markdown.
++r"""A fast and complete Python implementation of Markdown.
+ 
+ [from http://daringfireball.net/projects/markdown/]
+ > Markdown is a text-to-HTML filter; it translates an easy-to-read /
+ > easy-to-write structured text format into HTML.  Markdown's text
+ > format is most similar to that of plain text email, and supports
+ > features such as headers, *emphasis*, code blocks, blockquotes, and
+ > links.
+ >
+ > Markdown's syntax is designed not as a generic markup language, but
+ > specifically to serve as a front-end to (X)HTML. You can use span-level
+ > HTML tags anywhere in a Markdown document, and you can use block level
+ > HTML tags (like <div> and <table> as well).
+ 
+ Module usage:
+ 
+     >>> import markdown2
+-    >>> html = markdown2.markdown_path(path, ...)
+-    >>> markdown2.markdown("*boo!*", ...)
+-    <em>boo!</em>
++    >>> markdown2.markdown("*boo!*")   # also markdown2.markdown_path(<path>)
++    u'<p><em>boo!</em></p>\n'
+ 
+-    >>> markdowner = Markdown(...)
++    >>> markdowner = Markdown()
+     >>> markdowner.convert("*boo!*")
+-    <em>boo!</em>
++    u'<p><em>boo!</em></p>\n'
+     >>> markdowner.convert("**boom!**")
+-    <strong>boom!</strong>
++    u'<p><strong>boom!</strong></p>\n'
+ 
+ This implementation of Markdown implements the full "core" syntax plus a
+ number of extras (e.g., code syntax coloring, footnotes) as described on
+ <http://code.google.com/p/python-markdown2/wiki/Extras>.
+ """
+ 
+ cmdln_desc = """A fast and complete Python implementation of Markdown, a
+ text-to-HTML conversion tool for web writers.
+ """
+ 
+@@ -118,21 +117,21 @@
+                     safe_mode=safe_mode, extras=extras,
+                     link_patterns=link_patterns).convert(text)
+ 
+ class Markdown(object):
+     # The set of "extras" to enable in processing. This can be set
+     # via (a) subclassing and (b) the constructor "extras" argument.
+     extras = None
+ 
+     urls = None
+     titles = None
+-    html_blocks = None
++    html_blocks = None  # a HashTable instance
+     html_spans = None
+     html_removed_text = "[HTML_REMOVED]"  # for compat with markdown.py
+ 
+     # Used to track when we're inside an ordered or unordered list
+     # (see _ProcessListItems() for details):
+     list_level = 0
+ 
+     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
+ 
+     def __init__(self, html4tags=False, tab_width=4, safe_mode=None,
+@@ -157,21 +156,21 @@
+             self.extras = set(self.extras)
+         if extras:
+             self.extras.update(extras)
+         self._instance_extra = self.extras.copy()
+         self.link_patterns = link_patterns
+         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
+ 
+     def reset(self):
+         self.urls = {}
+         self.titles = {}
+-        self.html_blocks = {}
++        self.html_blocks = HashTable()
+         self.html_spans = {}
+         self.list_level = 0
+         self.extras = self._instance_extra.copy()
+         if "footnotes" in self.extras:
+             self.footnotes = {}
+             self.footnote_ids = []
+ 
+     def convert(self, text):
+         """Convert the given text."""
+         # Main function. The order in which other subs are called here is
+@@ -206,20 +205,23 @@
+ 
+         # Strip any lines consisting only of spaces and tabs.
+         # This makes subsequent regexen easier to write, because we can
+         # match consecutive blank lines with /\n+/ instead of something
+         # contorted like /[ \t]*\n+/ .
+         text = self._ws_only_line_re.sub("", text)
+ 
+         if self.safe_mode:
+             text = self._hash_html_spans(text)
+ 
++        if "mako" in self.extras:
++            text = self._hash_mako_blocks(text)
++
+         # Turn block-level HTML blocks into hash entries
+         text = self._hash_html_blocks(text, raw=True)
+ 
+         # Strip link definitions, store in hashes.
+         if "footnotes" in self.extras:
+             # Must do footnotes first because an unlucky footnote defn
+             # looks like a link defn:
+             #   [^4]: this "looks like a link defn"
+             text = self._strip_footnote_definitions(text)
+         text = self._strip_link_definitions(text)
+@@ -404,23 +406,22 @@
+             [ \t]*              # trailing spaces/tabs
+             (?=\n+|\Z)          # followed by a newline or end of document
+         )
+         """ % _block_tags_b,
+         re.X | re.M)
+ 
+     def _hash_html_block_sub(self, match, raw=False):
+         html = match.group(1)
+         if raw and self.safe_mode:
+             html = self._sanitize_html(html)
+-        key = _hash_text(html)
+-        self.html_blocks[key] = html
+-        return "\n\n" + key + "\n\n"
++        hash = self.html_blocks.add(html)
++        return "\n\n" + hash + "\n\n"
+ 
+     def _hash_html_blocks(self, text, raw=False):
+         """Hashify HTML blocks
+ 
+         We only want to do this for block-level HTML tags, such as headers,
+         lists, and tables. That's because we still want to wrap <p>s around
+         "paragraphs" that are wrapped in non-block-level tags, such as anchors,
+         phrase emphasis, and spans. The list of tags we're looking for is
+         hard-coded.
+ 
+@@ -455,20 +456,76 @@
+             _hr_tag_re = _hr_tag_re_from_tab_width(self.tab_width)
+             text = _hr_tag_re.sub(hash_html_block_sub, text)
+ 
+         # Special case for standalone HTML comments:
+         if "<!--" in text:
+             _html_comment_re = _html_comment_re_from_tab_width(self.tab_width)
+             text = _html_comment_re.sub(hash_html_block_sub, text)
+ 
+         return text
+ 
++    _mako_regexes = [
++        # http://www.makotemplates.org/docs/syntax.html
++        # Ordering of these regexes is important.
++
++        # Python Blocks
++        re.compile(r'''
++            <%!?\B.*?%>
++            [ \t]*              # trailing spaces/tabs
++            (?=\n+|\Z)          # followed by a newline or end of document
++            ''', re.M | re.S | re.X),
++
++        # Tags
++        # - Block tags
++        re.compile(r'''
++            <%(def|call|doc|text)\b.*?>
++            .*?
++            </%\1>
++            [ \t]*              # trailing spaces/tabs
++            (?=\n+|\Z)          # followed by a newline or end of document
++            ''', re.M | re.S | re.X),
++        # - Single tag
++        re.compile(r'''
++            <%(page|include|namespace|inherit)\b.*?/>
++            [ \t]*              # trailing spaces/tabs
++            (?=\n+|\Z)          # followed by a newline or end of document
++            ''', re.M | re.S | re.X),
++
++        # Control Structures
++        # Note: don't support "Newline Filters".
++        re.compile(r'''
++            ^[ \t]*%[ \t]*(for|if)
++            .*?
++            ^[ \t]*%[ \t]*end\1
++            [ \t]*              # trailing spaces/tabs
++            (?=\n+|\Z)          # followed by a newline or end of document
++            ''', re.M | re.S | re.X),
++
++        # Comments
++        # Note: don't support "Newline Filters".
++        re.compile(r'^[ \t]*##.*?$', re.M),
++
++        # Expression Substitution
++        re.compile(r'\${.*?}'),
++    ]
++
++    def _hash_mako_block_sub(self, match):
++        mako_block = match.group(0)
++        key = _hash_text(mako_block)
++        hash = self.html_blocks.add(mako_block)
++        return "\n\n" + hash + "\n\n"
++
++    def _hash_mako_blocks(self, text):
++        for regex in self._mako_regexes:
++            text = regex.sub(self._hash_mako_block_sub, text)
++        return text
++
+     def _strip_link_definitions(self, text):
+         # Strips link definitions from text, stores the URLs and titles in
+         # hash references.
+         less_than_tab = self.tab_width - 1
+     
+         # Link defs are in the form: ^[id]: url "optional title"
+         _link_def_re = re.compile(r"""
+             ^[ ]{0,%d}\[(.+)\]: # id = \1
+               [ \t]*
+               \n?               # maybe *one* newline
+@@ -597,21 +654,21 @@
+     
+         # Do hard breaks:
+         text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
+     
+         return text
+ 
+     # "Sorta" because auto-links are identified as "tag" tokens.
+     _sorta_html_tokenize_re = re.compile(r"""
+         (
+             # tag
+-            </?         
++            </?         #TODO: append '%?' for Mako, how best to do this?
+             (?:\w+)                                     # tag name
+             (?:\s+(?:[\w-]+:)?[\w-]+=(?:".*?"|'.*?'))*  # attributes
+             \s*/?>
+             |
+             # auto-link (e.g., <http://www.activestate.com/>)
+             <\w+[^>]*>
+             |
+             <!--.*?-->      # comment
+             |
+             <\?.*?\?>       # processing instruction
+@@ -1227,21 +1284,21 @@
+ 
+     def _form_paragraphs(self, text):
+         # Strip leading and trailing lines:
+         text = text.strip('\n')
+ 
+         # Wrap <p> tags.
+         grafs = re.split(r"\n{2,}", text)
+         for i, graf in enumerate(grafs):
+             if graf in self.html_blocks:
+                 # Unhashify HTML blocks
+-                grafs[i] = self.html_blocks[graf]
++                grafs[i] = self.html_blocks.unhash(graf)
+             else:
+                 # Wrap <p> tags.
+                 graf = self._run_span_gamut(graf)
+                 grafs[i] = "<p>" + graf.lstrip(" \t") + "</p>"
+ 
+         return "\n\n".join(grafs)
+ 
+     def _add_footnotes(self, text):
+         if self.footnotes:
+             footer = [
+@@ -1376,20 +1433,56 @@
+ 
+     - code-friendly: because it *disables* part of the syntax
+     - link-patterns: because you need to specify some actual
+       link-patterns anyway
+     """
+     extras = ["footnotes", "code-color"]
+ 
+ 
+ #---- internal support functions
+ 
++class HashTable(dict):
++    """A table for mapping hashed versions of text. Basically
++    it is a {<hash>: <text>} dictionary with the .add() and .unhash()
++    convenience methods.
++
++        >>> tbl = HashTable()
++        >>> hash = tbl.add("foo")
++        >>> hash
++        '!{hash}acbd18db4cc2f85cedef654fccc4a4d8!'
++        >>> hash in tbl
++        True
++        >>> tbl[hash]
++        'foo'
++        >>> tbl.unhash("bar %s bar" % hash)
++        'bar foo bar'
++    """
++    def add(self, text):
++        hash = _hash_text(text)
++        self[hash] = text
++        return hash
++
++    _hash_re = re.compile("!{hash}[0-9a-z]{32}!")
++    def _unhash_sub(self, match):
++        hash = match.group(0)
++        if hash in self:
++            return self.unhash(self[hash])
++        else:
++            return hash
++
++    def unhash(self, text):
++        if "!{hash}" not in text:
++            return text
++        return self._hash_re.sub(self._unhash_sub, text)
++
++
++
+ # From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52549
+ def _curry(*args, **kwargs):
+     function, args = args[0], args[1:]
+     def result(*rest, **kwrest):
+         combined = kwargs.copy()
+         combined.update(kwrest)
+         return function(*args + rest, **combined)
+     return result
+ 
+ # Recipe: regex_from_encoded_pattern (1.0)
+@@ -1579,21 +1672,21 @@
+     # '@' *must* be encoded. I [John Gruber] insist.
+     if r > 0.9 and ch != "@":
+         return ch
+     elif r < 0.45:
+         # The [1:] is to drop leading '0': 0x63 -> x63
+         return '&#%s;' % hex(ord(ch))[1:]
+     else:
+         return '&#%s;' % ord(ch)
+ 
+ def _hash_text(text):
+-    return '!'+md5.md5(text.encode("utf-8")).hexdigest()+'!'
++    return '!{hash}'+md5.md5(text.encode("utf-8")).hexdigest()+'!'
+ 
+ 
+ #---- mainline
+ 
+ class _NoReflowFormatter(optparse.IndentedHelpFormatter):
+     """An optparse formatter that does NOT reflow the description."""
+     def format_description(self, description):
+         return description or ""
+ 
+ def _test():
+@@ -1668,18 +1761,17 @@
+     markdown_pl = join(dirname(__file__), "test", "Markdown.pl")
+     for path in paths:
+         if opts.compare:
+             print "-- Markdown.pl"
+             os.system('perl %s "%s"' % (markdown_pl, path))
+             print "-- markdown2.py"
+         html = markdown_path(path, encoding=opts.encoding,
+                              html4tags=opts.html4tags,
+                              safe_mode=opts.safe_mode,
+                              extras=extras, link_patterns=link_patterns)
+-        sys.stdout.write(
+-            html.encode(sys.stdout.encoding, 'xmlcharrefreplace'))
++        sys.stdout.write(html.encode(sys.stdout.encoding, "xmlcharrefreplace"))
+ 
+ 
+ if __name__ == "__main__":
+     logging.basicConfig()
+     sys.exit( main(sys.argv) )
+ 
