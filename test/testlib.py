@@ -49,7 +49,7 @@
 # - Make the quiet option actually quiet.
 
 __revision__ = "$Id$"
-__version_info__ = (0, 4, 0)
+__version_info__ = (0, 5, 0)
 __version__ = '.'.join(map(str, __version_info__))
 
 
@@ -240,10 +240,13 @@ def testmods_from_testdir(testdir):
         try:
             iinfo = imp.find_module(testmod_name, [dirname(testmod_path)])
             sys.path.insert(0, testdir)
+            old_dir = os.getcwd()
+            os.chdir(testdir)
             try:
                 testmod = imp.load_module(testmod_name, *iinfo)
             finally:
-                del sys.path[0]
+                os.chdir(old_dir)
+                sys.path.remove(testdir)
         except TestSkipped, ex:
             log.warn("'%s' module skipped: %s", testmod_name, ex)
         except Exception, ex:
@@ -317,7 +320,6 @@ def tests_from_manifest(testdir_from_ns):
     (b) each TestCase-subclass in
     (c) each "test_*" Python module in
     (d) each test dir in the manifest.
-    
     
     If a "test_*" module has a top-level "test_suite_class", it will later
     be used to group all test cases from that module into an instance of that
@@ -460,7 +462,7 @@ def list_tests(testdir_from_ns, tags):
 
 #---- text test runner that can handle TestSkipped reasonably
 
-class _ConsoleTestResult(unittest.TestResult):
+class ConsoleTestResult(unittest.TestResult):
     """A test result class that can print formatted text results to a stream.
 
     Used by ConsoleTestRunner.
@@ -534,9 +536,9 @@ class ConsoleTestRunner:
     def __init__(self, stream=sys.stderr):
         self.stream = stream
 
-    def run(self, test_or_suite):
+    def run(self, test_or_suite, test_result_class=ConsoleTestResult):
         """Run the given test case or test suite."""
-        result = _ConsoleTestResult(self.stream)
+        result = test_result_class(self.stream)
         start_time = time.time()
         test_or_suite.run(result)
         time_taken = time.time() - start_time
