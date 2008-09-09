@@ -40,6 +40,7 @@ if sys.version_info < (2, 3):
         _setup(**kwargs)
 
 doclines = __doc__.split("\n")
+script = (sys.platform == "win32" and "lib\\markdown2.py" or "bin/markdown2")
 
 setup(name="markdown2",
       version=markdown2.__version__,
@@ -48,6 +49,9 @@ setup(name="markdown2",
       url="http://code.google.com/p/python-markdown2/",
       license="http://www.opensource.org/licenses/mit-license.php",
       platforms=["any"],
+      py_modules=["markdown2"],
+      package_dir={"": "lib"},
+      scripts=[script],
       description=doclines[0],
       classifiers=filter(None, classifiers.split("\n")),
       long_description="\n".join(doclines[2:]),

@@ -27,6 +27,11 @@ class site(Task):
     def make(self):
         webbrowser.open("http://code.google.com/p/python-markdown2/")
 
+class sdist(Task):
+    """python setup.py sdist"""
+    def make(self):
+        run_in_dir("python setup.py sdist", self.dir, self.log.debug)
+
 class test(Task):
     """Run all tests (except known failures)."""
     def make(self):

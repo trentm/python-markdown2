@@ -1,0 +1,7 @@
+include Makefile.py
+include CHANGES.txt
+include LICENSE.txt
+include README.txt
+include TODO.txt
+include test/api.doctests
+recursive-include test/tm-cases *.text *.html *.opts *.tags
