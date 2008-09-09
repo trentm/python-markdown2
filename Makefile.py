@@ -32,6 +32,20 @@ class sdist(Task):
     def make(self):
         run_in_dir("python setup.py sdist", self.dir, self.log.debug)
 
+class pypi(Task):
+    """Update release to pypi."""
+    def make(self):
+        tasks = (sys.platform == "win32"
+                 and "sdist bdist_wininst upload"
+                 or "sdist upload")
+        #run_in_dir("python setup.py %s" % tasks, self.dir, self.log.debug)
+        sys.path.insert(0, join(self.dir, "lib"))
+        import markdown2
+        url = "http://pypi.python.org/pypi/markdown2/%s" % markdown2.__version__
+        import webbrowser
+        webbrowser.open_new(url)
+
+
 class test(Task):
     """Run all tests (except known failures)."""
     def make(self):

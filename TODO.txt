@@ -1,3 +1,4 @@
+- add task to upload built package to Google Code as well
 - add description of pyshell and demote-headers extras to wiki
 - to bring up on markdown-discuss:
     - the trailing '#' escaping in DoHeaders (provide a patch for this)
