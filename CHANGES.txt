@@ -1,5 +1,13 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.7
+
+- Add a proper setup.py and release to pypi:
+  http://pypi.python.org/pypi/markdown2/
+- Move markdown2.py module to a lib subdir. This allows one to put the "lib"
+  dir of a source checkout (e.g. via an svn:externals) on ones Python Path
+  without have the .py files at the top-level getting in the way.
+
 ## python-markdown2 v1.0.1.6
 
 - Fix Python 2.6 deprecation warning about the `md5` module.

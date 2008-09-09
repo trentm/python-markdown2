@@ -38,10 +38,10 @@ class pypi(Task):
         tasks = (sys.platform == "win32"
                  and "sdist bdist_wininst upload"
                  or "sdist upload")
-        #run_in_dir("python setup.py %s" % tasks, self.dir, self.log.debug)
+        run_in_dir("python setup.py %s" % tasks, self.dir, self.log.debug)
+
         sys.path.insert(0, join(self.dir, "lib"))
-        import markdown2
-        url = "http://pypi.python.org/pypi/markdown2/%s" % markdown2.__version__
+        url = "http://pypi.python.org/pypi/markdown2/"
         import webbrowser
         webbrowser.open_new(url)
 
