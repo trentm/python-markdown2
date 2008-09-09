@@ -5,7 +5,7 @@ number of "*.text" files to process.
 
 Example:
     python gen_perf_cases.py    # generate a couple cases dirs
-    python perf.py all tmp-test-cases
+    python perf.py tmp-test-cases
 """
 
 import os
@@ -52,7 +52,7 @@ def hotshot_markdown2_py(cases_dir, repeat):
     time_markdown2_py(cases_dir, repeat)
 
 def time_markdown2_py(cases_dir, repeat):
-    sys.path.insert(0, "..")
+    sys.path.insert(0, "../lib")
     import markdown2
     del sys.path[0]
     markdowner = markdown2.Markdown()

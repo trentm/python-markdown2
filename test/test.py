@@ -16,8 +16,11 @@ testdir_from_ns = {
 }
 
 def setup():
-    externals_dir = join(dirname(dirname(abspath(__file__))), "externals")
-    pygments_dir = join(externals_dir, "pygments")
+    top_dir = dirname(dirname(abspath(__file__)))
+    lib_dir = join(top_dir, "lib")
+    sys.path.insert(0, lib_dir)
+
+    pygments_dir = join(top_dir, "externals", "pygments")
     if exists(pygments_dir):
         sys.path.insert(0, pygments_dir)
 

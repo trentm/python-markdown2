@@ -30,4 +30,4 @@
 
 
 
-[Python Cookbook]: http://aspn.activestate.com/ASPN/Python/Cookbook/
+[Python Cookbook]: http://code.activestate.com/recipes/

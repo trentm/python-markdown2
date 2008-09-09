@@ -14,6 +14,7 @@
 - http://support.googlecode.com/svn/trunk/scripts/googlecode_distutils_upload.py
 - Extras.wiki desc of code-color option. Not sure I love the ":::name"
   markup for the lexer name.
+- update MDTest tests from http://git.michelf.com/mdtest/
 - find more unicode edge cases (look for any usage of md5() and make that
   unicode)
 - update MDTest 1.1? (see

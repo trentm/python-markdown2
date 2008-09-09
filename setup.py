@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""markdown2: A fast and complete Python implementaion of Markdown.
+"""markdown2: A fast and complete Python implementaion of Markdown.
 
 Markdown is a text-to-HTML filter; it translates an easy-to-read /
 easy-to-write structured text format into HTML.  Markdown's text
@@ -12,7 +12,10 @@ This is a fast and complete Python implementation of the Markdown
 spec.
 """
 
+import sys
 from distutils.core import setup
+
+sys.path.insert(0, "lib")
 import markdown2
 
 
