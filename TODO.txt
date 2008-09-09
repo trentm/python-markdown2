@@ -28,6 +28,7 @@
     - setup.py, easy_install, pypi
     - e.g.:
       http://gitorious.org/projects/git-python/repos/mainline/trees/master
+    - http://www.python.org/~jeremy/weblog/030924.html
 - get on http://en.wikipedia.org/wiki/Markdown
 - announce: python-announce
 - ask about remaining two MarkdownTest test failures
