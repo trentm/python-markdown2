@@ -49,7 +49,7 @@
 # - Make the quiet option actually quiet.
 
 __revision__ = "$Id$"
-__version_info__ = (0, 5, 0)
+__version_info__ = (0, 5, 1)
 __version__ = '.'.join(map(str, __version_info__))
 
 
@@ -378,11 +378,11 @@ def tests_from_manifest_and_tags(testdir_from_ns, tags):
 def test(testdir_from_ns, tags=[], setup_func=None):
     log.debug("test(testdir_from_ns=%r, tags=%r, ...)",
               testdir_from_ns, tags)
+    if setup_func is not None:
+        setup_func()
     tests = list(tests_from_manifest_and_tags(testdir_from_ns, tags))
     if not tests:
         return None
-    if tests and setup_func is not None:
-        setup_func()
     
     # Groups test cases into a test suite class given by their test module's
     # "test_suite_class" hook, if any.
