@@ -1,3 +1,4 @@
+- fix the r135 xml option, add xml extra for it (see email)
 - add task to upload built package to Google Code as well
 - add description of pyshell and demote-headers extras to wiki
 - to bring up on markdown-discuss:

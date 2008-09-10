@@ -1786,8 +1786,9 @@ def main(argv=sys.argv):
     else:
         link_patterns = None
 
-    from os.path import join, dirname
-    markdown_pl = join(dirname(__file__), "test", "Markdown.pl")
+    from os.path import join, dirname, abspath
+    markdown_pl = join(dirname(dirname(abspath(__file__))), "test",
+                       "Markdown.pl")
     for path in paths:
         if opts.compare:
             print "-- Markdown.pl"
