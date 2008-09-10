@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# Copyright (c) 2007 ActiveState Software Inc.
-# See the file LICENSE.txt for licensing information.
+# Copyright (c) 2007-2008 ActiveState Software Inc.
+# License: MIT (http://www.opensource.org/licenses/mit-license.php)
 
 """Test the Python markdown2.py."""
 

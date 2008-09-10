@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.8
+
+- License note updates to facilitate Thomas Moschny building a package for
+  Fedora Core Linux. No functional change.
+
 ## python-markdown2 v1.0.1.7
 
 - Add a proper setup.py and release to pypi:

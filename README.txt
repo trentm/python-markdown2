@@ -64,31 +64,6 @@ License
 
 This project is licensed under the MIT License. 
 
-Note that in the source repository there are a few files (for the test suite
-and performance metrics) that are under different licenses. None of these
-files are included in the source packages. These exceptions are as follows:
-
-- perf/recipes.pprint: Python License
-
-  This file includes a number of real-world examples of Markdown from the
-  ActiveState Python Cookbook, used for doing some performance testing of
-  markdown2.py
-
-- test/php-markdown-cases/* & test/php-markdown-extra-cases/*
-
-  These are copies of the MarkdownTest-1.0 and MDTest packages announced on
-  the markdown-discuss list.
-
-- test/markdown.py: GPL 2 or BSD
-
-  A copy (currently old) of Python-Markdown -- the other Python Markdown
-  implementation.
-
-- test/markdown.php: BSD-style
-
-  This is PHP Markdown (http://michelf.com/projects/php-markdown/).
-
-- test/Markdown.pl: BSD-style
-
-  A copy of Perl Markdown (http://daringfireball.net/projects/markdown/).
-
+Note that in the subversion repository there are a few files (for the test
+suite and performance metrics) that are under different licenses. These files
+are *not* included in source packages. See LICENSE.txt for details.

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# Copyright (c) 2007 ActiveState Corp.
+# Copyright (c) 2007-2008 ActiveState Corp.
+# License: MIT (http://www.opensource.org/licenses/mit-license.php)
 
 r"""A fast and complete Python implementation of Markdown.
 
@@ -43,10 +44,9 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 7) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 8) # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
-__license__ = "MIT (http://www.opensource.org/licenses/mit-license.php)"
 
 import os
 import sys
@@ -1705,6 +1705,9 @@ def _test():
     doctest.testmod()
 
 def main(argv=sys.argv):
+    if not logging.root.handlers:
+        logging.basicConfig()
+
     usage = "usage: %prog [PATHS...]"
     version = "%prog "+__version__
     parser = optparse.OptionParser(prog="markdown2", usage=usage,
@@ -1800,6 +1803,5 @@ def main(argv=sys.argv):
 
 
 if __name__ == "__main__":
-    logging.basicConfig()
     sys.exit( main(sys.argv) )
 

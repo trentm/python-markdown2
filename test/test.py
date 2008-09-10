@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# Copyright (c) 2007 ActiveState Software Inc.
+# Copyright (c) 2007-2008 ActiveState Software Inc.
+# License: MIT (http://www.opensource.org/licenses/mit-license.php)
 
 """The markdown2 test suite entry point."""
 
