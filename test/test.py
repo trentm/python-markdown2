@@ -26,8 +26,14 @@ def setup():
         sys.path.insert(0, pygments_dir)
 
 if __name__ == "__main__":
+    default_tags = ["-knownfailure"]
+    try:
+        import pygments
+    except ImportError:
+        # Skip pygments tests.
+        default_tags.append("-pygments")
     retval = testlib.harness(testdir_from_ns=testdir_from_ns,
                              setup_func=setup,
-                             default_tags=["-knownfailure"])
+                             default_tags=default_tags)
     sys.exit(retval)
 
