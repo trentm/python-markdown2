@@ -1,6 +1,6 @@
 #!python
-# Copyright (c) 2000-2006 ActiveState Software Inc.
-# See the file LICENSE.txt for licensing information.
+# Copyright (c) 2000-2008 ActiveState Software Inc.
+# License: MIT License (http://www.opensource.org/licenses/mit-license.php)
 
 """
     test suite harness
@@ -17,6 +17,7 @@
         -h, --help      print this text and exit
         -l, --list      Just list the available test modules. You can also
                         specify tags to play with module filtering.
+        -n, --no-default-tags   Ignore default tags
         -L <directive>  Specify a logging level via
                             <logname>:<levelname>
                         For example:
@@ -49,7 +50,7 @@
 # - Make the quiet option actually quiet.
 
 __revision__ = "$Id$"
-__version_info__ = (0, 5, 1)
+__version_info__ = (0, 6, 2)
 __version__ = '.'.join(map(str, __version_info__))
 
 
@@ -239,14 +240,15 @@ def testmods_from_testdir(testdir):
         log.debug("import test module '%s'", testmod_path)
         try:
             iinfo = imp.find_module(testmod_name, [dirname(testmod_path)])
-            sys.path.insert(0, testdir)
+            testabsdir = abspath(testdir)
+            sys.path.insert(0, testabsdir)
             old_dir = os.getcwd()
             os.chdir(testdir)
             try:
                 testmod = imp.load_module(testmod_name, *iinfo)
             finally:
                 os.chdir(old_dir)
-                sys.path.remove(testdir)
+                sys.path.remove(testabsdir)
         except TestSkipped, ex:
             log.warn("'%s' module skipped: %s", testmod_name, ex)
         except Exception, ex:
@@ -619,12 +621,13 @@ def _indent(s, width=4, skip_first_line=False):
 #
 #    return opts, raw_tags
 
-def _parse_opts(args):
+def _parse_opts(args, default_tags):
     """_parse_opts(args) -> (log_level, action, tags)"""
-    opts, raw_tags = getopt.getopt(args, "hvqdlL:",
-        ["help", "verbose", "quiet", "debug", "list"])
+    opts, raw_tags = getopt.getopt(args, "hvqdlL:n",
+        ["help", "verbose", "quiet", "debug", "list", "no-default-tags"])
     log_level = logging.WARN
     action = "test"
+    no_default_tags = False
     for opt, optarg in opts:
         if opt in ("-h", "--help"):
             action = "help"
@@ -636,6 +639,8 @@ def _parse_opts(args):
             log_level = logging.DEBUG
         elif opt in ("-l", "--list"):
             action = "list"
+        elif opt in ("-n", "--no-default-tags"):
+            no_default_tags = True
         elif opt == "-L":
             # Optarg is of the form '<logname>:<levelname>', e.g.
             # "codeintel:DEBUG", "codeintel.db:INFO".
@@ -644,7 +649,10 @@ def _parse_opts(args):
             logging.getLogger(lname).setLevel(llevel)
 
     # Clean up the given tags.
-    tags = []
+    if no_default_tags:
+        tags = []
+    else:
+        tags = default_tags
     for raw_tag in raw_tags:
         if splitext(raw_tag)[1] in (".py", ".pyc", ".pyo", ".pyw") \
            and exists(raw_tag):
@@ -662,7 +670,7 @@ def _parse_opts(args):
 
 
 def harness(testdir_from_ns={None: os.curdir}, argv=sys.argv,
-            setup_func=None):
+            setup_func=None, default_tags=None):
     """Convenience mainline for a test harness "test.py" script.
 
         "testdir_from_ns" (optional) is basically a set of directories in
@@ -675,6 +683,7 @@ def harness(testdir_from_ns={None: os.curdir}, argv=sys.argv,
         "setup_func" (optional) is a callable that will be called once
             before any tests are run to prepare for the test suite. It
             is not called if no tests will be run.
+        "default_tags" (optional)
     
     Typically, if you have a number of test_*.py modules you can create
     a test harness, "test.py", for them that looks like this:
@@ -686,7 +695,7 @@ def harness(testdir_from_ns={None: os.curdir}, argv=sys.argv,
     """
     logging.basicConfig()
     try:
-        log_level, action, tags = _parse_opts(argv[1:])
+        log_level, action, tags = _parse_opts(argv[1:], default_tags)
     except getopt.error, ex:
         log.error(str(ex) + " (did you need a '--' before a '-TAG' argument?)")
         return 1
