@@ -13,10 +13,26 @@ spec.
 """
 
 import sys
+import distutils
 from distutils.core import setup
 
 sys.path.insert(0, "lib")
 import markdown2
+
+#TODO: Get googleupload working. Problem now is that distutils name
+#      "markdown2" is not the same as google code name "python-markdown2".
+#try:
+#    from googlecode_distutils_upload import upload as googleupload
+#except ImportError:
+#    class googleupload(distutils.core.Command):
+#        user_options = []
+#        def __init__(self, *args, **kwargs):
+#            sys.stderr.write("""\
+#error: Install the following modules in site-packages to upload:
+# http://support.googlecode.com/svn/trunk/scripts/googlecode_distutils_upload.py
+# http://support.googlecode.com/svn/trunk/scripts/googlecode_upload.py
+#""")
+#            sys.exit(3)
 
 
 classifiers = """\
@@ -55,5 +71,6 @@ setup(name="markdown2",
       description=doclines[0],
       classifiers=filter(None, classifiers.split("\n")),
       long_description="\n".join(doclines[2:]),
+      #cmdclass={'googleupload': googleupload},
       )
 
