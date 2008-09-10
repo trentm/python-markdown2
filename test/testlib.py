@@ -49,8 +49,7 @@
 # - See the optparse "TODO" below.
 # - Make the quiet option actually quiet.
 
-__revision__ = "$Id$"
-__version_info__ = (0, 6, 2)
+__version_info__ = (0, 6, 3)
 __version__ = '.'.join(map(str, __version_info__))
 
 
@@ -693,9 +692,10 @@ def harness(testdir_from_ns={None: os.curdir}, argv=sys.argv,
             retval = testlib.harness()
             sys.exit(retval)
     """
-    logging.basicConfig()
+    if not logging.root.handlers:
+        logging.basicConfig()
     try:
-        log_level, action, tags = _parse_opts(argv[1:], default_tags)
+        log_level, action, tags = _parse_opts(argv[1:], default_tags or [])
     except getopt.error, ex:
         log.error(str(ex) + " (did you need a '--' before a '-TAG' argument?)")
         return 1
