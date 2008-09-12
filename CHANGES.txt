@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 v1.0.1.8+
+## python-markdown2 v1.0.1.9
 
 - Fix bug in processing text with two HTML comments, where the first comment
   is cuddled to other content. See "test/tm-cases/two_comments.text". Noted
