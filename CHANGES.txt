@@ -1,5 +1,9 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.9+
+
+(nothing yet)
+
 ## python-markdown2 v1.0.1.9
 
 - Fix bug in processing text with two HTML comments, where the first comment

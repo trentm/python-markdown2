@@ -44,7 +44,7 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 9) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 9, '+') # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
