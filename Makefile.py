@@ -30,21 +30,18 @@ class site(Task):
 class sdist(Task):
     """python setup.py sdist"""
     def make(self):
-        prefix = ""
-        if sys.platform == "darwin":
-            # http://forums.macosxhints.com/archive/index.php/t-43243.html
-            # This is an Apple customization to `tar` to avoid creating
-            # '._foo' files for extended-attributes for archived files.
-            prefix = "COPY_EXTENDED_ATTRIBUTES_DISABLE=1 "
-        run_in_dir("%spython setup.py sdist" % prefix, self.dir, self.log.debug)
+        run_in_dir("%spython setup.py sdist" % _setup_command_prefix(),
+                   self.dir, self.log.debug)
 
 class pypi(Task):
     """Update release to pypi."""
+    deps = ["sdist"]
     def make(self):
         tasks = (sys.platform == "win32"
                  and "sdist bdist_wininst upload"
                  or "sdist upload")
-        run_in_dir("python setup.py %s" % tasks, self.dir, self.log.debug)
+        run_in_dir("%spython setup.py %s" % (_setup_command_prefix(), tasks),
+                   self.dir, self.log.debug)
 
         sys.path.insert(0, join(self.dir, "lib"))
         url = "http://pypi.python.org/pypi/markdown2/"
@@ -284,5 +281,13 @@ def _paths_from_path_patterns(path_patterns, files=True, dirs="never",
             elif files and _should_include_path(path, includes, excludes):
                 yield path
 
+def _setup_command_prefix():
+    prefix = ""
+    if sys.platform == "darwin":
+        # http://forums.macosxhints.com/archive/index.php/t-43243.html
+        # This is an Apple customization to `tar` to avoid creating
+        # '._foo' files for extended-attributes for archived files.
+        prefix = "COPY_EXTENDED_ATTRIBUTES_DISABLE=1 "
+    return prefix
 
 
