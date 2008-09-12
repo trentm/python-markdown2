@@ -1,12 +1,6 @@
 - fix the r135 xml option, add xml extra for it (see email)
-    - two_comments.txt bug: test case, fix (related to reported
-      comment|para|comment bug? how about not allowing '--' inside comment
-      regex?)
-    - m2 --compare barsimple.txt
-    - m2 --compare barnodiv.txt
-    - m2 --compare bar.txt
-    - python test.py cuddled_with_para
 - add task to upload built package to Google Code as well
+    Need to fix the Google upload distutils task limitation first.
 - add description of pyshell and demote-headers extras to wiki
 - to bring up on markdown-discuss:
     - the trailing '#' escaping in DoHeaders (provide a patch for this)
