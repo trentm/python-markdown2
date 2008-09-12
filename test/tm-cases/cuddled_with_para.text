@@ -1,0 +1,33 @@
+# Cuddled with paragraph
+
+<?meta command?>
+Paragraph preceded by an XML processing instruction.
+
+<!-- comment -->
+Paragraph preceded by an HTML/XML comment.
+
+<img src="bar.png"/>
+Paragraph preceded by an HTML span element.
+
+<div>div1</div>
+Paragraph preceded by an HTML block element.
+
+
+# Not cuddled with paragraph
+
+<?meta command?>
+
+Paragraph preceded by an XML processing instruction.
+
+<!-- comment -->
+
+Paragraph preceded by an HTML/XML comment.
+
+<img src="bar.png"/>
+
+Paragraph preceded by an HTML span element.
+
+<div>div2</div>
+
+Paragraph preceded by an HTML block element.
+

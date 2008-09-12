@@ -44,7 +44,7 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 8) # first three nums match Markdown.pl
+__version_info__ = (1, 0, 1, 8, '+') # first three nums match Markdown.pl
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -429,7 +429,9 @@ class Markdown(object):
         )
         """ % _block_tags_b,
         re.X | re.M)
-    _liberal_tag_block_re = re.compile(r"""
+
+    # Save for usage in coming 'xml' extra.
+    XXX_liberal_tag_block_re = re.compile(r"""
         (                       # save in \1
             ^                   # start of line  (with re.M)
             (?:
@@ -504,8 +506,58 @@ class Markdown(object):
 
         # Special case for standalone HTML comments:
         if "<!--" in text:
-            _html_comment_re = _html_comment_re_from_tab_width(self.tab_width)
-            text = _html_comment_re.sub(hash_html_block_sub, text)
+            start = 0
+            while True:
+                # Delimiters for next comment block.
+                try:
+                    start_idx = text.index("<!--", start)
+                except ValueError, ex:
+                    break
+                try:
+                    end_idx = text.index("-->", start_idx) + 3
+                except ValueError, ex:
+                    break
+
+                # Start position for next comment block search.
+                start = end_idx
+
+                # Validate whitespace before comment.
+                if start_idx:
+                    # - Up to `tab_width - 1` spaces before start_idx.
+                    for i in range(self.tab_width - 1):
+                        if text[start_idx - 1] != ' ':
+                            break
+                        start_idx -= 1
+                        if start_idx == 0:
+                            break
+                    # - Must be preceded by 2 newlines or hit the start of
+                    #   the document.
+                    if start_idx == 0:
+                        pass
+                    elif start_idx == 1 and text[0] == '\n':
+                        start_idx = 0  # to match minute detail of Markdown.pl regex
+                    elif text[start_idx-2:start_idx] == '\n\n':
+                        pass
+                    else:
+                        break
+
+                # Validate whitespace after comment.
+                # - Any number of spaces and tabs.
+                while end_idx < len(text):
+                    if text[end_idx] not in ' \t':
+                        break
+                    end_idx += 1
+                # - Must be following by 2 newlines or hit end of text.
+                if text[end_idx:end_idx+2] not in ('', '\n', '\n\n'):
+                    continue
+
+                # Escape and hash (must match `_hash_html_block_sub`).
+                html = text[start_idx:end_idx]
+                if raw and self.safe_mode:
+                    html = self._sanitize_html(html)
+                key = _hash_text(html)
+                self.html_blocks[key] = html
+                text = text[:start_idx] + "\n\n" + key + "\n\n" + text[end_idx:]
 
         return text
 
@@ -1637,26 +1689,6 @@ class _memoized(object):
       return self.func.__doc__
 
 
-def _html_comment_re_from_tab_width(tab_width):
-    return re.compile(r"""
-        (?:
-            (?<=\n\n)       # Starting after a blank line
-            |               # or
-            \A\n?           # the beginning of the doc
-        )
-        (                       # save in $1
-            [ ]{0,%d}
-            (?:
-                <!
-                (--.*?--\s*)+
-                >
-            )
-            [ \t]*
-            (?=\n{2,}|\Z)       # followed by a blank line or end of document
-        )
-        """ % (tab_width - 1), re.X | re.S)
-_html_comment_re_from_tab_width = _memoized(_html_comment_re_from_tab_width)
-
 def _hr_tag_re_from_tab_width(tab_width):
      return re.compile(r"""
         (?:
@@ -1791,9 +1823,13 @@ def main(argv=sys.argv):
                        "Markdown.pl")
     for path in paths:
         if opts.compare:
-            print "-- Markdown.pl"
-            os.system('perl %s "%s"' % (markdown_pl, path))
-            print "-- markdown2.py"
+            print "==== Markdown.pl ===="
+            perl_cmd = 'perl %s "%s"' % (markdown_pl, path)
+            o = os.popen(perl_cmd)
+            perl_html = o.read()
+            o.close()
+            sys.stdout.write(perl_html)
+            print "==== markdown2.py ===="
         html = markdown_path(path, encoding=opts.encoding,
                              html4tags=opts.html4tags,
                              safe_mode=opts.safe_mode,
@@ -1801,6 +1837,8 @@ def main(argv=sys.argv):
                              use_file_vars=opts.use_file_vars)
         sys.stdout.write(
             html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
+        if opts.compare:
+            print "==== match? %r ====" % (perl_html == html)
 
 
 if __name__ == "__main__":
