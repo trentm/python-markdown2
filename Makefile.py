@@ -30,7 +30,13 @@ class site(Task):
 class sdist(Task):
     """python setup.py sdist"""
     def make(self):
-        run_in_dir("python setup.py sdist", self.dir, self.log.debug)
+        prefix = ""
+        if sys.platform == "darwin":
+            # http://forums.macosxhints.com/archive/index.php/t-43243.html
+            # This is an Apple customization to `tar` to avoid creating
+            # '._foo' files for extended-attributes for archived files.
+            prefix = "COPY_EXTENDED_ATTRIBUTES_DISABLE=1 "
+        run_in_dir("%spython setup.py sdist" % prefix, self.dir, self.log.debug)
 
 class pypi(Task):
     """Update release to pypi."""
