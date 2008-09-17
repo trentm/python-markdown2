@@ -12,12 +12,16 @@ This is a fast and complete Python implementation of the Markdown
 spec.
 """
 
+import os
 import sys
 import distutils
 from distutils.core import setup
 
-sys.path.insert(0, "lib")
-import markdown2
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "lib"))
+try:
+    import markdown2
+finally:
+    del sys.path[0]
 
 #TODO: Get googleupload working. Problem now is that distutils name
 #      "markdown2" is not the same as google code name "python-markdown2".

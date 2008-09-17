@@ -2,6 +2,8 @@
 
 ## python-markdown2 v1.0.1.10 (not yet final)
 
+- Fix sys.path manipulation in setup.py so `easy_install markdown2-*.tar.gz`
+  works. (Henry Precheur pointed out the problem.)
 - "bin/markdown2" is now a stub runner script rather than a symlink to
   "lib/markdown2.py". The symlink was a problem for sdist: tar makes it a
   copy.
