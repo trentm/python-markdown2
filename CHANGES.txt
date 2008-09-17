@@ -2,6 +2,9 @@
 
 ## python-markdown2 v1.0.1.10 (not yet final)
 
+- "bin/markdown2" is now a stub runner script rather than a symlink to
+  "lib/markdown2.py". The symlink was a problem for sdist: tar makes it a
+  copy.
 - Added 'xml' extra: passes *one-liner* XML processing instructions and
   namespaced XML tags without wrapping in a <p> -- i.e. treats them as a HTML
   block tag.
