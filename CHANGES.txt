@@ -1,8 +1,10 @@
 # python-markdown2 Changelog
 
-## python-markdown2 v1.0.1.9+
+## python-markdown2 v1.0.1.10 (not yet final)
 
-(nothing yet)
+- Added 'xml' extra: passes *one-liner* XML processing instructions and
+  namespaced XML tags without wrapping in a <p> -- i.e. treats them as a HTML
+  block tag.
 
 ## python-markdown2 v1.0.1.9
 
