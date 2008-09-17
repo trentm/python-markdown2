@@ -11,7 +11,10 @@
     - The link for backslash escapes doesn't mention '>', but I believe it
       should -- viz Markdown.pl's `%g_escape_table` which *does* include '>'.
       TODO: bring this up on markdown-discuss list.
-
+- wiki: add an "Other Markdown implementations page"
+    http://daringfireball.net/projects/markdown/
+    http://www.michelf.com/projects/php-markdown/
+    http://www.freewisdom.org/projects/python-markdown/Features
 - test safe_mode on HTML in footnotes
 - markdown2.py on trentm.com/projects
 - compare setup.py stuff from Yannick to what I have now. Also:
