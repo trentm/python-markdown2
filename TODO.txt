@@ -1,6 +1,8 @@
 - fix the r135 xml option, add xml extra for it (see email)
 - add task to upload built package to Google Code as well
     Need to fix the Google upload distutils task limitation first.
+  http://support.googlecode.com/svn/trunk/scripts/googlecode_distutils_upload.py
+- put a link on Google Code proj page to pypi page
 - add description of pyshell and demote-headers extras to wiki
 - to bring up on markdown-discuss:
     - the trailing '#' escaping in DoHeaders (provide a patch for this)
@@ -12,27 +14,23 @@
 
 - test safe_mode on HTML in footnotes
 - markdown2.py on trentm.com/projects
-- setup.py stuff from Yannick.
+- compare setup.py stuff from Yannick to what I have now. Also:
+    http://gitorious.org/projects/git-python/repos/mainline/trees/master
+    http://www.python.org/~jeremy/weblog/030924.html
 - http://www.freewisdom.org/projects/python-markdown/Available_Extensions
-- http://support.googlecode.com/svn/trunk/scripts/googlecode_distutils_upload.py
 - Extras.wiki desc of code-color option. Not sure I love the ":::name"
   markup for the lexer name.
-- update MDTest tests from http://git.michelf.com/mdtest/
 - find more unicode edge cases (look for any usage of md5() and make that
   unicode)
 - update MDTest 1.1? (see
   http://six.pairlist.net/pipermail/markdown-discuss/2007-September/000815.html)
+  update MDTest tests from http://git.michelf.com/mdtest/
 - I see ref to Markdown.pl 1.0.2
   (http://six.pairlist.net/pipermail/markdown-discuss/2007-August/000756.html)
   Update to that? Yes. Copy, at least, in showdown package.
 - take a look at other examples/test-cases from
   http://adlcommunity.net/help.php?file=advanced_markdown.html
 - googlecode site: Why another Python impl? Test info. Usage/Features page.
-- package up a release:
-    - setup.py, easy_install, pypi
-    - e.g.:
-      http://gitorious.org/projects/git-python/repos/mainline/trees/master
-    - http://www.python.org/~jeremy/weblog/030924.html
 - get on http://en.wikipedia.org/wiki/Markdown
 - announce: python-announce
 - ask about remaining two MarkdownTest test failures
