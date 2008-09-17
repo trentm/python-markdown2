@@ -430,32 +430,6 @@ class Markdown(object):
         """ % _block_tags_b,
         re.X | re.M)
 
-    # Save for usage in coming 'xml' extra.
-    XXX_liberal_tag_block_re = re.compile(r"""
-        (                       # save in \1
-            ^                   # start of line  (with re.M)
-            (?:
-                <(%s|\w+:\w+)   # start tag = \2
-                \b              # word break
-                (?:.*\n)*?      # any number of lines, minimally matching
-                .*</\2>         # the matching end tag
-            |
-                <(\w+:)?\w+     # single tag-start
-                \b              # word break
-                .*?             # any content on one line, minimally matching
-                />              # end of tag
-            |
-                <\?\w+          # start of processing instruction
-                \b              # word break
-                .*?             # any content on one line, minimally matching
-                \?>             # the PI end tag
-            )
-            [ \t]*              # trailing spaces/tabs
-            (?=\n+|\Z)          # followed by a newline or end of document
-        )
-        """ % _block_tags_b,
-        re.X | re.M)
-
     def _hash_html_block_sub(self, match, raw=False):
         html = match.group(1)
         if raw and self.safe_mode:
@@ -558,6 +532,17 @@ class Markdown(object):
                 key = _hash_text(html)
                 self.html_blocks[key] = html
                 text = text[:start_idx] + "\n\n" + key + "\n\n" + text[end_idx:]
+
+        if "xml" in self.extras:
+            # Treat XML processing instructions and namespaced one-liner
+            # tags as if they were block HTML tags. E.g., if standalone
+            # (i.e. are their own paragraph), the following do not get 
+            # wrapped in a <p> tag:
+            #    <?foo bar?>
+            #
+            #    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="chapter_1.md"/>
+            _xml_oneliner_re = _xml_oneliner_re_from_tab_width(self.tab_width)
+            text = _xml_oneliner_re.sub(hash_html_block_sub, text)
 
         return text
 
@@ -1689,6 +1674,27 @@ class _memoized(object):
       return self.func.__doc__
 
 
+def _xml_oneliner_re_from_tab_width(tab_width):
+    """Standalone XML processing instruction regex."""
+    return re.compile(r"""
+        (?:
+            (?<=\n\n)       # Starting after a blank line
+            |               # or
+            \A\n?           # the beginning of the doc
+        )
+        (                           # save in $1
+            [ ]{0,%d}
+            (?:
+                <\?\w+\b\s+.*?\?>   # XML processing instruction
+                |
+                <\w+:\w+\b\s+.*?/>  # namespaced single tag
+            )
+            [ \t]*
+            (?=\n{2,}|\Z)       # followed by a blank line or end of document
+        )
+        """ % (tab_width - 1), re.X)
+_xml_oneliner_re_from_tab_width = _memoized(_xml_oneliner_re_from_tab_width)
+
 def _hr_tag_re_from_tab_width(tab_width):
      return re.compile(r"""
         (?:
@@ -1763,6 +1769,7 @@ def main(argv=sys.argv):
                            "'code-color' adds code-block syntax coloring; "
                            "'link-patterns' adds auto-linking based on patterns; "
                            "'footnotes' adds the footnotes syntax;"
+                           "'xml' passes one-liner processing instructions and namespaced XML tags;"
                            "'pyshell' to put unindented Python interactive shell sessions in a <code> block.")
     parser.add_option("--use-file-vars",
                       help="Look for and use Emacs-style 'markdown-extras' "
