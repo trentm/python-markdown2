@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 v1.0.1.10 (not yet final)
+## python-markdown2 v1.0.1.10
 
 - Fix sys.path manipulation in setup.py so `easy_install markdown2-*.tar.gz`
   works. (Henry Precheur pointed out the problem.)
