@@ -2,6 +2,9 @@
 
 ## python-markdown2 v1.0.1.11 (not yet final)
 
+- [Issue 20] Can't assume that `sys.argv` is defined at top-level code --
+  e.g. when used at a PostreSQL stored procedure. Fix that.
+
 ## python-markdown2 v1.0.1.10
 
 - Fix sys.path manipulation in setup.py so `easy_install markdown2-*.tar.gz`

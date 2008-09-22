@@ -1742,7 +1742,9 @@ def _test():
     import doctest
     doctest.testmod()
 
-def main(argv=sys.argv):
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     if not logging.root.handlers:
         logging.basicConfig()
 
