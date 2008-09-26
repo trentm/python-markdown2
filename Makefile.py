@@ -106,6 +106,7 @@ class pygments(Task):
     def make(self):
         pygments_dir = join(self.dir, "externals", "pygments")
         if exists(pygments_dir):
+            run_in_dir("hg pull", pygments_dir, self.log.info)
             run_in_dir("hg update", pygments_dir, self.log.info)
         else:
             if not exists(dirname(pygments_dir)):
