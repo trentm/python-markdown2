@@ -11,7 +11,7 @@ import logging
 
 import testlib
 
-
+log = logging.getLogger("test")
 testdir_from_ns = {
     None: os.curdir,
 }
@@ -26,14 +26,17 @@ def setup():
         sys.path.insert(0, pygments_dir)
 
 if __name__ == "__main__":
+    logging.basicConfig()
+
+    setup()
     default_tags = ["-knownfailure"]
     try:
         import pygments
     except ImportError:
-        # Skip pygments tests.
+        log.warn("skipping pygments tests ('pygments' module not found)")
         default_tags.append("-pygments")
+
     retval = testlib.harness(testdir_from_ns=testdir_from_ns,
-                             setup_func=setup,
                              default_tags=default_tags)
     sys.exit(retval)
 
