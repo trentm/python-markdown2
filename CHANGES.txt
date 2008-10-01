@@ -1,5 +1,7 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.12 (not final yet)
+
 ## python-markdown2 v1.0.1.11
 
 - Fix syntax_color test for the latest Pygments.
