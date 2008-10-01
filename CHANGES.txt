@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 v1.0.1.11 (not yet final)
+## python-markdown2 v1.0.1.11
 
 - Fix syntax_color test for the latest Pygments.
 - [Issue 20] Can't assume that `sys.argv` is defined at top-level code --
