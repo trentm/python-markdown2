@@ -1,0 +1,2 @@
+# This fails only because python-markdown2 now escapes the naked '>'.
+knownfailure issue21 

@@ -2,6 +2,12 @@
 
 ## python-markdown2 v1.0.1.12 (not final yet)
 
+- [Issue 21] Escape naked '>' characters, as is already done for '&' and '<'
+  characters. Note that other markdown implementations (both Perl and PHP) do
+  *not* do this. This results differing output with two 3rd-party tests:
+  "php-markdown-cases/Backslash escapes.text" and "markdowntest-cases/Amps
+  and angle encoding.tags".
+
 ## python-markdown2 v1.0.1.11
 
 - Fix syntax_color test for the latest Pygments.

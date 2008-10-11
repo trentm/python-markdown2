@@ -1410,6 +1410,7 @@ class Markdown(object):
     #   http://bumppo.net/projects/amputator/
     _ampersand_re = re.compile(r'&(?!#?[xX]?(?:[0-9a-fA-F]+|\w+);)')
     _naked_lt_re = re.compile(r'<(?![a-z/?\$!])', re.I)
+    _naked_gt_re = re.compile(r'''(?<![a-z?!/'"-])>''', re.I)
 
     def _encode_amps_and_angles(self, text):
         # Smart processing for ampersands and angle brackets that need
@@ -1418,6 +1419,11 @@ class Markdown(object):
     
         # Encode naked <'s
         text = self._naked_lt_re.sub('&lt;', text)
+
+        # Encode naked >'s
+        # Note: Other markdown implementations (e.g. Markdown.pl, PHP
+        # Markdown) don't do this.
+        text = self._naked_gt_re.sub('&gt;', text)
         return text
 
     def _encode_backslash_escapes(self, text):
