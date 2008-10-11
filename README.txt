@@ -67,3 +67,29 @@ This project is licensed under the MIT License.
 Note that in the subversion repository there are a few files (for the test
 suite and performance metrics) that are under different licenses. These files
 are *not* included in source packages. See LICENSE.txt for details.
+
+
+Test Suite
+----------
+
+This markdown implementation passes a fairly extensive test suite. To run it:
+
+    cd test && python test.py
+
+If you have the [mk](http://svn.openkomodo.com/openkomodo/browse/mk/trunk)
+tool installed you can run the test suite with all available Python versions
+by running:
+
+    mk test
+
+The crux of the test suite is a number of "cases" directories -- each with a
+set of matching .text (input) and .html (expected output) files. These are:
+
+    tm-cases/                   Tests authored for python-markdown2
+    markdowntest-cases/         Tests from the 3rd-party MarkdownTest package
+    php-markdown-cases/         Tests from the 3rd-party MDTest package
+    php-markdown-extra-cases/   Tests also from MDTest package
+
+See the wiki page for full details:
+http://code.google.com/p/python-markdown2/wiki/TestingNotes
+
