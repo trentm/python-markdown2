@@ -1,5 +1,5 @@
 
-"""Makefile for the 'mk' project.
+"""Makefile for the python-markdown2 project.
 
 ${common_task_list}
 
@@ -47,6 +47,32 @@ class pypi(Task):
         url = "http://pypi.python.org/pypi/markdown2/"
         import webbrowser
         webbrowser.open_new(url)
+
+class googlecode_upload(Task):
+    """Update sdist to Google Code project site."""
+    deps = ["sdist"]
+    def make(self):
+        try:
+            import googlecode_upload
+        except ImportError:
+            raise MakeError("couldn't import `googlecode_upload` (get it from http://support.googlecode.com/svn/trunk/scripts/googlecode_upload.py)")
+        sys.path.insert(0, join(self.dir, "lib"))
+        import markdown2
+
+        status, reason, url = googlecode_upload.upload_find_auth(
+            sdist_path,
+            "python-markdown2", # project_name
+            "markdown2 %s source package" % markdown2.version, # summary
+            #TODO: appropriate labels, e.g. "featured"
+            None) # labels
+        if not url:
+            raise MakeError("couldn't upload sdsit to Google Code: %s (%s)"
+                            % (reason, status))
+        self.log.info("uploaded sdist to `%s'", url)
+
+        project_url = "http://code.google.com/p/python-markdown2/"
+        import webbrowser
+        webbrowser.open_new(project_url)
 
 
 class test(Task):
