@@ -1183,7 +1183,7 @@ class Markdown(object):
         except util.ClassNotFound:
             return None
 
-    def _color_with_pygments(self, codeblock, lexer):
+    def _color_with_pygments(self, codeblock, lexer, **formatter_opts):
         import pygments
         import pygments.formatters
 
@@ -1201,7 +1201,7 @@ class Markdown(object):
                 """Return the source with a code, pre, and div."""
                 return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
 
-        formatter = HtmlCodeFormatter(cssclass="codehilite")
+        formatter = HtmlCodeFormatter(cssclass="codehilite", **formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
     def _code_block_sub(self, match):
@@ -1217,7 +1217,9 @@ class Markdown(object):
             lexer = self._get_pygments_lexer(lexer_name)
             codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
             if lexer:
-                colored = self._color_with_pygments(codeblock, lexer)
+                formatter_opts = self.extras['code-color'] or {}
+                colored = self._color_with_pygments(codeblock, lexer,
+                                                    **formatter_opts)
                 return "\n\n%s\n\n" % colored
 
         codeblock = self._encode_code(codeblock)

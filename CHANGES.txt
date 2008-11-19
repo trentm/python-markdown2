@@ -2,11 +2,19 @@
 
 ## python-markdown2 v1.0.1.12 (not final yet)
 
+- [Issue 23] Add support for passing options to pygments for the "code-color"
+  extra. For example:
+
+    >>> markdown("...", extras={'code-color': {"noclasses": True}})
+
+  This `formatter_opts` dict is passed to the pygments HtmlCodeFormatter.
+  Patch from 'svetlyak.40wt'.
 - [Issue 21] Escape naked '>' characters, as is already done for '&' and '<'
   characters. Note that other markdown implementations (both Perl and PHP) do
-  *not* do this. This results differing output with two 3rd-party tests:
+  *not* do this. This results in differing output with two 3rd-party tests:
   "php-markdown-cases/Backslash escapes.text" and "markdowntest-cases/Amps
   and angle encoding.tags".
+
 
 ## python-markdown2 v1.0.1.11
 
