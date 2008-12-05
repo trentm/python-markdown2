@@ -12,6 +12,7 @@ from os.path import join, dirname, normpath, abspath, exists, basename
 import re
 import webbrowser
 
+from mklib.common import MkError
 from mklib import Task
 from mklib.sh import run_in_dir
 
@@ -33,9 +34,9 @@ class sdist(Task):
         run_in_dir("%spython setup.py sdist" % _setup_command_prefix(),
                    self.dir, self.log.debug)
 
+#TODO: rename to pypi_upload (see go)
 class pypi(Task):
     """Update release to pypi."""
-    deps = ["sdist"]
     def make(self):
         tasks = (sys.platform == "win32"
                  and "sdist bdist_wininst upload"
@@ -48,6 +49,7 @@ class pypi(Task):
         import webbrowser
         webbrowser.open_new(url)
 
+#TODO: update from go
 class googlecode_upload(Task):
     """Update sdist to Google Code project site."""
     deps = ["sdist"]
@@ -55,19 +57,21 @@ class googlecode_upload(Task):
         try:
             import googlecode_upload
         except ImportError:
-            raise MakeError("couldn't import `googlecode_upload` (get it from http://support.googlecode.com/svn/trunk/scripts/googlecode_upload.py)")
+            raise MkError("couldn't import `googlecode_upload` (get it from http://support.googlecode.com/svn/trunk/scripts/googlecode_upload.py)")
         sys.path.insert(0, join(self.dir, "lib"))
         import markdown2
 
+        sdist_path = join(self.dir, "dist",
+            "markdown2-%s.tar.gz" % markdown2.__version__)
         status, reason, url = googlecode_upload.upload_find_auth(
             sdist_path,
             "python-markdown2", # project_name
-            "markdown2 %s source package" % markdown2.version, # summary
+            "markdown2 %s source package" % markdown2.__version__, # summary
             #TODO: appropriate labels, e.g. "featured"
             None) # labels
         if not url:
-            raise MakeError("couldn't upload sdsit to Google Code: %s (%s)"
-                            % (reason, status))
+            raise MkError("couldn't upload sdsit to Google Code: %s (%s)"
+                          % (reason, status))
         self.log.info("uploaded sdist to `%s'", url)
 
         project_url = "http://code.google.com/p/python-markdown2/"
@@ -92,7 +96,7 @@ class test(Task):
         assert ' ' not in python
         o = os.popen('''%s -c "import sys; print sys.version"''' % python)
         ver_str = o.read().strip()
-        ver_bits = re.split("[\.a-z]", ver_str, 2)[:2]
+        ver_bits = re.split("\.|[^\d]", ver_str, 2)[:2]
         ver = tuple(map(int, ver_bits))
         return ver
 
