@@ -34,8 +34,7 @@ class sdist(Task):
         run_in_dir("%spython setup.py sdist" % _setup_command_prefix(),
                    self.dir, self.log.debug)
 
-#TODO: rename to pypi_upload (see go)
-class pypi(Task):
+class pypi_upload(Task):
     """Update release to pypi."""
     def make(self):
         tasks = (sys.platform == "win32"
