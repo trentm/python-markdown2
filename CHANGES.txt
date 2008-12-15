@@ -14,7 +14,16 @@
   *not* do this. This results in differing output with two 3rd-party tests:
   "php-markdown-cases/Backslash escapes.text" and "markdowntest-cases/Amps
   and angle encoding.tags".
-
+- "link-patterns" extra: Add support for the href replacement being a
+  callable, e.g.:
+  
+    >>> link_patterns = [
+    ...     (re.compile("PEP\s+(\d+)", re.I),
+    ...      lambda m: "http://www.python.org/dev/peps/pep-%04d/" % int(m.group(1))),
+    ... ]
+    >>> markdown2.markdown("Here is PEP 42.", extras=["link-patterns"],
+    ...     link_patterns=link_patterns)
+    u'<p>Here is <a href="http://www.python.org/dev/peps/pep-0042/">PEP 42</a>.</p>\n'
 
 ## python-markdown2 v1.0.1.11
 

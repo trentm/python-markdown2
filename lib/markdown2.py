@@ -1486,10 +1486,14 @@ class Markdown(object):
         lookbehind assertion to attempt to guard against this.
         """
         link_from_hash = {}
-        for regex, href in self.link_patterns:
+        for regex, repl in self.link_patterns:
             replacements = []
             for match in regex.finditer(text):
-                replacements.append((match.span(), match.expand(href)))
+                if hasattr(repl, "__call__"):
+                    href = repl(match)
+                else:
+                    href = match.expand(repl)
+                replacements.append((match.span(), href))
             for (start, end), href in reversed(replacements):
                 escaped_href = (
                     href.replace('"', '&quot;')  # b/c of attr quote
