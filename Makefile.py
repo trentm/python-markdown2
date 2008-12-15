@@ -93,7 +93,7 @@ class test(Task):
 
     def _python_ver_from_python(self, python):
         assert ' ' not in python
-        o = os.popen('''%s -c "import sys; print sys.version"''' % python)
+        o = os.popen('''%s -c "import sys; print(sys.version)"''' % python)
         ver_str = o.read().strip()
         ver_bits = re.split("\.|[^\d]", ver_str, 2)[:2]
         ver = tuple(map(int, ver_bits))
