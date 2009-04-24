@@ -1,8 +1,13 @@
-include Makefile.py
-include CHANGES.txt
-include LICENSE.txt
 include README.txt
 include TODO.txt
+include LICENSE.txt
 include CONTRIBUTORS.txt
+include CHANGES.txt
+include Makefile.py
+include setup.py
+
+include bin/markdown2
 include test/api.doctests
+include externals/README.txt
+recursive-include externals/which *.py
 recursive-include test/tm-cases *.text *.html *.opts *.tags

@@ -2,6 +2,7 @@
 
 ## python-markdown2 v1.0.1.12 (not final yet)
 
+- Update MANIFEST.in to ensure bin/markdown2 gets included in sdist.
 - [Issue 23] Add support for passing options to pygments for the "code-color"
   extra. For example:
 
