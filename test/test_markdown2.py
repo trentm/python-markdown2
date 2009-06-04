@@ -46,35 +46,6 @@ class _MarkdownTestCase(unittest.TestCase):
             %s""") % (close_though, _display(text), 
                       _display(python_html), _display(perl_html)))
 
-    _xml_escape_re = re.compile(r'&#(x[0-9A-Fa-f]{2,3}|[0-9]{2,3});')
-    def _xml_escape_sub(self, match):
-        escape = match.group(1)
-        if escape[0] == 'x':
-            return unichr(int('0'+escape, base=16))
-        else:
-            return unichr(int(escape))
-
-    _markdown_email_link_re = re.compile(ur'<a href="(.*?&#.*?)">(.*?)</a>', re.U)
-    def _markdown_email_link_sub(self, match):
-        href, text = match.groups()
-        href = self._xml_escape_re.sub(self._xml_escape_sub, href)
-        text = self._xml_escape_re.sub(self._xml_escape_sub, text)
-        return '<a href="%s">%s</a>' % (href, text)
-
-    def _normalize(self, html):
-        """Normalize (somewhat) Markdown'd HTML.
-
-        Part of Markdown'ing involves obfuscating email links with
-        randomize encoding. Undo that obfuscation.
-        
-        Also normalize EOLs.
-        """
-        html = self._markdown_email_link_re.sub(
-            self._markdown_email_link_sub, html)
-        if sys.platform == "win32":
-            html = html.replace('\r\n', '\n')
-        return html
-
     def _assertMarkdownPath(self, text_path, encoding="utf-8", opts=None):
         text = codecs.open(text_path, 'r', encoding=encoding).read()
         html_path = splitext(text_path)[0] + ".html"
@@ -89,9 +60,9 @@ class _MarkdownTestCase(unittest.TestCase):
         if opts is None:
             opts = {}
 
-        norm_html = self._normalize(html)
+        norm_html = norm_html_from_html(html)
         python_html = markdown2.markdown(text, **opts)
-        python_norm_html = self._normalize(python_html)
+        python_norm_html = norm_html_from_html(python_html)
 
         close_though = ""
         if python_norm_html != norm_html \
@@ -233,6 +204,38 @@ class DocTestsTestCase(unittest.TestCase):
 
 
 #---- internal support stuff
+    
+_xml_escape_re = re.compile(r'&#(x[0-9A-Fa-f]{2,3}|[0-9]{2,3});')
+def _xml_escape_sub(match):
+    escape = match.group(1)
+    if escape[0] == 'x':
+        return unichr(int('0'+escape, base=16))
+    else:
+        return unichr(int(escape))
+
+_markdown_email_link_re = re.compile(ur'<a href="(.*?&#.*?)">(.*?)</a>', re.U)
+def _markdown_email_link_sub(match):
+    href, text = match.groups()
+    href = _xml_escape_re.sub(_xml_escape_sub, href)
+    text = _xml_escape_re.sub(_xml_escape_sub, text)
+    return '<a href="%s">%s</a>' % (href, text)
+
+def norm_html_from_html(html):
+    """Normalize (somewhat) Markdown'd HTML.
+
+    Part of Markdown'ing involves obfuscating email links with
+    randomize encoding. Undo that obfuscation.
+    
+    Also normalize EOLs.
+    """
+    if not isinstance(html, unicode):
+        html = html.decode('utf-8')
+    html = _markdown_email_link_re.sub(
+        _markdown_email_link_sub, html)
+    if sys.platform == "win32":
+        html = html.replace('\r\n', '\n')
+    return html
+
 
 def _display(s):
     """Markup the given string for useful display."""
