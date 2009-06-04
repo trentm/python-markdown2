@@ -1839,7 +1839,7 @@ def main(argv=None):
     else:
         link_patterns = None
 
-    from os.path import join, dirname, abspath
+    from os.path import join, dirname, abspath, exists
     markdown_pl = join(dirname(dirname(abspath(__file__))), "test",
                        "Markdown.pl")
     for path in paths:
@@ -1859,7 +1859,16 @@ def main(argv=None):
         sys.stdout.write(
             html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
         if opts.compare:
-            print "==== match? %r ====" % (perl_html == html)
+            test_dir = join(dirname(dirname(abspath(__file__))), "test")
+            if exists(join(test_dir, "test_markdown2.py")):
+                sys.path.insert(0, test_dir)
+                from test_markdown2 import norm_html_from_html
+                norm_html = norm_html_from_html(html)
+                norm_perl_html = norm_html_from_html(perl_html)
+            else:
+                norm_html = html
+                norm_perl_html = perl_html
+            print "==== match? %r ====" % (norm_perl_html == norm_html)
 
 
 if __name__ == "__main__":
