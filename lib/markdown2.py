@@ -90,7 +90,7 @@ def _escape_hash(s):
     # using the MD5 hexdigest of one of these chars in there text.
     # Other ideas: random.random(), uuid.uuid()
     #return md5(s).hexdigest()   # Markdown.pl effectively does this.
-    return 'md5:'+md5(s).hexdigest()
+    return 'md5-'+md5(s).hexdigest()
 g_escape_table = dict([(ch, _escape_hash(ch))
                        for ch in '\\`*_{}[]()>#+-.!'])
 
