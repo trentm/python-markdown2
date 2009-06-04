@@ -1444,7 +1444,7 @@ class Markdown(object):
           (
               [-.\w]+
               \@
-              [-\w]+(\.[-\w]+)*\.[a-zA-Z]+
+              [-\w]+(\.[-\w]+)*\.[a-z]+
           )
           >
         """, re.I | re.X | re.U)
