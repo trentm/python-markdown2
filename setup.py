@@ -51,6 +51,8 @@ setup(
     version=markdown2.__version__,
     maintainer="Trent Mick",
     maintainer_email="trentm@gmail.com",
+    author="Trent Mick",
+    author_email="trentm@gmail.com",
     url="http://code.google.com/p/python-markdown2/",
     license="http://www.opensource.org/licenses/mit-license.php",
     platforms=["any"],
