@@ -29,6 +29,8 @@ if __name__ == "__main__":
     logging.basicConfig()
 
     setup()
+    #TODO: some solution for this! This makes it *really* obscure to
+    #  see and test those 'knownfailure' tests.
     default_tags = ["-knownfailure"]
     try:
         import pygments

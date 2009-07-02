@@ -44,8 +44,8 @@ text-to-HTML conversion tool for web writers.
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 12) # first three nums match Markdown.pl
-__version__ = '1.0.1.12'
+__version_info__ = (1, 0, 1, 13) # first three nums match Markdown.pl
+__version__ = '1.0.1.13'
 __author__ = "Trent Mick"
 
 import os
@@ -1731,7 +1731,8 @@ def _xml_encode_email_char_at_random(ch):
     r = random()
     # Roughly 10% raw, 45% hex, 45% dec.
     # '@' *must* be encoded. I [John Gruber] insist.
-    if r > 0.9 and ch != "@":
+    # Issue 26: '_' must be encoded.
+    if r > 0.9 and ch not in "@_":
         return ch
     elif r < 0.45:
         # The [1:] is to drop leading '0': 0x63 -> x63

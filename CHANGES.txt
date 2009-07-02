@@ -1,8 +1,14 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.13 (not yet released)
+
+- [Issue 26] Complete the fix for this issue. Before this change the
+  randomized obscuring of 'mailto:' link letters would sometimes result
+  in emails with underscores getting misinterpreted as for italics.
+
 ## python-markdown2 v1.0.1.12
 
-- [Issue 24] Fix bug where email auto linking wouldn't work for emails with
+- [Issue 26] Fix bug where email auto linking wouldn't work for emails with
   underscores. E.g. `Mail me: <foo_bar@example.com>` wouldn't work.
 - Update MANIFEST.in to ensure bin/markdown2 gets included in sdist.
 - [Issue 23] Add support for passing options to pygments for the "code-color"
