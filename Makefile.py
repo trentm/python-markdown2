@@ -223,8 +223,7 @@ class announce_release(Task):
                 continue
             break
 
-        whatsnew_text = tail
-        whatsnew_text = whatsnew_text.rstrip('\n')
+        whatsnew_text = tail.strip()
         version = first.strip().split()[-1]
         if version.startswith("v"):
             version = version[1:]
