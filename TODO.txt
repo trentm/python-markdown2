@@ -2,7 +2,6 @@
 - add task to upload built package to Google Code as well
     Need to fix the Google upload distutils task limitation first.
   http://support.googlecode.com/svn/trunk/scripts/googlecode_distutils_upload.py
-- put a link on Google Code proj page to pypi page
 - add description of pyshell and demote-headers extras to wiki
 - to bring up on markdown-discuss:
     - the trailing '#' escaping in DoHeaders (provide a patch for this)
@@ -16,7 +15,6 @@
     http://www.michelf.com/projects/php-markdown/
     http://www.freewisdom.org/projects/python-markdown/Features
 - test safe_mode on HTML in footnotes
-- markdown2.py on trentm.com/projects
 - compare setup.py stuff from Yannick to what I have now. Also:
     http://gitorious.org/projects/git-python/repos/mainline/trees/master
     http://www.python.org/~jeremy/weblog/030924.html
@@ -35,7 +33,6 @@
   http://adlcommunity.net/help.php?file=advanced_markdown.html
 - googlecode site: Why another Python impl? Test info. Usage/Features page.
 - get on http://en.wikipedia.org/wiki/Markdown
-- announce: python-announce
 - ask about remaining two MarkdownTest test failures
 - put in recipes site
 - perhaps some extras from Maruku and PHP Markdown extra
