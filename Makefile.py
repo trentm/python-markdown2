@@ -280,6 +280,7 @@ class announce_release(Task):
 
 #---- internal support stuff
 
+# Recipe http://code.activestate.com/recipes/576824/
 def email_it_via_gmail(headers, text=None, html=None, password=None):
     """Send an email -- with text and HTML parts.
     
@@ -293,8 +294,6 @@ def email_it_via_gmail(headers, text=None, html=None, password=None):
     
     Derived from http://code.activestate.com/recipes/473810/ and
     http://stackoverflow.com/questions/778202/smtplib-and-gmail-python-script-problems
-
-    TODO: Make a recipe from this.
     """
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
