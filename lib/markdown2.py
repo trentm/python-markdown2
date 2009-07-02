@@ -249,10 +249,10 @@ class Markdown(object):
 
         text = self._run_block_gamut(text)
 
-        text = self._unescape_special_chars(text)
-
         if "footnotes" in self.extras:
             text = self._add_footnotes(text)
+
+        text = self._unescape_special_chars(text)
 
         if self.safe_mode:
             text = self._unhash_html_spans(text)
