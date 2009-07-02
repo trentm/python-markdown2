@@ -2,6 +2,9 @@
 
 ## python-markdown2 v1.0.1.14 (not yet released)
 
+- [Issue 27] Fix problem with underscores in footnotes content (with
+  "footnotes" extra).
+
 ## python-markdown2 v1.0.1.13
 
 - [Issue 24] Set really long sentinel for max-length of link text to avoid
