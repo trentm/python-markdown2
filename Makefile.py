@@ -168,7 +168,12 @@ class announce_release(Task):
         - Project Page: <http://code.google.com/p/python-markdown2/>
         - PyPI: <http://pypi.python.org/pypi/markdown2/>
 
+        ### What's new?
+        
         %(whatsnew)s
+        
+        Full changelog: <http://code.google.com/p/python-markdown2/source/browse/trunk/CHANGES.txt>
+        
         ### What is 'markdown2'?
         
         `markdown2.py` is a fast and complete Python implementation of
@@ -216,8 +221,8 @@ class announce_release(Task):
                 continue
             break
 
-        whatsnew_text = "### What's new\n" + tail
-        whatsnew_text = whatsnew_text.rstrip('\n') + '\n\n'
+        whatsnew_text = tail
+        whatsnew_text = whatsnew_text.rstrip('\n')
         version = first.strip().split()[-1]
         if version.startswith("v"):
             version = version[1:]
