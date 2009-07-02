@@ -153,8 +153,10 @@ class pygments(Task):
 class announce_release(Task):
     """Send a release announcement. Don't send this multiple times!."""
     headers = {
-        "To": ["python-markdown2@googlegroups.com",
-           "python-announce@python.org"],
+        "To": [
+            "python-markdown2@googlegroups.com",
+            "python-announce@python.org"
+        ],
         "From": ["Trent Mick <trentm@gmail.com>"],
         "Subject": "ANN: python-markdown2 %(version)s -- A fast and complete Python implementation of Markdown",
         "Reply-To": "python-markdown2@googlegroups.com",
