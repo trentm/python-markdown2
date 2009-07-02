@@ -16,7 +16,7 @@
 - [Issue 23] Add support for passing options to pygments for the "code-color"
   extra. For example:
 
-    >>> markdown("...", extras={'code-color': {"noclasses": True}})
+        >>> markdown("...", extras={'code-color': {"noclasses": True}})
 
   This `formatter_opts` dict is passed to the pygments HtmlCodeFormatter.
   Patch from 'svetlyak.40wt'.
@@ -28,13 +28,13 @@
 - "link-patterns" extra: Add support for the href replacement being a
   callable, e.g.:
   
-    >>> link_patterns = [
-    ...     (re.compile("PEP\s+(\d+)", re.I),
-    ...      lambda m: "http://www.python.org/dev/peps/pep-%04d/" % int(m.group(1))),
-    ... ]
-    >>> markdown2.markdown("Here is PEP 42.", extras=["link-patterns"],
-    ...     link_patterns=link_patterns)
-    u'<p>Here is <a href="http://www.python.org/dev/peps/pep-0042/">PEP 42</a>.</p>\n'
+        >>> link_patterns = [
+        ...     (re.compile("PEP\s+(\d+)", re.I),
+        ...      lambda m: "http://www.python.org/dev/peps/pep-%04d/" % int(m.group(1))),
+        ... ]
+        >>> markdown2.markdown("Here is PEP 42.", extras=["link-patterns"],
+        ...     link_patterns=link_patterns)
+        u'<p>Here is <a href="http://www.python.org/dev/peps/pep-0042/">PEP 42</a>.</p>\n'
 
 ## python-markdown2 v1.0.1.11
 
@@ -50,7 +50,7 @@
   "lib/markdown2.py". The symlink was a problem for sdist: tar makes it a
   copy.
 - Added 'xml' extra: passes *one-liner* XML processing instructions and
-  namespaced XML tags without wrapping in a <p> -- i.e. treats them as a HTML
+  namespaced XML tags without wrapping in a `<p>` -- i.e. treats them as a HTML
   block tag.
 
 ## python-markdown2 v1.0.1.9
@@ -80,8 +80,8 @@
 - Fix Python 2.6 deprecation warning about the `md5` module.
 - Pass XML processing instructions and one-liner tags. For example:
 
-    <?blah ...?>
-    <xi:include xmlns:xi="..." />
+        <?blah ...?>
+        <xi:include xmlns:xi="..." />
 
   Limitations: they must be on one line. Test: pi_and_xinclude.
   Suggested by Wolfgang Machert.
@@ -92,8 +92,10 @@
   attribute of the Markdown class is a dict (it was a set).
 - Add "demote-headers" extra that will demote the markdown for, e.g., an h1
   to h2-6 by the number of the demote-headers argument.
-      >>> markdown('# this would be an h1', extras={'demote-headers': 2})
-      u'<h3>this would be an h1</h3>\n'
+      
+        >>> markdown('# this would be an h1', extras={'demote-headers': 2})
+        u'<h3>this would be an h1</h3>\n'
+  
   This can be useful for user-supplied Markdown content for a sub-section of
   a page.
 
@@ -146,15 +148,19 @@
 - Add "link-patterns" extra: allows one to specify a list of regexes that
   should be automatically made into links. For example, one can define a
   mapping for things like "Mozilla Bug 1234":
+        
         regex:  mozilla\s+bug\s+(\d+)
         href:   http://bugzilla.mozilla.org/show_bug.cgi?id=\1
+  
   See <http://code.google.com/p/python-markdown2/wiki/Extras> for details.
 - Add a "MarkdownWithExtras" class that enables all extras (except
   "code-friendly"):
-    >>> import markdown2
-    >>> converter = markdown2.MarkdownWithExtras()
-    >>> converter.convert('...TEXT...')
-    ...HTML...
+    
+        >>> import markdown2
+        >>> converter = markdown2.MarkdownWithExtras()
+        >>> converter.convert('...TEXT...')
+        ...HTML...
+
 - [Issue 1] Added "code-color" extra: pygments-based (TODO: link) syntax
   coloring of code blocks. Requires the pygments Python library on sys.path.
   See <http://code.google.com/p/python-markdown2/wiki/Extras> for details.
@@ -163,8 +169,8 @@
 
 ## python-markdown2 v1.0.1.0
 
-- Added "code-friendly" extra: disables the use of leading and trailing '_'
-  and '__' for emphasis and strong. These can easily get in the way when
+- Added "code-friendly" extra: disables the use of leading and trailing `_`
+  and `__` for emphasis and strong. These can easily get in the way when
   writing docs about source code with variable_list_this and when one is not
   careful about quoting.
 - Full basic Markdown syntax.
