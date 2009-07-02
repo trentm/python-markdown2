@@ -2,6 +2,8 @@
 
 ## python-markdown2 v1.0.1.13 (not yet released)
 
+- [Issue 24] Set really long sentinel for max-length of link text to avoid
+  problems with reasonably long ones.
 - [Issue 26] Complete the fix for this issue. Before this change the
   randomized obscuring of 'mailto:' link letters would sometimes result
   in emails with underscores getting misinterpreted as for italics.

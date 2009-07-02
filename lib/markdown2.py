@@ -834,7 +834,7 @@ class Markdown(object):
         Markdown.pl because of the lack of atomic matching support in
         Python's regex engine used in $g_nested_brackets.
         """
-        MAX_LINK_TEXT_SENTINEL = 300
+        MAX_LINK_TEXT_SENTINEL = 3000  # markdown2 issue 24
 
         # `anchor_allowed_pos` is used to support img links inside
         # anchors, but not anchors inside anchors. An anchor's start
