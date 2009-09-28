@@ -2,6 +2,8 @@
 
 ## python-markdown2 v1.0.1.14 (not yet released)
 
+- [Issue 29] Fix security hole in the md5-hashing scheme for handling HTML
+  chunks during processing.
 - [Issue 27] Fix problem with underscores in footnotes content (with
   "footnotes" extra).
 
