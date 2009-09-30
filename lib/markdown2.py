@@ -60,6 +60,7 @@ except ImportError:
 import optparse
 from random import random, randint
 import codecs
+from urllib import quote
 
 
 
@@ -939,7 +940,8 @@ class Markdown(object):
                         title_str = ''
                     if is_img:
                         result = '<img src="%s" alt="%s"%s%s' \
-                            % (url, link_text.replace('"', '&quot;'),
+                            % (url.replace('"', '&quot;'),
+                               link_text.replace('"', '&quot;'),
                                title_str, self.empty_element_suffix)
                         curr_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[match.end():]
@@ -982,7 +984,8 @@ class Markdown(object):
                             title_str = ''
                         if is_img:
                             result = '<img src="%s" alt="%s"%s%s' \
-                                % (url, link_text.replace('"', '&quot;'),
+                                % (url.replace('"', '&quot;'),
+                                   link_text.replace('"', '&quot;'),
                                    title_str, self.empty_element_suffix)
                             curr_pos = start_idx + len(result)
                             text = text[:start_idx] + result + text[match.end():]
