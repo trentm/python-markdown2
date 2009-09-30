@@ -1,5 +1,9 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.16 (not yet released)
+
+(none yet)
+
 ## python-markdown2 v1.0.1.15
 
 - [Issue 30] Fix a possible XSS via JavaScript injection in a carefully
