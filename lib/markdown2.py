@@ -35,6 +35,18 @@ number of extras (e.g., code syntax coloring, footnotes) as described on
 
 cmdln_desc = """A fast and complete Python implementation of Markdown, a
 text-to-HTML conversion tool for web writers.
+
+Supported extras (see -x|--extras option below):
+* code-friendly: Disable _ and __ for em and strong.
+* code-color: Pygments-based syntax coloring of <code> sections.
+* cuddled-lists: Allow lists to be cuddled to the preceding paragraph.                           
+* footnotes: Support footnotes as in use on daringfireball.net and
+  implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
+* pyshell: Treats unindented Python interactive shell sessions as <code>
+  blocks.
+* link-patterns: Auto-link given regex patterns in text (e.g. bug number
+  references, revision number references).
+* xml: Passes one-liner processing instructions and namespaced XML tags.
 """
 
 # Dev Notes:
@@ -1809,13 +1821,7 @@ def main(argv=None):
                            "[HTML_REMOVED] note")
     parser.add_option("-x", "--extras", action="append",
                       help="Turn on specific extra features (not part of "
-                           "the core Markdown spec). Supported values: "
-                           "'code-friendly' disables _/__ for emphasis; "
-                           "'code-color' adds code-block syntax coloring; "
-                           "'link-patterns' adds auto-linking based on patterns; "
-                           "'footnotes' adds the footnotes syntax;"
-                           "'xml' passes one-liner processing instructions and namespaced XML tags;"
-                           "'pyshell' to put unindented Python interactive shell sessions in a <code> block.")
+                           "the core Markdown spec). See above.")
     parser.add_option("--use-file-vars",
                       help="Look for and use Emacs-style 'markdown-extras' "
                            "file var to turn on extras. See "
