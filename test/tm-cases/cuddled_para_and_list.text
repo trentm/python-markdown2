@@ -2,3 +2,23 @@ I did these things:
 * bullet1
 * bullet2
 * bullet3
+
+I did these too:
+* bullet1
+* bullet2
+* bullet3 this is
+a longer one.
+
+And these in order:
+1. bullet1
+2. bullet2
+3. bullet3
+
+Here is an asterisk,
+* What do you think
+about it?
+
+I suggest using version
+8. Oops, now this line is treated
+as a sub-list.
+

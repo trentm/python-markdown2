@@ -1129,12 +1129,12 @@ class Markdown(object):
         return text
     
     _list_item_re = re.compile(r'''
-        (\n)?               # leading line = \1
-        (^[ \t]*)           # leading whitespace = \2
-        (%s) [ \t]+         # list marker = \3
-        ((?:.+?)            # list item text = \4
-         (\n{1,2}))         # eols = \5
-        (?= \n* (\Z | \2 (%s) [ \t]+))
+        (\n)?                   # leading line = \1
+        (^[ \t]*)               # leading whitespace = \2
+        (?P<marker>%s) [ \t]+   # list marker = \3
+        ((?:.+?)                # list item text = \4
+         (\n{1,2}))             # eols = \5
+        (?= \n* (\Z | \2 (?P<next_marker>%s) [ \t]+))
         ''' % (_marker_any, _marker_any),
         re.M | re.X | re.S)
 
@@ -1380,15 +1380,35 @@ class Markdown(object):
         text = text.strip('\n')
 
         # Wrap <p> tags.
-        grafs = re.split(r"\n{2,}", text)
-        for i, graf in enumerate(grafs):
+        grafs = []
+        for i, graf in enumerate(re.split(r"\n{2,}", text)):
             if graf in self.html_blocks:
                 # Unhashify HTML blocks
-                grafs[i] = self.html_blocks[graf]
+                grafs.append(self.html_blocks[graf])
             else:
+                cuddled_list = None
+                if "cuddled-lists" in self.extras:
+                    # Need to put back trailing '\n' for `_list_item_re`
+                    # match at the end of the paragraph.
+                    li = self._list_item_re.search(graf + '\n')
+                    # Two of the same list marker in this paragraph: a likely
+                    # candidate for a list cuddled to preceding paragraph
+                    # text (issue 33). Note the `[-1]` is a quick way to
+                    # consider numeric bullets (e.g. "1." and "2.") to be
+                    # equal.
+                    if (li and li.group("next_marker")
+                        and li.group("marker")[-1] == li.group("next_marker")[-1]):
+                        start = li.start()
+                        cuddled_list = self._do_lists(graf[start:]).rstrip("\n")
+                        assert cuddled_list.startswith("<ul>") or cuddled_list.startswith("<ol>")
+                        graf = graf[:start]
+                    
                 # Wrap <p> tags.
                 graf = self._run_span_gamut(graf)
-                grafs[i] = "<p>" + graf.lstrip(" \t") + "</p>"
+                grafs.append("<p>" + graf.lstrip(" \t") + "</p>")
+                
+                if cuddled_list:
+                    grafs.append(cuddled_list)
 
         return "\n\n".join(grafs)
 
