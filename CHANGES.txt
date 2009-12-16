@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.17 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 v1.0.1.16
 
 - [Issue 33] Implement a "cuddled-lists" extra that allows:
