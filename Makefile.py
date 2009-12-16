@@ -97,7 +97,7 @@ class test(Task):
             ver_str = "%s.%s" % ver
             print "-- test with Python %s (%s)" % (ver_str, python)
             assert ' ' not in python
-            run_in_dir("%s test.py" % python,
+            run_in_dir("%s test.py -- -knownfailure" % python,
                        join(self.dir, "test"))
 
     def _python_ver_from_python(self, python):
