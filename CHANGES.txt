@@ -2,7 +2,23 @@
 
 ## python-markdown2 v1.0.1.16 (not yet released)
 
-(none yet)
+- [Issue 33] Implement a "cuddled-lists" extra that allows:
+
+        I did these things:
+        * bullet1
+        * bullet2
+        * bullet3
+
+  to be converted to:
+
+        <p>I did these things:</p>
+
+        <ul>
+        <li>bullet1</li>
+        <li>bullet2</li>
+        <li>bullet3</li>
+        </ul>
+
 
 ## python-markdown2 v1.0.1.15
 
