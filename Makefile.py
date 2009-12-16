@@ -202,7 +202,7 @@ class announce_release(Task):
             $ cat hi.markdown
             # Hello World!
             $ markdown2 hi.markdown
-            <h1>Hellow World!</h1>
+            <h1>Hello World!</h1>
 
         This implementation of Markdown implements the full "core" syntax plus a
         number of extras (e.g., code syntax coloring, footnotes) as described on
