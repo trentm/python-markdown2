@@ -1,4 +1,23 @@
 - add "html-classes" extra to wiki
+- bug: can't have '<\w+' in a code span or code block with safe_mode if there
+  is a '>' somewhere later in the document. E.g. code.as.com-beta/CHANGES.md.
+  It captures all of that. Right answer is to not count code spans or code
+  blocks.
+  - add an issue for this
+  - test cases
+  - idea: better sanitation re-write? lot of work
+  - idea: Change all <,>,& emission from markdown processing to something
+    like {LT}, {GT}, {AMP}, {OPENTAG:$tag[:$class]} (first checking for
+    conflicts and escaping those out of the way). Then do sanitization at the
+    end:
+        escape: escape all <,>,& with entities
+        remove: not supported
+        whitelist: (new) build a reasonable default whitelist of patterns to
+            keep. Takes "extras" argument (and hook for subclassing) to
+            for custom whitelist. Google Code (was it?) had some list
+            of reasonable whitelist stuff.
+    Then unescape these special chars. The use of OPENTAG above would make
+    "html-classes" extra trivial.
 
 - fix the r135 xml option, add xml extra for it (see email)
 - add task to upload built package to Google Code as well
