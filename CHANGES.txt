@@ -2,7 +2,9 @@
 
 ## python-markdown2 v1.0.1.17 (not yet released)
 
-(nothing yet)
+- Preliminary support for "html-classes" extra: takes a dict mapping HTML tag
+  to the string value to use for a "class" attribute for that emitted tag.
+  Currently just supports "pre" and "code" for code *blocks*.
 
 
 ## python-markdown2 v1.0.1.16

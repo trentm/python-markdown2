@@ -42,6 +42,9 @@ Supported extras (see -x|--extras option below):
 * cuddled-lists: Allow lists to be cuddled to the preceding paragraph.                           
 * footnotes: Support footnotes as in use on daringfireball.net and
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
+* html-classes: Takes a dict mapping html tag names (lowercase) to a
+  string to use for a "class" tag attribute. Currently only supports
+  "pre" and "code" tags. Add an issue if you require this for other tags.
 * pyshell: Treats unindented Python interactive shell sessions as <code>
   blocks.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
@@ -1247,7 +1250,25 @@ class Markdown(object):
                 return "\n\n%s\n\n" % colored
 
         codeblock = self._encode_code(codeblock)
-        return "\n\n<pre><code>%s\n</code></pre>\n\n" % codeblock
+        pre_class_str = self._html_class_str_from_tag("pre")
+        code_class_str = self._html_class_str_from_tag("code")
+        return "\n\n<pre%s><code%s>%s\n</code></pre>\n\n" % (
+            pre_class_str, code_class_str, codeblock)
+
+    def _html_class_str_from_tag(self, tag):
+        """Get the appropriate ' class="..."' string (note the leading
+        space), if any, for the given tag.
+        """
+        if "html-classes" not in self.extras:
+            return ""
+        try:
+            html_classes_from_tag = self.extras["html-classes"]
+        except TypeError:
+            return ""
+        else:
+            if tag in html_classes_from_tag:
+                return ' class="%s"' % html_classes_from_tag[tag]
+        return ""
 
     def _do_code_blocks(self, text):
         """Process Markdown `<pre><code>` blocks."""
