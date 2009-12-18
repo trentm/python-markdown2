@@ -1,3 +1,5 @@
+- add "html-classes" extra to wiki
+
 - fix the r135 xml option, add xml extra for it (see email)
 - add task to upload built package to Google Code as well
     Need to fix the Google upload distutils task limitation first.
