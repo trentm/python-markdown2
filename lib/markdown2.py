@@ -209,6 +209,8 @@ class Markdown(object):
         if "footnotes" in self.extras:
             self.footnotes = {}
             self.footnote_ids = []
+        if "header-ids" in self.extras:
+            self._count_from_header_id = {} # no `defaultdict` in Python 2.4
 
     def convert(self, text):
         """Convert the given text."""
@@ -1027,6 +1029,22 @@ class Markdown(object):
 
         return text 
 
+    def header_id_from_text(self, text, prefix):
+        """Generate a header id attribute value from the given header
+        HTML content.
+        
+        This is only called if the "header-ids" extra is enabled.
+        Subclasses may override this for different header ids.
+        """
+        header_id = _slugify(text)
+        if prefix:
+            header_id = prefix + '-' + header_id
+        if header_id in self._count_from_header_id:
+            self._count_from_header_id[header_id] += 1
+            header_id += '-%s' % self._count_from_header_id[header_id]
+        else:
+            self._count_from_header_id[header_id] = 1
+        return header_id
 
     _setext_h_re = re.compile(r'^(.+)[ \t]*\n(=+|-+)[ \t]*\n+', re.M)
     def _setext_h_sub(self, match):
@@ -1034,8 +1052,13 @@ class Markdown(object):
         demote_headers = self.extras.get("demote-headers")
         if demote_headers:
             n = min(n + demote_headers, 6)
-        return "<h%d>%s</h%d>\n\n" \
-               % (n, self._run_span_gamut(match.group(1)), n)
+        header_id_attr = ""
+        if "header-ids" in self.extras:
+            header_id = self.header_id_from_text(match.group(1),
+                prefix=self.extras["header-ids"])
+            header_id_attr = ' id="%s"' % header_id
+        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr,
+            self._run_span_gamut(match.group(1)), n)
 
     _atx_h_re = re.compile(r'''
         ^(\#{1,6})  # \1 = string of #'s
@@ -1051,8 +1074,13 @@ class Markdown(object):
         demote_headers = self.extras.get("demote-headers")
         if demote_headers:
             n = min(n + demote_headers, 6)
-        return "<h%d>%s</h%d>\n\n" \
-               % (n, self._run_span_gamut(match.group(2)), n)
+        header_id_attr = ""
+        if "header-ids" in self.extras:
+            header_id = self.header_id_from_text(match.group(2),
+                prefix=self.extras["header-ids"])
+            header_id_attr = ' id="%s"' % header_id
+        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr,
+            self._run_span_gamut(match.group(2)), n)
 
     def _do_headers(self, text):
         # Setext-style headers:
@@ -1600,6 +1628,20 @@ class MarkdownWithExtras(Markdown):
 
 
 #---- internal support functions
+
+_slugify_strip_re = re.compile(r'[^\w\s-]')
+_slugify_hyphenate_re = re.compile(r'[-\s]+')
+def _slugify(value):
+    """
+    Normalizes string, converts to lowercase, removes non-alpha characters,
+    and converts spaces to hyphens.
+    
+    From Django's "django/template/defaultfilters.py".
+    """
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(_slugify_strip_re.sub('', value).strip().lower())
+    return _slugify_hyphenate_re.sub('-', value)
 
 # From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52549
 def _curry(*args, **kwargs):

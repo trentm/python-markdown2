@@ -2,6 +2,26 @@
 
 ## python-markdown2 v1.0.1.17 (not yet released)
 
+- New "header-ids" extra that will add an `id` attribute to headers:
+
+        # My First Section
+
+  will become:
+
+        <h1 id="my-first-section">My First Section</h1>
+
+  An argument can be give for the extra, which will be used as a prefix for
+  the ids:
+  
+        $ cat foo.txt 
+        # hi there
+        $ python markdown2.py foo.txt 
+        <h1>hi there</h1>
+        $ python markdown2.py foo.txt -x header-ids
+        <h1 id="hi-there">hi there</h1>
+        $ python markdown2.py foo.txt -x header-ids=prefix
+        <h1 id="prefix-hi-there">hi there</h1>
+
 - Preliminary support for "html-classes" extra: takes a dict mapping HTML tag
   to the string value to use for a "class" attribute for that emitted tag.
   Currently just supports "pre" and "code" for code *blocks*.
