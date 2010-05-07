@@ -194,6 +194,8 @@ class Markdown(object):
                 extras = dict([(e, None) for e in extras])
             self.extras.update(extras)
         assert isinstance(self.extras, dict)
+        if "toc" in self.extras and not "header-ids" in self.extras:
+            self.extras["header-ids"] = None   # "toc" implies "header-ids"
         self._instance_extras = self.extras.copy()
         self.link_patterns = link_patterns
         self.use_file_vars = use_file_vars
@@ -285,7 +287,11 @@ class Markdown(object):
             text = self._unhash_html_spans(text)
 
         text += "\n"
-        return text
+        
+        rv = UnicodeWithAttrs(text)
+        if "toc" in self.extras:
+            rv._toc = self._toc
+        return rv
 
     _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
     # This regular expression is intended to match blocks like this:
@@ -1046,6 +1052,12 @@ class Markdown(object):
             self._count_from_header_id[header_id] = 1
         return header_id
 
+    _toc = None
+    def _toc_add_entry(self, level, id, name):
+        if self._toc is None:
+            self._toc = []
+        self._toc.append((level, id, name))
+
     _setext_h_re = re.compile(r'^(.+)[ \t]*\n(=+|-+)[ \t]*\n+', re.M)
     def _setext_h_sub(self, match):
         n = {"=": 1, "-": 2}[match.group(2)[0]]
@@ -1057,8 +1069,10 @@ class Markdown(object):
             header_id = self.header_id_from_text(match.group(1),
                 prefix=self.extras["header-ids"])
             header_id_attr = ' id="%s"' % header_id
-        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr,
-            self._run_span_gamut(match.group(1)), n)
+        html = self._run_span_gamut(match.group(1))
+        if "toc" in self.extras:
+            self._toc_add_entry(n, header_id, html)
+        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
     _atx_h_re = re.compile(r'''
         ^(\#{1,6})  # \1 = string of #'s
@@ -1079,8 +1093,10 @@ class Markdown(object):
             header_id = self.header_id_from_text(match.group(2),
                 prefix=self.extras["header-ids"])
             header_id_attr = ' id="%s"' % header_id
-        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr,
-            self._run_span_gamut(match.group(2)), n)
+        html = self._run_span_gamut(match.group(2))
+        if "toc" in self.extras:
+            self._toc_add_entry(n, header_id, html)
+        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
     def _do_headers(self, text):
         # Setext-style headers:
@@ -1629,6 +1645,47 @@ class MarkdownWithExtras(Markdown):
 
 #---- internal support functions
 
+class UnicodeWithAttrs(unicode):
+    """A subclass of unicode used for the return value of conversion to
+    possibly attach some attributes. E.g. the "toc_html" attribute when
+    the "toc" extra is used.
+    """
+    _toc = None
+    @property
+    def toc_html(self):
+        """Return the HTML for the current TOC.
+        
+        This expects the `_toc` attribute to have been set on this instance.
+        """
+        if self._toc is None:
+            return None
+        
+        def indent():
+            return '  ' * (len(h_stack) - 1)
+        lines = []
+        h_stack = [0]   # stack of header-level numbers
+        for level, id, name in self._toc:
+            if level > h_stack[-1]:
+                lines.append("%s<ul>" % indent())
+                h_stack.append(level)
+            elif level == h_stack[-1]:
+                lines[-1] += "</li>"
+            else:
+                while level < h_stack[-1]:
+                    h_stack.pop()
+                    if not lines[-1].endswith("</li>"):
+                        lines[-1] += "</li>"
+                    lines.append("%s</ul></li>" % indent())
+            lines.append(u'%s<li><a href="#%s">%s</a>' % (
+                indent(), id, name))
+        while len(h_stack) > 1:
+            h_stack.pop()
+            if not lines[-1].endswith("</li>"):
+                lines[-1] += "</li>"
+            lines.append("%s</ul>" % indent())
+        return '\n'.join(lines) + '\n'
+
+
 _slugify_strip_re = re.compile(r'[^\w\s-]')
 _slugify_hyphenate_re = re.compile(r'[-\s]+')
 def _slugify(value):
@@ -1958,6 +2015,9 @@ def main(argv=None):
                              use_file_vars=opts.use_file_vars)
         sys.stdout.write(
             html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
+        if extras and "toc" in extras:
+            log.debug("toc_html: " +
+                html.toc_html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
         if opts.compare:
             test_dir = join(dirname(dirname(abspath(__file__))), "test")
             if exists(join(test_dir, "test_markdown2.py")):

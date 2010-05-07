@@ -46,14 +46,20 @@ class _MarkdownTestCase(unittest.TestCase):
             %s""") % (close_though, _display(text), 
                       _display(python_html), _display(perl_html)))
 
-    def _assertMarkdownPath(self, text_path, encoding="utf-8", opts=None):
+    def _assertMarkdownPath(self, text_path, encoding="utf-8", opts=None,
+            toc_html_path=None):
         text = codecs.open(text_path, 'r', encoding=encoding).read()
         html_path = splitext(text_path)[0] + ".html"
         html = codecs.open(html_path, 'r', encoding=encoding).read()
-        self._assertMarkdown(text, html, text_path, html_path, opts=opts)
+        extra = {}
+        if toc_html_path:
+            extra["toc_html"] = codecs.open(toc_html_path, 'r', encoding=encoding).read()
+            extra["toc_html_path"] = toc_html_path
+        self._assertMarkdown(text, html, text_path, html_path, opts=opts,
+            **extra)
 
     def _assertMarkdown(self, text, html, text_path=None, html_path=None,
-                        opts=None):
+            opts=None, toc_html=None, toc_html_path=None):
         """Assert that markdown2.py produces the expected HTML."""
         if text_path is None: text_path = "<text content>"
         if html_path is None: html_path = "<html content>"
@@ -63,7 +69,7 @@ class _MarkdownTestCase(unittest.TestCase):
         norm_html = norm_html_from_html(html)
         python_html = markdown2.markdown(text, **opts)
         python_norm_html = norm_html_from_html(python_html)
-
+        
         close_though = ""
         if python_norm_html != norm_html \
            and (python_norm_html.replace('\n', '')
@@ -98,6 +104,31 @@ class _MarkdownTestCase(unittest.TestCase):
 
         self.assertEqual(python_norm_html, norm_html, 
                          errmsg.encode('ascii', 'charreprreplace'))
+        
+        if toc_html:
+            python_toc_html = python_html.toc_html
+            python_norm_toc_html = norm_html_from_html(python_toc_html)
+            norm_toc_html = norm_html_from_html(toc_html)
+            
+            diff = u''
+            if python_norm_toc_html != norm_toc_html:
+                diff = difflib.unified_diff(
+                        norm_toc_html.splitlines(1), 
+                        python_norm_toc_html.splitlines(1),
+                        toc_html_path,
+                        "`markdown2 %s`.toc_html" % text_path)
+                diff = u''.join(diff)
+            errmsg = _dedent(u"""\
+                markdown2.py didn't produce the expected TOC HTML%s:
+                  ---- text (escaping: .=space, \\n=newline) ----
+                %s  ---- Python markdown2.py TOC HTML (escaping: .=space, \\n=newline) ----
+                %s  ---- expected TOC HTML (escaping: .=space, \\n=newline) ----
+                %s  ---- diff ----
+                %s""") % (close_though, _display(text), 
+                          _display(python_toc_html), _display(toc_html),
+                          _indent(diff))
+            self.assertEqual(python_norm_toc_html, norm_toc_html, 
+                errmsg.encode('ascii', 'charreprreplace'))
 
     def generate_tests(cls):
         """Add test methods to this class for each test file in
@@ -117,8 +148,12 @@ class _MarkdownTestCase(unittest.TestCase):
                     print "WARNING: couldn't load `%s' opts file: %s" \
                           % (opts_path, ex)
 
-            test_func = lambda self, t=text_path, o=opts: \
-                self._assertMarkdownPath(t, opts=o)
+            toc_html_path = splitext(text_path)[0] + ".toc_html"
+            if not exists(toc_html_path):
+                toc_html_path = None
+
+            test_func = lambda self, t=text_path, o=opts, c=toc_html_path: \
+                self._assertMarkdownPath(t, opts=o, toc_html_path=c)
 
             tags_path = splitext(text_path)[0] + ".tags"
             if exists(tags_path):
