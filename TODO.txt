@@ -21,9 +21,6 @@
 
 - fix the r135 xml option, add xml extra for it (see email)
 - look at http://code.google.com/p/markdownsharp/
-- add task to upload built package to Google Code as well
-    Need to fix the Google upload distutils task limitation first.
-  http://support.googlecode.com/svn/trunk/scripts/googlecode_distutils_upload.py
 - add description of pyshell and demote-headers extras to wiki
 - to bring up on markdown-discuss:
     - the trailing '#' escaping in DoHeaders (provide a patch for this)
