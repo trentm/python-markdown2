@@ -1,5 +1,5 @@
-markdown2 README
-================
+python-markdown2 README
+=======================
 
 This is a fast and complete Python implementation of Markdown, a text-to-html
 markup system as defined here:
@@ -49,6 +49,10 @@ The python-markdown2 project lives here (subversion repo, issue tracker,
 wiki):
 
     http://code.google.com/p/python-markdown2/
+
+The change log:
+
+    http://code.google.com/p/python-markdown2/source/browse/trunk/CHANGES.txt
 
 To checkout the full sources:
 
