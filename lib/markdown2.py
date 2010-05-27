@@ -42,6 +42,8 @@ Supported extras (see -x|--extras option below):
 * cuddled-lists: Allow lists to be cuddled to the preceding paragraph.
 * footnotes: Support footnotes as in use on daringfireball.net and
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
+* header-ids: Adds "id" attributes to headers. The id value is a slug of
+  the header text.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
   string to use for a "class" tag attribute. Currently only supports
   "pre" and "code" tags. Add an issue if you require this for other tags.
@@ -49,6 +51,8 @@ Supported extras (see -x|--extras option below):
   blocks.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
   references, revision number references).
+* toc: The returned HTML string gets a new "toc_html" attribute which is
+  a Table of Contents for the document. (experimental)
 * xml: Passes one-liner processing instructions and namespaced XML tags.
 """
 
