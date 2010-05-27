@@ -39,7 +39,7 @@ text-to-HTML conversion tool for web writers.
 Supported extras (see -x|--extras option below):
 * code-friendly: Disable _ and __ for em and strong.
 * code-color: Pygments-based syntax coloring of <code> sections.
-* cuddled-lists: Allow lists to be cuddled to the preceding paragraph.                           
+* cuddled-lists: Allow lists to be cuddled to the preceding paragraph.
 * footnotes: Support footnotes as in use on daringfireball.net and
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
@@ -59,8 +59,8 @@ Supported extras (see -x|--extras option below):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 17) # first three nums match Markdown.pl
-__version__ = '1.0.1.17'
+__version_info__ = (1, 0, 1, 18) # first three nums match Markdown.pl
+__version__ = '1.0.1.18'
 __author__ = "Trent Mick"
 
 import os

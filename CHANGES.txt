@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 v1.0.1.18 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 v1.0.1.17
 
 - [Issue 36] Fix "cuddled-lists" extra handling for an
