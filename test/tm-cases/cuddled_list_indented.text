@@ -1,0 +1,15 @@
+With no indent:
+* one
+* two
+
+With 4 space indent:
+    * one
+    * two
+
+With one tab indent:
+	* one
+	* two
+
+With 3 space indent:
+   * one
+   * two

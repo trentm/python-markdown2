@@ -1473,7 +1473,7 @@ class Markdown(object):
                     # text (issue 33). Note the `[-1]` is a quick way to
                     # consider numeric bullets (e.g. "1." and "2.") to be
                     # equal.
-                    if (li and li.group("next_marker")
+                    if (li and len(li.group(2)) <= 3 and li.group("next_marker")
                         and li.group("marker")[-1] == li.group("next_marker")[-1]):
                         start = li.start()
                         cuddled_list = self._do_lists(graf[start:]).rstrip("\n")

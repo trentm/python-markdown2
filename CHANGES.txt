@@ -2,6 +2,10 @@
 
 ## python-markdown2 v1.0.1.17 (not yet released)
 
+- [Issue 36] Fix "cuddled-lists" extra handling for an
+  looks-like-a-cuddled-list-but-is-indented block. See the
+  "test/tm-cases/cuddled_list_indented.text" test case.
+
 - Experimental new "toc" extra. The returned string from conversion will have
   a `toc_html` attribute.
 
