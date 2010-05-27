@@ -1,6 +1,3 @@
-python-markdown2 README
-=======================
-
 This is a fast and complete Python implementation of Markdown, a text-to-html
 markup system as defined here:
 
@@ -10,8 +7,10 @@ markup system as defined here:
 Install
 -------
 
-To install it in your Python installation run:
+To install it in your Python installation run one of the following:
 
+    pypm install markdown2      # if you use ActivePython (activestate.com/activepython)
+    pip install markdown2
     python setup.py install
 
 However, everything you need to run this is in "lib/markdown2.py". If it is
@@ -61,16 +60,6 @@ To checkout the full sources:
 To report a bug:
 
     http://code.google.com/p/python-markdown2/issues/list
-
-
-License
--------
-
-This project is licensed under the MIT License. 
-
-Note that in the subversion repository there are a few files (for the test
-suite and performance metrics) that are under different licenses. These files
-are *not* included in source packages. See LICENSE.txt for details.
 
 
 Test Suite

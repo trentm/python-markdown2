@@ -1,27 +1,17 @@
 #!/usr/bin/env python
 
-"""markdown2: A fast and complete Python implementaion of Markdown.
-
-Markdown is a text-to-HTML filter; it translates an easy-to-read /
-easy-to-write structured text format into HTML.  Markdown's text
-format is most similar to that of plain text email, and supports
-features such as headers, *emphasis*, code blocks, blockquotes, and
-links.  -- http://daringfireball.net/projects/markdown/
-
-This is a fast and complete Python implementation of the Markdown
-spec.
-"""
-
 import os
 import sys
 import distutils
 from distutils.core import setup
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "lib"))
+_top_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(_top_dir, "lib"))
 try:
     import markdown2
 finally:
     del sys.path[0]
+README = open(os.path.join(_top_dir, 'README.txt')).read()
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -43,7 +33,6 @@ if sys.version_info < (2, 3):
             del kwargs["classifiers"]
         _setup(**kwargs)
 
-doclines = __doc__.split("\n")
 script = (sys.platform == "win32" and "lib\\markdown2.py" or "bin/markdown2")
 
 setup(
@@ -54,13 +43,13 @@ setup(
     author="Trent Mick",
     author_email="trentm@gmail.com",
     url="http://code.google.com/p/python-markdown2/",
-    license="http://www.opensource.org/licenses/mit-license.php",
+    license="MIT",
     platforms=["any"],
     py_modules=["markdown2"],
     package_dir={"": "lib"},
     scripts=[script],
-    description=doclines[0],
+    description="A fast and complete Python implementaion of Markdown",
     classifiers=filter(None, classifiers.split("\n")),
-    long_description="\n".join(doclines[2:]),
+    long_description=README,
 )
 
