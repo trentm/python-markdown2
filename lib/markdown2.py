@@ -189,6 +189,7 @@ class Markdown(object):
         else:
             self.safe_mode = safe_mode
 
+        # Massaging and building the "extras" info.
         if self.extras is None:
             self.extras = {}
         elif not isinstance(self.extras, dict):
@@ -201,6 +202,7 @@ class Markdown(object):
         if "toc" in self.extras and not "header-ids" in self.extras:
             self.extras["header-ids"] = None   # "toc" implies "header-ids"
         self._instance_extras = self.extras.copy()
+        
         self.link_patterns = link_patterns
         self.use_file_vars = use_file_vars
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
