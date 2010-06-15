@@ -1049,7 +1049,7 @@ class Markdown(object):
         Subclasses may override this for different header ids.
         """
         header_id = _slugify(text)
-        if prefix:
+        if prefix and isinstance(prefix, basestring):
             header_id = prefix + '-' + header_id
         if header_id in self._count_from_header_id:
             self._count_from_header_id[header_id] += 1
