@@ -5,9 +5,15 @@ Here I interrupt myself with an en dash -- no, now it's with---an em dash.
 
 And finally...wait for it, and again with spaces. . .I've tested ellipses.
 
+Escapes
+-------
+
 Before getting to the hard stuff, I'll run through all the escape sequences --- they shouldn't need to become HTML entities.
 
     \\ \" \' \` \- \. \>
+
+The "smarty-pants" extra adds escapes for \'single quotes\' and \"double
+quotes\" in case you want to force dumb quotes.
 
 "Quotation marks"
 -----------------

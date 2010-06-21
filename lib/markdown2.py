@@ -210,6 +210,11 @@ class Markdown(object):
         self.use_file_vars = use_file_vars
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
+        self._escape_table = g_escape_table.copy()
+        if "smarty-pants" in self.extras:
+            self._escape_table['"'] = _hash_ascii('"')
+            self._escape_table["'"] = _hash_ascii("'")
+
     def reset(self):
         self.urls = {}
         self.titles = {}
@@ -793,8 +798,8 @@ class Markdown(object):
                 # character with its corresponding MD5 checksum value;
                 # this is likely overkill, but it should prevent us from
                 # colliding with the escape values by accident.
-                escaped.append(token.replace('*', g_escape_table['*'])
-                                    .replace('_', g_escape_table['_']))
+                escaped.append(token.replace('*', self._escape_table['*'])
+                                    .replace('_', self._escape_table['_']))
             else:
                 escaped.append(self._encode_backslash_escapes(token))
             is_html_markup = not is_html_markup
@@ -964,12 +969,12 @@ class Markdown(object):
                         url = url[1:-1]  # '<url>' -> 'url'
                     # We've got to encode these to avoid conflicting
                     # with italics/bold.
-                    url = url.replace('*', g_escape_table['*']) \
-                             .replace('_', g_escape_table['_'])
+                    url = url.replace('*', self._escape_table['*']) \
+                             .replace('_', self._escape_table['_'])
                     if title:
                         title_str = ' title="%s"' \
-                            % title.replace('*', g_escape_table['*']) \
-                                   .replace('_', g_escape_table['_']) \
+                            % title.replace('*', self._escape_table['*']) \
+                                   .replace('_', self._escape_table['_']) \
                                    .replace('"', '&quot;')
                     else:
                         title_str = ''
@@ -1008,12 +1013,12 @@ class Markdown(object):
                         url = self.urls[link_id]
                         # We've got to encode these to avoid conflicting
                         # with italics/bold.
-                        url = url.replace('*', g_escape_table['*']) \
-                                 .replace('_', g_escape_table['_'])
+                        url = url.replace('*', self._escape_table['*']) \
+                                 .replace('_', self._escape_table['_'])
                         title = self.titles.get(link_id)
                         if title:
-                            title = title.replace('*', g_escape_table['*']) \
-                                         .replace('_', g_escape_table['_'])
+                            title = title.replace('*', self._escape_table['*']) \
+                                         .replace('_', self._escape_table['_'])
                             title_str = ' title="%s"' % title
                         else:
                             title_str = ''
@@ -1404,13 +1409,13 @@ class Markdown(object):
             ('<', '&lt;'),
             ('>', '&gt;'),
             # Now, escape characters that are magic in Markdown:
-            ('*', g_escape_table['*']),
-            ('_', g_escape_table['_']),
-            ('{', g_escape_table['{']),
-            ('}', g_escape_table['}']),
-            ('[', g_escape_table['[']),
-            (']', g_escape_table[']']),
-            ('\\', g_escape_table['\\']),
+            ('*', self._escape_table['*']),
+            ('_', self._escape_table['_']),
+            ('{', self._escape_table['{']),
+            ('}', self._escape_table['}']),
+            ('[', self._escape_table['[']),
+            (']', self._escape_table[']']),
+            ('\\', self._escape_table['\\']),
         ]
         for before, after in replacements:
             text = text.replace(before, after)
@@ -1584,7 +1589,7 @@ class Markdown(object):
         return text
 
     def _encode_backslash_escapes(self, text):
-        for ch, escape in g_escape_table.items():
+        for ch, escape in self._escape_table.items():
             text = text.replace("\\"+ch, escape)
         return text
 
@@ -1653,8 +1658,8 @@ class Markdown(object):
                 escaped_href = (
                     href.replace('"', '&quot;')  # b/c of attr quote
                         # To avoid markdown <em> and <strong>:
-                        .replace('*', g_escape_table['*'])
-                        .replace('_', g_escape_table['_']))
+                        .replace('*', self._escape_table['*'])
+                        .replace('_', self._escape_table['_']))
                 link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
                 hash = _hash_text(link)
                 link_from_hash[hash] = link
@@ -1665,7 +1670,7 @@ class Markdown(object):
     
     def _unescape_special_chars(self, text):
         # Swap back in all the special characters we've hidden.
-        for ch, hash in g_escape_table.items():
+        for ch, hash in self._escape_table.items():
             text = text.replace(hash, ch)
         return text
 
