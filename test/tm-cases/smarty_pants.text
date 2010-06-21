@@ -1,0 +1,26 @@
+"Simple substitutions"
+----------------------
+
+Here I interrupt myself with an en dash -- no, now it's with---an em dash.
+
+And finally...wait for it, and again with spaces. . .I've tested ellipses.
+
+Before getting to the hard stuff, I'll run through all the escape sequences --- they shouldn't need to become HTML entities.
+
+    \\ \" \' \` \- \. \>
+
+"Quotation marks"
+-----------------
+
+You'll notice that I began this document with a quotation to test a potential error: $ is zero-width and \\s is one-width, and you can't have both in a backreference.  Meanwhile, I've this paragraph has tested contractions four times; 'tis close, but this last apostrophe should fool the regex.
+
+The docs say, "You can open and close quotations with quotation marks, and they don't both have to be single or double."  So 'this" works.  And "this.'  And finally, 'this.'
+
+Most of the corrections are consistent with what a word processor might do when autoformatting:
+
+ * When a single- or double-prime falls between text and whitespace, it opens facing the text.
+ * Edge case: a single-prime can be surrounded by text, in which case it becomes an apostrophe and opens left.
+ * Edge case: in "British grammar", quotations are closed just before punctuation, so a closing quotation mark may be followed not by whitespace but by one of ,;.?!
+ * Edge case: 'tis and 'twas, or sometimes capitalized as 'Tis and 'Twas, are "archaic" contractions that require an apostrophe (opening left), not an opening single quote (opening right).
+ * Other edge cases: nested quotation marks, or perhaps an apostrophe (see directly above) neighboring a quotation mark.  The only "easy" solution is to have such quotation marks adjust to actual text, or if they're only neighbored by whitespace and/or quotation marks, wait for those quotation marks to pick a direction, and then match it.  Ick!
+ * Other edge cases: opening or closing quotations just within parentheses or brackets of some kind, generally in code, etc.  Transformations here are **not** supported because said transformations are only meant to apply to plain English or other natural language; trying to satisfy such edge cases would lead to a slippery slope and bloat.

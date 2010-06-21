@@ -1,0 +1,27 @@
+<h2>&ldquo;Simple substitutions&rdquo;</h2>
+
+<p>Here I interrupt myself with an en dash &ndash; no, now it&rsquo;s with&mdash;an em dash.</p>
+
+<p>And finally&#8230;wait for it, and again with spaces&#8230;I&rsquo;ve tested ellipses.</p>
+
+<p>Before getting to the hard stuff, I&rsquo;ll run through all the escape sequences &mdash; they shouldn&rsquo;t need to become HTML entities.</p>
+
+<pre><code>\\ \" \' \` \- \. \&gt;
+</code></pre>
+
+<h2>&ldquo;Quotation marks&rdquo;</h2>
+
+<p>You&rsquo;ll notice that I began this document with a quotation to test a potential error: $ is zero-width and \s is one-width, and you can&rsquo;t have both in a backreference.  Meanwhile, I&rsquo;ve this paragraph has tested contractions four times; &rsquo;tis close, but this last apostrophe should fool the regex.</p>
+
+<p>The docs say, &ldquo;You can open and close quotations with quotation marks, and they don&rsquo;t both have to be single or double.&rdquo;  So &lsquo;this&rdquo; works.  And &ldquo;this.&rsquo;  And finally, &lsquo;this.&rsquo;</p>
+
+<p>Most of the corrections are consistent with what a word processor might do when autoformatting:</p>
+
+<ul>
+<li>When a single- or double-prime falls between text and whitespace, it opens facing the text.</li>
+<li>Edge case: a single-prime can be surrounded by text, in which case it becomes an apostrophe and opens left.</li>
+<li>Edge case: in &ldquo;British grammar&rdquo;, quotations are closed just before punctuation, so a closing quotation mark may be followed not by whitespace but by one of ,;.?!</li>
+<li>Edge case: &rsquo;tis and &rsquo;twas, or sometimes capitalized as &rsquo;Tis and &rsquo;Twas, are &ldquo;archaic&rdquo; contractions that require an apostrophe (opening left), not an opening single quote (opening right).</li>
+<li>Other edge cases: nested quotation marks, or perhaps an apostrophe (see directly above) neighboring a quotation mark.  The only &ldquo;easy&rdquo; solution is to have such quotation marks adjust to actual text, or if they&rsquo;re only neighbored by whitespace and/or quotation marks, wait for those quotation marks to pick a direction, and then match it.  Ick!</li>
+<li>Other edge cases: opening or closing quotations just within parentheses or brackets of some kind, generally in code, etc.  Transformations here are <strong>not</strong> supported because said transformations are only meant to apply to plain English or other natural language; trying to satisfy such edge cases would lead to a slippery slope and bloat.</li>
+</ul>

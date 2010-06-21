@@ -51,6 +51,9 @@ Supported extras (see -x|--extras option below):
   blocks.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
   references, revision number references).
+* smarty-pants: Replaces ' and " with curly quotation marks or curly 
+  apostrophes.  Replaces --, ---, ..., and . . . with en dashes, em dashes, 
+  and ellipses.
 * toc: The returned HTML string gets a new "toc_html" attribute which is
   a Table of Contents for the document. (experimental)
 * xml: Passes one-liner processing instructions and namespaced XML tags.
@@ -747,6 +750,9 @@ class Markdown(object):
     
         text = self._do_italics_and_bold(text)
     
+        if "smarty-pants" in self.extras:
+            text = self._do_smart_punctuation(text)
+    
         # Do hard breaks:
         text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
     
@@ -1423,7 +1429,41 @@ class Markdown(object):
             text = self._strong_re.sub(r"<strong>\2</strong>", text)
             text = self._em_re.sub(r"<em>\2</em>", text)
         return text
-    
+
+    # Run double delimiter substitutions before single delimiter substitutions.
+    _opening_single_quote_re = re.compile(r"""
+            (?<!\S)                     # if preceeded by whitespace or nothing
+            '                           # find this character
+            (?!\s|twas|tis|Twas|Tis)    # unless followed by whitespace or tis or twas
+        """, re.X | re.S)
+    _opening_double_quote_re = re.compile(r'(?<!\S)"(?=\S)', re.S)
+    _closing_single_quote_re = re.compile(r"""
+            (?: (?<!\S) ' (?=twas|tis|Twas|Tis) )   # is the apostrophe in tis or twas
+            |                                       # or
+            (?<=\S) '                               # is a standard contraction (text in front, text behind)
+                                                    # or closing quote (text in front, whitespace behind)
+        """, re.X | re.S)
+    _closing_double_quote_re = re.compile(r'(?<=\S)"(?=(\s|,|;|\.|\?|!|$))', re.S)
+    def _do_smart_punctuation(self, text):
+        """Fancifies 'single quotes', "double quotes", and apostrophes.  
+        Converts --, ---, and ... into en dashes, em dashes, and ellipses.
+        
+        Inspiration is: <http://daringfireball.net/projects/smartypants/>
+        See "test/tm-cases/smarty_pants.text" for a full discussion of the
+        support here and
+        <http://code.google.com/p/python-markdown2/issues/detail?id=42> for a
+        discussion of some diversion from the original SmartyPants.
+        """
+        text = self._opening_double_quote_re.sub("&ldquo;", text)
+        text = self._opening_single_quote_re.sub("&lsquo;", text)
+        text = self._closing_double_quote_re.sub("&rdquo;", text)
+        text = self._closing_single_quote_re.sub("&rsquo;", text)
+
+        text = text.replace("---", "&mdash;")
+        text = text.replace("--", "&ndash;")
+        text = text.replace("...", "&#8230;")
+        text = text.replace(". . .", "&#8230;")
+        return text
 
     _block_quote_re = re.compile(r'''
         (                           # Wrap whole match in \1

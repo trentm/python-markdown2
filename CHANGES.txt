@@ -2,6 +2,10 @@
 
 ## python-markdown2 v1.0.1.18 (not yet released)
 
+- [Issue 42] Add "smarty-pants" extra for transforming plain ASCII
+  punctuation characters into “smart” typographic punctuation HTML entities.
+  Inspiration: <http://daringfireball.net/projects/smartypants/>
+  Implementation by Nikhil Chelliah.
 - Guard against using using `True` instead of `None` as follows 
   `markdown(..., extras={'header-ids': True})`. `None` is wanted, but `True`
   is commonly (at least I did it twice) used.
