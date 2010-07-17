@@ -1,4 +1,10 @@
+- add "smarty-pants" extra to wiki
 - add "html-classes" extra to wiki
+- better "Extras" wiki page that shows a quick example of each with link for
+  more details. Mention "extensions" for gjuice.
+- add description of pyshell and demote-headers extras to wiki
+- find more unicode edge cases (look for any usage of md5() and make that
+  unicode)
 - bug: can't have '<\w+' in a code span or code block with safe_mode if there
   is a '>' somewhere later in the document. E.g. code.as.com-beta/CHANGES.md.
   It captures all of that. Right answer is to not count code spans or code
@@ -18,30 +24,10 @@
             of reasonable whitelist stuff.
     Then unescape these special chars. The use of OPENTAG above would make
     "html-classes" extra trivial.
-
-- fix the r135 xml option, add xml extra for it (see email)
-- look at http://code.google.com/p/markdownsharp/
-- add description of pyshell and demote-headers extras to wiki
-- to bring up on markdown-discuss:
-    - the trailing '#' escaping in DoHeaders (provide a patch for this)
-    - the discussion of backticks and backslash-escapes in code spans:
-        also bring in python-markdown-discuss on this
-    - The link for backslash escapes doesn't mention '>', but I believe it
-      should -- viz Markdown.pl's `%g_escape_table` which *does* include '>'.
-      TODO: bring this up on markdown-discuss list.
-- wiki: add an "Other Markdown implementations page"
-    http://daringfireball.net/projects/markdown/
-    http://www.michelf.com/projects/php-markdown/
-    http://www.freewisdom.org/projects/python-markdown/Features
 - test safe_mode on HTML in footnotes
-- compare setup.py stuff from Yannick to what I have now. Also:
-    http://gitorious.org/projects/git-python/repos/mainline/trees/master
-    http://www.python.org/~jeremy/weblog/030924.html
 - http://www.freewisdom.org/projects/python-markdown/Available_Extensions
 - Extras.wiki desc of code-color option. Not sure I love the ":::name"
   markup for the lexer name.
-- find more unicode edge cases (look for any usage of md5() and make that
-  unicode)
 - update MDTest 1.1? (see
   http://six.pairlist.net/pipermail/markdown-discuss/2007-September/000815.html)
   update MDTest tests from http://git.michelf.com/mdtest/
@@ -50,10 +36,9 @@
   Update to that? Yes. Copy, at least, in showdown package.
 - take a look at other examples/test-cases from
   http://adlcommunity.net/help.php?file=advanced_markdown.html
-- googlecode site: Why another Python impl? Test info. Usage/Features page.
 - get on http://en.wikipedia.org/wiki/Markdown
 - ask about remaining two MarkdownTest test failures
-- put in recipes site
+- fix the r135 xml option, add xml extra for it (see email)
 - perhaps some extras from Maruku and PHP Markdown extra
   (http://maruku.rubyforge.org/maruku.html#extra)
     - tables (tho I don't really like the syntax, prefer google codes, see
@@ -78,8 +63,4 @@
         [Zaphod Breeblebrox]
         > blah blah
         > blah
-- do perf comparison with the other Markdown impls (if compare horribly then
-  do something about it)
-- submit a Markdown.py (or .pl?) fix based on revision 1895 (on tm svn)
-- see about using html5lib (for speed and/or for better raw HTML handling)
-- see about plugins (SmartyPants, others available)
+
