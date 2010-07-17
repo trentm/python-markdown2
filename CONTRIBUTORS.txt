@@ -1,3 +1,4 @@
 Trent Mick (primary author)
 Thomas Moschny (redhat packaging, https://bugzilla.redhat.com/show_bug.cgi?id=461692)
 Massimo Di Pierro (security fix, issue 29)
+Nikhil Chelliah ("smarty-pants" extra, issue 42)
