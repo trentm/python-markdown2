@@ -1435,20 +1435,26 @@ class Markdown(object):
             text = self._em_re.sub(r"<em>\2</em>", text)
         return text
 
-    # Run double delimiter substitutions before single delimiter substitutions.
-    _opening_single_quote_re = re.compile(r"""
-            (?<!\S)                     # if preceeded by whitespace or nothing
-            '                           # find this character
-            (?!\s|twas|tis|Twas|Tis)    # unless followed by whitespace or tis or twas
-        """, re.X | re.S)
-    _opening_double_quote_re = re.compile(r'(?<!\S)"(?=\S)', re.S)
-    _closing_single_quote_re = re.compile(r"""
-            (?: (?<!\S) ' (?=twas|tis|Twas|Tis) )   # is the apostrophe in tis or twas
-            |                                       # or
-            (?<=\S) '                               # is a standard contraction (text in front, text behind)
-                                                    # or closing quote (text in front, whitespace behind)
-        """, re.X | re.S)
-    _closing_double_quote_re = re.compile(r'(?<=\S)"(?=(\s|,|;|\.|\?|!|$))', re.S)
+    # "smarty-pants" extra: Very liberal in interpreting a single prime as an
+    # apostrophe; e.g. ignores the fact that "round", "bout", "twer", and
+    # "twixt" can be written without an initial apostrophe. This is fine because
+    # using scare quotes (single quotation marks) is rare.
+    _apostrophe_year_re = re.compile(r"'(\d\d)(?=(\s|,|;|\.|\?|!|$))")
+    _contractions = ["tis", "twas", "twer", "neath", "o", "n",
+        "round", "bout", "twixt", "nuff", "fraid", "sup"]
+    def _do_smart_contractions(self, text):
+        text = self._apostrophe_year_re.sub(r"&#8217;\1", text)
+        for c in self._contractions:
+            text = text.replace("'%s" % c, "&#8217;%s" % c)
+            text = text.replace("'%s" % c.capitalize(),
+                "&#8217;%s" % c.capitalize())
+        return text
+
+    # Substitute double-quotes before single-quotes.
+    _opening_single_quote_re = re.compile(r"(?<!\S)'(?=\S)")
+    _opening_double_quote_re = re.compile(r'(?<!\S)"(?=\S)')
+    _closing_single_quote_re = re.compile(r"(?<=\S)'")
+    _closing_double_quote_re = re.compile(r'(?<=\S)"(?=(\s|,|;|\.|\?|!|$))')
     def _do_smart_punctuation(self, text):
         """Fancifies 'single quotes', "double quotes", and apostrophes.  
         Converts --, ---, and ... into en dashes, em dashes, and ellipses.
@@ -1459,14 +1465,19 @@ class Markdown(object):
         <http://code.google.com/p/python-markdown2/issues/detail?id=42> for a
         discussion of some diversion from the original SmartyPants.
         """
-        text = self._opening_double_quote_re.sub("&ldquo;", text)
-        text = self._opening_single_quote_re.sub("&lsquo;", text)
-        text = self._closing_double_quote_re.sub("&rdquo;", text)
-        text = self._closing_single_quote_re.sub("&rsquo;", text)
+        if "'" in text: # guard for perf
+            text = self._do_smart_contractions(text)
+            text = self._opening_single_quote_re.sub("&#8216;", text)
+            text = self._closing_single_quote_re.sub("&#8217;", text)
+        
+        if '"' in text: # guard for perf
+            text = self._opening_double_quote_re.sub("&#8220;", text)
+            text = self._closing_double_quote_re.sub("&#8221;", text)
 
-        text = text.replace("---", "&mdash;")
-        text = text.replace("--", "&ndash;")
+        text = text.replace("---", "&#8212;")
+        text = text.replace("--", "&#8211;")
         text = text.replace("...", "&#8230;")
+        text = text.replace(" . . . ", "&#8230;")
         text = text.replace(". . .", "&#8230;")
         return text
 

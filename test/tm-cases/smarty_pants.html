@@ -1,32 +1,47 @@
-<h2>&ldquo;Simple substitutions&rdquo;</h2>
+<h2>Simple substitutions</h2>
 
-<p>Here I interrupt myself with an en dash &ndash; no, now it&rsquo;s with&mdash;an em dash.</p>
+<p>Here I interrupt myself with an en dash &#8211; no, now it&#8217;s with&#8212;an em dash.</p>
 
-<p>And finally&#8230;wait for it, and again with spaces&#8230;I&rsquo;ve tested ellipses.</p>
+<p>And finally&#8230;wait for it, and again with spaces&#8230;I&#8217;ve tested ellipses&#8230;and also with even more spaces.</p>
 
 <h2>Escapes</h2>
 
-<p>Before getting to the hard stuff, I&rsquo;ll run through all the escape sequences &mdash; they shouldn&rsquo;t need to become HTML entities.</p>
+<p>Before getting to the hard stuff, I&#8217;ll run through all the escape sequences &#8212; they shouldn&#8217;t need to become HTML entities.</p>
 
 <pre><code>\\ \" \' \` \- \. \&gt;
 </code></pre>
 
-<p>The &ldquo;smarty-pants&rdquo; extra adds escapes for 'single quotes' and "double
+<p>The &#8220;smarty-pants&#8221; extra adds escapes for 'single quotes' and "double
 quotes" in case you want to force dumb quotes.</p>
 
-<h2>&ldquo;Quotation marks&rdquo;</h2>
+<h2>Quotation marks</h2>
 
-<p>You&rsquo;ll notice that I began this document with a quotation to test a potential error: $ is zero-width and \s is one-width, and you can&rsquo;t have both in a backreference.  Meanwhile, I&rsquo;ve this paragraph has tested contractions four times; &rsquo;tis close, but this last apostrophe should fool the regex.</p>
+<p>You&#8217;ll notice that I began this document with a quotation to test a potential error: $ is zero-width and \s is one-width, and you can&#8217;t have both in a backreference.  Meanwhile, I&#8217;ve this paragraph has tested contractions four times; &#8217;tis close, but this last apostrophe should fool the regex.</p>
 
-<p>The docs say, &ldquo;You can open and close quotations with quotation marks, and they don&rsquo;t both have to be single or double.&rdquo;  So &lsquo;this&rdquo; works.  And &ldquo;this.&rsquo;  And finally, &lsquo;this.&rsquo;</p>
+<p>&#8220;This text&#8221; tests to see whether an adjacent &lt;p&gt; tag messes up detection of quotation marks.</p>
+
+<p>The docs say, &#8220;You can open and close quotations with quotation marks, and they don&#8217;t both have to be single or double.&#8221;  So &#8216;this&#8221; works.  And &#8220;this.&#8217;  And finally, &#8216;this.&#8217;</p>
 
 <p>Most of the corrections are consistent with what a word processor might do when autoformatting:</p>
 
 <ul>
 <li>When a single- or double-prime falls between text and whitespace, it opens facing the text.</li>
-<li>Edge case: a single-prime can be surrounded by text, in which case it becomes an apostrophe and opens left.</li>
-<li>Edge case: in &ldquo;British grammar&rdquo;, quotations are closed just before punctuation, so a closing quotation mark may be followed not by whitespace but by one of ,;.?!</li>
-<li>Edge case: &rsquo;tis and &rsquo;twas, or sometimes capitalized as &rsquo;Tis and &rsquo;Twas, are &ldquo;archaic&rdquo; contractions that require an apostrophe (opening left), not an opening single quote (opening right).</li>
-<li>Other edge cases: nested quotation marks, or perhaps an apostrophe (see directly above) neighboring a quotation mark.  The only &ldquo;easy&rdquo; solution is to have such quotation marks adjust to actual text, or if they&rsquo;re only neighbored by whitespace and/or quotation marks, wait for those quotation marks to pick a direction, and then match it.  Ick!</li>
+<li>Edge case: in &#8220;British grammar&#8221;, quotations are closed just before punctuation, so a closing quotation mark may be followed not by whitespace but by one of ,;.?!</li>
+<li>Other edge cases: nested quotation marks, or perhaps an apostrophe (see directly above) neighboring a quotation mark.  The only &#8220;easy&#8221; solution is to have such quotation marks adjust to actual text, or if they&#8217;re only neighbored by whitespace and/or quotation marks, wait for those quotation marks to pick a direction, and then match it.  Ick!</li>
 <li>Other edge cases: opening or closing quotations just within parentheses or brackets of some kind, generally in code, etc.  Transformations here are <strong>not</strong> supported because said transformations are only meant to apply to plain English or other natural language; trying to satisfy such edge cases would lead to a slippery slope and bloat.</li>
 </ul>
+
+<h3>Edge case: contractions</h3>
+
+<p>A single-prime can be surrounded by text, in which case it becomes an apostrophe and opens left.</p>
+
+<p>For common contractions, a space single-prime non-space combination should produce an apostrophe (&amp;#8217;) instead of an opening scare quote (&amp;#8216;).</p>
+
+<p>Here is the full list: &#8217;tis, &#8217;twas, &#8217;twer, &#8217;neath, &#8217;o, &#8217;n, &#8217;round, &#8217;bout, &#8217;twixt, &#8217;nuff, &#8217;fraid, &#8217;sup <br />
+The full list, capitalized: &#8217;Tis, &#8217;Twas, &#8217;Twer, &#8217;Neath, &#8217;O, &#8217;N, &#8217;Round, &#8217;Bout, &#8217;Twixt, &#8217;Nuff, &#8217;Fraid, &#8217;Sup <br />
+And normal text: &#8216;random &#8216;stuff &#8216;that &#8216;shouldn&#8217;t &#8216;be &#8216;detected &#8216;as &#8216;contractions <br />
+And years: &#8217;29 &#8217;91 &#8216;1942 &#8216;2001 &#8216;2010</p>
+
+<p>Like quotation marks, the year shorthand expects a year, e.g. '29, to be followed by whitespace or sentence-ending punctuation.  Numbers like '456.7 will throw it off, but those aren&#8217;t entered very often.</p>
+
+<p>These transformations don&#8217;t consider whether or not the contraction was preceded by whitespace.  If it was preceded by text, then it would have been converted by the standard contraction rule (see the first line of this section).</p>
