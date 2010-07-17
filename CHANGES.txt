@@ -2,6 +2,7 @@
 
 ## python-markdown2 v1.0.1.18 (not yet released)
 
+- [Issue 39] Test case fix for pygments 1.3.1 from thomas.moschny.
 - [Issue 42] Add "smarty-pants" extra for transforming plain ASCII
   punctuation characters into smart typographic punctuation HTML entities.
   Inspiration: <http://daringfireball.net/projects/smartypants/>
