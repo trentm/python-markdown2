@@ -49,7 +49,7 @@
 # - See the optparse "TODO" below.
 # - Make the quiet option actually quiet.
 
-__version_info__ = (0, 6, 3)
+__version_info__ = (0, 6, 6)
 __version__ = '.'.join(map(str, __version_info__))
 
 
@@ -144,7 +144,7 @@ def timedtest(max_time, tolerance=TOLERANCE):
 
 #---- module api
 
-class Test:
+class Test(object):
     def __init__(self, ns, testmod, testcase, testfn_name,
                  testsuite_class=None):
         self.ns = ns
@@ -248,9 +248,11 @@ def testmods_from_testdir(testdir):
             finally:
                 os.chdir(old_dir)
                 sys.path.remove(testabsdir)
-        except TestSkipped, ex:
+        except TestSkipped:
+            _, ex, _ = sys.exc_info()
             log.warn("'%s' module skipped: %s", testmod_name, ex)
-        except Exception, ex:
+        except Exception:
+            _, ex, _ = sys.exc_info()
             log.warn("could not import test module '%s': %s (skipping, "
                      "run with '-d' for full traceback)",
                      testmod_path, ex)
@@ -289,7 +291,8 @@ def testcases_from_testmod(testmod):
                     continue
                 for testcase in loader.loadTestsFromTestCase(testcase_class):
                     yield testcase
-        except Exception, ex:
+        except Exception:
+            _, ex, _ = sys.exc_info()
             testmod_path = testmod.__file__
             if testmod_path.endswith(".pyc"):
                 testmod_path = testmod_path[:-1]
@@ -442,23 +445,23 @@ def list_tests(testdir_from_ns, tags):
     if log.isEnabledFor(logging.INFO): # long-form
         for i, t in enumerate(tests):
             if i:
-                print
+                print()
             testfile = t.testmod.__file__
             if testfile.endswith(".pyc"):
                 testfile = testfile[:-1]
-            print "%s:" % t.shortname()
-            print "  from: %s#%s.%s" \
-                  % (testfile, t.testcase.__class__.__name__, t.testfn_name)
+            print("%s:" % t.shortname())
+            print("  from: %s#%s.%s" % (testfile,
+                t.testcase.__class__.__name__, t.testfn_name))
             wrapped = textwrap.fill(' '.join(t.tags()), WIDTH-10)
-            print "  tags: %s" % _indent(wrapped, 8, True)
+            print("  tags: %s" % _indent(wrapped, 8, True))
             if t.doc():
-                print _indent(t.doc(), width=2)
+                print(_indent(t.doc(), width=2))
     else:
         for t in tests:
             line = t.shortname() + ' '
             if t.explicit_tags():
                 line += '[%s]' % ' '.join(t.explicit_tags())
-            print line
+            print(line)
 
 
 #---- text test runner that can handle TestSkipped reasonably
@@ -522,7 +525,7 @@ class ConsoleTestResult(unittest.TestResult):
             self.stream.write("%s\n" % err)
 
 
-class ConsoleTestRunner:
+class ConsoleTestRunner(object):
     """A test runner class that displays results on the console.
 
     It prints out the names of tests as they are run, errors as they
@@ -696,13 +699,14 @@ def harness(testdir_from_ns={None: os.curdir}, argv=sys.argv,
         logging.basicConfig()
     try:
         log_level, action, tags = _parse_opts(argv[1:], default_tags or [])
-    except getopt.error, ex:
+    except getopt.error:
+        _, ex, _ = sys.exc_info()
         log.error(str(ex) + " (did you need a '--' before a '-TAG' argument?)")
         return 1
     log.setLevel(log_level)
 
     if action == "help":
-        print __doc__
+        print(__doc__)
         return 0
     if action == "list":
         return list_tests(testdir_from_ns, tags)
