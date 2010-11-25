@@ -500,7 +500,7 @@ class Markdown(object):
                 l_key = _hash_text(last_line)
                 self.html_blocks[l_key] = last_line
                 return ''.join(["\n\n", f_key,
-                    "\n\n", self._run_block_gamut(middle), "\n\n",
+                    "\n\n", middle, "\n\n",
                     l_key, "\n\n"])
         key = _hash_text(html)
         self.html_blocks[key] = html

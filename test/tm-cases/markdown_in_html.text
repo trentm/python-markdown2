@@ -1,14 +1,26 @@
+# Using headings to test toc and markdown-in-html together
+
+- apples
+- bananas
+
 <div markdown="1">
 This is *true* markdown text.
 </div>
 
 <div class="bar" markdown="1">
-This **too**.
+## This **too**.
+
+And a paragraph
 </div>
 
 <div markdown="1" class="foo">
 And **this**.
 </div>
+
+# Veggies
+
+- carrots
+- lettuce
 
 <!-- This isn't currently supported (as it is in PHP Markdown), but it
      might be one day. -->

@@ -1,0 +1,7 @@
+<ul>
+  <li><a href="#using-headings-to-test-toc-and-markdown-in-html-together">Using headings to test toc and markdown-in-html together</a>
+  <ul>
+    <li><a href="#this-too">This <strong>too</strong>.</a></li>
+  </ul></li>
+  <li><a href="#veggies">Veggies</a></li>
+</ul>
