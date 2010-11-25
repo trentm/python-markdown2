@@ -1,3 +1,4 @@
+- add "markdown-in-html" extra to wiki
 - add "smarty-pants" extra to wiki
 - add "html-classes" extra to wiki
 - better "Extras" wiki page that shows a quick example of each with link for

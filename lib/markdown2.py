@@ -47,6 +47,10 @@ Supported extras (see -x|--extras option below):
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
   string to use for a "class" tag attribute. Currently only supports
   "pre" and "code" tags. Add an issue if you require this for other tags.
+* markdown-in-html: Allow the use of `markdown="1"` in a block HTML tag to
+  have markdown processing be done on its contents. Similar to
+  <http://michelf.com/projects/php-markdown/extra/#markdown-attr> but with
+  some limitations.
 * pyshell: Treats unindented Python interactive shell sessions as <code>
   blocks.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
@@ -477,10 +481,27 @@ class Markdown(object):
         """ % _block_tags_b,
         re.X | re.M)
 
+    _html_markdown_attr_re = re.compile(
+        r'''\s+markdown=("1"|'1')''')
     def _hash_html_block_sub(self, match, raw=False):
         html = match.group(1)
         if raw and self.safe_mode:
             html = self._sanitize_html(html)
+        elif 'markdown-in-html' in self.extras and 'markdown=' in html:
+            first_line = html.split('\n', 1)[0]
+            m = self._html_markdown_attr_re.search(first_line)
+            if m:
+                lines = html.split('\n')
+                middle = '\n'.join(lines[1:-1])
+                last_line = lines[-1]
+                first_line = first_line[:m.start()] + first_line[m.end():]
+                f_key = _hash_text(first_line)
+                self.html_blocks[f_key] = first_line
+                l_key = _hash_text(last_line)
+                self.html_blocks[l_key] = last_line
+                return ''.join(["\n\n", f_key,
+                    "\n\n", self._run_block_gamut(middle), "\n\n",
+                    l_key, "\n\n"])
         key = _hash_text(html)
         self.html_blocks[key] = html
         return "\n\n" + key + "\n\n"

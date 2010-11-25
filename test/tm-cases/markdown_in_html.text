@@ -1,0 +1,19 @@
+<div markdown="1">
+This is *true* markdown text.
+</div>
+
+<div class="bar" markdown="1">
+This **too**.
+</div>
+
+<div markdown="1" class="foo">
+And **this**.
+</div>
+
+<!-- This isn't currently supported (as it is in PHP Markdown), but it
+     might be one day. -->
+<table>
+<tr>
+<td markdown="1">This is *true* markdown text.</td>
+</tr>
+</table>
