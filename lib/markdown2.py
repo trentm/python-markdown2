@@ -299,6 +299,8 @@ class Markdown(object):
         if "footnotes" in self.extras:
             text = self._add_footnotes(text)
 
+        text = self.postprocess(text)
+
         text = self._unescape_special_chars(text)
 
         if self.safe_mode:
@@ -310,6 +312,13 @@ class Markdown(object):
         if "toc" in self.extras:
             rv._toc = self._toc
         return rv
+
+    def postprocess(self, text):
+        """A hook for subclasses to do some postprocessing of the html, if
+        desired. This is called before unescaping of special chars and
+        unhashing of raw HTML spans.
+        """
+        return text
 
     _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
     # This regular expression is intended to match blocks like this:
@@ -1073,12 +1082,20 @@ class Markdown(object):
 
         return text 
 
-    def header_id_from_text(self, text, prefix):
+    def header_id_from_text(self, text, prefix, n):
         """Generate a header id attribute value from the given header
         HTML content.
         
         This is only called if the "header-ids" extra is enabled.
         Subclasses may override this for different header ids.
+        
+        @param text {str} The text of the header tag
+        @param prefix {str} The requested prefix for header ids. This is the
+            value of the "header-ids" extra key, if any. Otherwise, None.
+        @param n {int} The <hN> tag number, i.e. `1` for an <h1> tag.
+        @returns {str} The value for the header tag's "id" attribute. Return
+            None to not have an id attribute and to exclude this header from
+            the TOC (if the "toc" extra is specified).
         """
         header_id = _slugify(text)
         if prefix and isinstance(prefix, basestring):
@@ -1105,10 +1122,11 @@ class Markdown(object):
         header_id_attr = ""
         if "header-ids" in self.extras:
             header_id = self.header_id_from_text(match.group(1),
-                prefix=self.extras["header-ids"])
-            header_id_attr = ' id="%s"' % header_id
+                self.extras["header-ids"], n)
+            if header_id:
+                header_id_attr = ' id="%s"' % header_id
         html = self._run_span_gamut(match.group(1))
-        if "toc" in self.extras:
+        if "toc" in self.extras and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
@@ -1129,10 +1147,11 @@ class Markdown(object):
         header_id_attr = ""
         if "header-ids" in self.extras:
             header_id = self.header_id_from_text(match.group(2),
-                prefix=self.extras["header-ids"])
-            header_id_attr = ' id="%s"' % header_id
+                self.extras["header-ids"], n)
+            if header_id:
+                header_id_attr = ' id="%s"' % header_id
         html = self._run_span_gamut(match.group(2))
-        if "toc" in self.extras:
+        if "toc" in self.extras and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
