@@ -1,0 +1,8 @@
+*.pyc
+tmp
+externals
+dist
+MANIFEST
+build
+googlecode_upload.py
+
