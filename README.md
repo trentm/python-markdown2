@@ -86,5 +86,5 @@ set of matching .text (input) and .html (expected output) files. These are:
     php-markdown-extra-cases/   Tests also from MDTest package
 
 See the [Testing Notes wiki
-page](https://github.com/trentm/python-markdown2/wiki/Testing-Notes)) for full
+page](https://github.com/trentm/python-markdown2/wiki/Testing-Notes) for full
 details.
