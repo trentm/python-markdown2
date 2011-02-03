@@ -1,16 +1,12 @@
-markup system as defined here:
-
-    http://daringfireball.net/projects/markdown/syntax
-
 Markdown is a light text markup format and a processor to convert that to HTML.
 The originator describes it as follows:
 
-    Markdown is a text-to-HTML conversion tool for web writers.
-    Markdown allows you to write using an easy-to-read, 
-    easy-to-write plain text format, then convert it to 
-    structurally valid XHTML (or HTML).
-  
-    -- <http://daringfireball.net/projects/markdown/>
+> Markdown is a text-to-HTML conversion tool for web writers.
+> Markdown allows you to write using an easy-to-read, 
+> easy-to-write plain text format, then convert it to 
+> structurally valid XHTML (or HTML).
+>
+> -- <http://daringfireball.net/projects/markdown/>
 
 This is a fast and complete Python implementation of Markdown. It was written to
 closely match the behaviour of the original Perl-implemented Markdown.pl. There
@@ -63,17 +59,11 @@ docstrings and/or `python markdown2.py --help` for more details.
 
 # Project
 
-The python-markdown2 project lives here:
+The python-markdown2 project lives at <https://github.com/trentm/python-markdown2/>
 
-    https://github.com/trentm/python-markdown2/
+The change log: <https://github.com/trentm/python-markdown2/blob/master/CHANGES.txt>
 
-The change log:
-
-    https://github.com/trentm/python-markdown2/blob/master/CHANGES.txt
-
-To report a bug:
-
-    https://github.com/trentm/python-markdown2/issues
+To report a bug: <https://github.com/trentm/python-markdown2/issues>
 
 
 # Test Suite
