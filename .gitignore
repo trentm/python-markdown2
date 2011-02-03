@@ -1,8 +1,10 @@
 *.pyc
 tmp
-externals
+externals/pygments
 dist
 MANIFEST
 build
 googlecode_upload.py
-
+perf/*.prof
+perf/tmp-*-cases
+sandbox/*.html
