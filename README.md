@@ -59,9 +59,11 @@ docstrings and/or `python markdown2.py --help` for more details.
 
 # Project
 
-The python-markdown2 project lives at <https://github.com/trentm/python-markdown2/>.
-Note: On Mar 6, 2011 this project was moved from [Google Code](http://code.google.com/p/python-markdown2)
-to here on Github.
+The python-markdown2 project lives at
+<https://github.com/trentm/python-markdown2/>.  (Note: On Mar 6, 2011 this
+project was moved from [Google Code](http://code.google.com/p/python-markdown2)
+to here on Github.) See also, [markdown2 on the Python Package Index
+(PyPI)](http://pypi.python.org/pypi/markdown2).
 
 The change log: <https://github.com/trentm/python-markdown2/blob/master/CHANGES.txt>
 
