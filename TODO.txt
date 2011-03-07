@@ -1,3 +1,6 @@
+- conversion to github:
+  - downloads
+  - redirect notices on google code pages
 - add "markdown-in-html" extra to wiki
 - add "smarty-pants" extra to wiki
 - add "html-classes" extra to wiki
