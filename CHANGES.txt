@@ -3,7 +3,7 @@
 ## python-markdown2 v1.0.1.18 (not yet released)
 
 - Add a `Markdown.postprocess(text) -> text` hook that is called near the end
-  of markdown conversion. By default this do no transformation. It is called
+  of markdown conversion. By default this does no transformation. It is called
   just before unescaping of special characters and unhashing of literal HTML
   blocks.
 - ["header-ids" and "toc" extras] Add "n" argument to
