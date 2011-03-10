@@ -1,0 +1,60 @@
+<p>On the number of spaces in horizontal rules: The spec is fuzzy: "If
+you wish, you may use spaces between the hyphens or asterisks."
+Markdown.pl 1.0.1's hr regexes limit the number of spaces between the
+hr chars to one or two. We'll reproduce that limit here.</p>
+
+<h1>no spaces</h1>
+
+<hr />
+
+<hr />
+
+<hr />
+
+<h1>one space</h1>
+
+<hr />
+
+<hr />
+
+<hr />
+
+<h1>one space with some leading space</h1>
+
+<hr />
+
+<hr />
+
+<hr />
+
+<h1>two spaces</h1>
+
+<hr />
+
+<hr />
+
+<hr />
+
+<h1>three spaces (these shouldn't be hr)</h1>
+
+<p>-   -   -</p>
+
+<p>*   *   *</p>
+
+<p>_   _   _</p>
+
+<h1>one or two spaces</h1>
+
+<hr />
+
+<hr />
+
+<hr />
+
+<h1>longer</h1>
+
+<hr />
+
+<hr />
+
+<hr />

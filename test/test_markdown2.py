@@ -199,6 +199,32 @@ class DirectTestCase(_MarkdownTestCase):
     Python-markdown (markdown.py).
     """
 
+    def test_slow_hr(self):
+        import time
+        text = """\
+* * *
+
+This on *almost* looks like an hr, except for the trailing '+'. In older
+versions of markdown2.py this was pathologically slow:
+
+- - - - - - - - - - - - - - - - - - - - - - - - - +
+"""
+        html = """\
+<hr />
+
+<p>This on <em>almost</em> looks like an hr, except for the trailing '+'. In older
+versions of markdown2.py this was pathologically slow:</p>
+
+<p>- - - - - - - - - - - - - - - - - - - - - - - - - +</p>
+"""
+        start = time.time()
+        self._assertMarkdown(text, html)
+        end = time.time()
+        delta = end - start
+        self.assertTrue(delta < 1.0, "It took more than 1s to process "
+            "'slow-hr'. It took %.2fs. Too slow!" % delta)
+    test_slow_hr.tags = ["perf"]
+
     def test_code_in_strong(self):
         self._assertMarkdown(
             '**look at `this code` call**',

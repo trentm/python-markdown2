@@ -701,10 +701,10 @@ class Markdown(object):
         return footnote_def_re.sub(self._extract_footnote_def_sub, text)
 
 
-    _hr_res = [
-        re.compile(r"^[ ]{0,2}([ ]?\*[ ]?){3,}[ \t]*$", re.M),
-        re.compile(r"^[ ]{0,2}([ ]?\-[ ]?){3,}[ \t]*$", re.M),
-        re.compile(r"^[ ]{0,2}([ ]?\_[ ]?){3,}[ \t]*$", re.M),
+    _hr_data = [
+        ('*', re.compile(r"^[ ]{0,3}\*(.*?)$", re.M)),
+        ('-', re.compile(r"^[ ]{0,3}\-(.*?)$", re.M)),
+        ('_', re.compile(r"^[ ]{0,3}\_(.*?)$", re.M)),
     ]
 
     def _run_block_gamut(self, text):
@@ -714,9 +714,18 @@ class Markdown(object):
         text = self._do_headers(text)
 
         # Do Horizontal Rules:
+        # On the number of spaces in horizontal rules: The spec is fuzzy: "If
+        # you wish, you may use spaces between the hyphens or asterisks."
+        # Markdown.pl 1.0.1's hr regexes limit the number of spaces between the
+        # hr chars to one or two. We'll reproduce that limit here.
         hr = "\n<hr"+self.empty_element_suffix+"\n"
-        for hr_re in self._hr_res:
-            text = hr_re.sub(hr, text)
+        for ch, regex in self._hr_data:
+            if ch in text:
+                for m in reversed(list(regex.finditer(text))):
+                    tail = m.group(1).rstrip()
+                    if not tail.strip(ch + ' ') and tail.count("   ") == 0:
+                        start, end = m.span()
+                        text = text[:start] + hr + text[end:]
 
         text = self._do_lists(text)
 
@@ -1201,6 +1210,7 @@ class Markdown(object):
                     [ ]{0,%d}
                     (%s)            # \3 = first list item marker
                     [ \t]+
+                    (?!\ *\3\ )     # '- - - ...' isn't a list. See 'not_quite_a_list' test case.
                   )
                   (?:.+?)
                   (                 # \4

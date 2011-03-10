@@ -1,0 +1,23 @@
+- This
+- is
+- a list.
+
+And:
+
+* *This* is
+* a list
+* too.
+
+
+However, because ASCII art can have long dash/asterisk lines let ensure that:
+
+- - - - - - - This isn't a list.
+
+* * Nor is this a list.
+
+-   -   - Or this.
+
+
+- - - - - - - - - - +
+ hi there ascii art
+- - - - - - - - - - +

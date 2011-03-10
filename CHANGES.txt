@@ -2,10 +2,21 @@
 
 ## python-markdown2 v1.0.1.18 (not yet released)
 
+- Tweak list matching to NOT make a ul for something like this:
+
+        - - - - - hi there
+
+  Before this change this would be a silly 5-deep nested li. See
+  "not_quite_a_list" test case.
+
+- [Issue 52] Fix potential pathologically slow matching for `<hr>` markdown
+  ("slow_hr" test case).
+
 - Add a `Markdown.postprocess(text) -> text` hook that is called near the end
   of markdown conversion. By default this does no transformation. It is called
   just before unescaping of special characters and unhashing of literal HTML
   blocks.
+
 - ["header-ids" and "toc" extras] Add "n" argument to
   `Markdown.header_id_from_text` hook. This allows a subclass using this hook
   to differentiate the header id based on the hN number (e.g. h1 diff that
@@ -31,11 +42,13 @@
         </div>
 
 - [Issue 39] Test case fix for pygments 1.3.1 from thomas.moschny.
+
 - [Issue 42] Add "smarty-pants" extra for transforming plain ASCII
   punctuation characters into smart typographic punctuation HTML entities.
   Inspiration: <http://daringfireball.net/projects/smartypants/>
   Implementation by Nikhil Chelliah. Also add `\'` and `\"` escape sequences
   for forcing dumb quotes when this extra is in use.
+
 - Guard against using `True` instead of `None` as follows 
   `markdown(..., extras={'header-ids': True})`. `None` is wanted, but `True`
   is commonly (at least I did it twice) used.
