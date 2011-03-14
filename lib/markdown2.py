@@ -1598,18 +1598,25 @@ class Markdown(object):
         for regex, repl in self.link_patterns:
             replacements = []
             for match in regex.finditer(text):
+                title = None # XXX: rename variable (ambiguous/misleading)
                 if hasattr(repl, "__call__"):
-                    href = repl(match)
+                    components = repl(match) # XXX: rename variable
+                    try:
+                        href, title = components
+                    except ValueError:
+                        href = components
                 else:
                     href = match.expand(repl)
-                replacements.append((match.span(), href))
-            for (start, end), href in reversed(replacements):
+                replacements.append((match.span(), href, title))
+            for (start, end), href, title in reversed(replacements):
                 escaped_href = (
                     href.replace('"', '&quot;')  # b/c of attr quote
                         # To avoid markdown <em> and <strong>:
                         .replace('*', g_escape_table['*'])
                         .replace('_', g_escape_table['_']))
-                link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
+                if not title:
+                    title = text[start:end]
+                link = '<a href="%s">%s</a>' % (escaped_href, title)
                 hash = _hash_text(link)
                 link_from_hash[hash] = link
                 text = text[:start] + hash + text[end:]
