@@ -2,6 +2,8 @@
 
 ![fooimg](http://example.com/foo.gif "lorem [ipsum] dolor <sit> amet")
 
+!["this" [is] my <alt> text](http://example.com/foo.gif "lorem [ipsum] dolor <sit> amet")
+
 [bar][id]
 
 ![barimg][idimg]

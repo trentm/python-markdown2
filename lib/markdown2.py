@@ -1020,7 +1020,7 @@ class Markdown(object):
                     if is_img:
                         result = '<img src="%s" alt="%s"%s%s' \
                             % (url.replace('"', '&quot;'),
-                               link_text.replace('"', '&quot;'),
+                               _xml_escape_attr(link_text),
                                title_str, self.empty_element_suffix)
                         curr_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[match.end():]
