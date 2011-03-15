@@ -655,7 +655,7 @@ class Markdown(object):
         key = id.lower()    # Link IDs are case-insensitive
         self.urls[key] = self._encode_amps_and_angles(url)
         if title:
-            self.titles[key] = title.replace('"', '&quot;')
+            self.titles[key] = title
         return ""
 
     def _extract_footnote_def_sub(self, match):
@@ -1011,10 +1011,10 @@ class Markdown(object):
                     url = url.replace('*', self._escape_table['*']) \
                              .replace('_', self._escape_table['_'])
                     if title:
-                        title_str = ' title="%s"' \
-                            % title.replace('*', self._escape_table['*']) \
-                                   .replace('_', self._escape_table['_']) \
-                                   .replace('"', '&quot;')
+                        title_str = ' title="%s"' % (
+                            _xml_escape_attr(title)
+                                .replace('*', self._escape_table['*'])
+                                .replace('_', self._escape_table['_']))
                     else:
                         title_str = ''
                     if is_img:
@@ -1056,8 +1056,10 @@ class Markdown(object):
                                  .replace('_', self._escape_table['_'])
                         title = self.titles.get(link_id)
                         if title:
-                            title = title.replace('*', self._escape_table['*']) \
-                                         .replace('_', self._escape_table['_'])
+                            before = title
+                            title = _xml_escape_attr(title) \
+                                .replace('*', self._escape_table['*']) \
+                                .replace('_', self._escape_table['_'])
                             title_str = ' title="%s"' % title
                         else:
                             title_str = ''
@@ -2005,6 +2007,22 @@ def _hr_tag_re_from_tab_width(tab_width):
         """ % (tab_width - 1), re.X)
 _hr_tag_re_from_tab_width = _memoized(_hr_tag_re_from_tab_width)
 
+
+def _xml_escape_attr(attr, skip_single_quote=True):
+    """Escape the given string for use in an HTML/XML tag attribute.
+    
+    By default this doesn't bother with escaping `'` to `&#39;`, presuming that
+    the tag attribute is surrounded by double quotes.
+    """
+    escaped = (attr
+        .replace('&', '&amp;')
+        .replace('"', '&quot;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;'))
+    if not skip_single_quote:
+        escaped = escaped.replace("'", "&#39;")
+    return escaped
+    
 
 def _xml_encode_email_char_at_random(ch):
     r = random()

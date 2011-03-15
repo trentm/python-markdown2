@@ -2,6 +2,8 @@
 
 ## python-markdown2 v1.0.1.18 (not yet released)
 
+- [Issue 54] Fix escaping of link title attributes. Thanks FND!
+
 - Tweak list matching to NOT make a ul for something like this:
 
         - - - - - hi there
