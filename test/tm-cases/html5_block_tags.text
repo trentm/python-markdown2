@@ -1,0 +1,3 @@
+<aside>This should *not* be emphasized.</aside>
+
+The *emphasis* above should be ignored.
