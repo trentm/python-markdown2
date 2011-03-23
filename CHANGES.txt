@@ -2,6 +2,10 @@
 
 ## python-markdown2 v1.0.1.18 (not yet released)
 
+- [Issue 57] Add html5 block tags (article, section, aside, et al; see
+  "_html5tags" variable) to Markdown literal HTML block tag handling. Thanks
+  Tim Gray!
+
 - [Issue 56] Fix `setup.py install`.
 
 - [Issue 54] Fix escaping of link title attributes. Thanks FND!
