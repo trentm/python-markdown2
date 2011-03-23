@@ -17,6 +17,10 @@ And a paragraph
 And **this**.
 </div>
 
+<section markdown="1">
+And even **this** in an HTML5 block tag.
+</section>
+
 # Veggies
 
 - carrots
