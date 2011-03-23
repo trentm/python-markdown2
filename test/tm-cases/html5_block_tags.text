@@ -1,3 +1,7 @@
 <aside>This should *not* be emphasized.</aside>
 
+<section>
+    Likewise *this* emphasis should be ignored.
+</section>
+
 The *emphasis* above should be ignored.
