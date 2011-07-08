@@ -178,7 +178,7 @@ class announce_release(Task):
         --
         Trent Mick
         trentm@gmail.com
-        http://trentm.com/blog/
+        http://trentm.com
     """
     
     def _parse_changes_txt(self):
