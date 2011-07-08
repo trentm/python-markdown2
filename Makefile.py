@@ -92,23 +92,7 @@ class test(Task):
                     python_from_ver[ver] = python
         for ver, python in sorted(python_from_ver.items()):
             yield ver, python
-        
 
-class todo(Task):
-    """Print out todo's and xxx's in the docs area."""
-    def make(self):
-        for path in _paths_from_path_patterns(['.'],
-                excludes=[".svn", "*.pyc", "TO""DO.txt", "Makefile.py",
-                          "*.png", "*.gif", "*.pprint", "*.prof",
-                          "tmp-*"]):
-            self._dump_pattern_in_path("TO\DO\\|XX\X", path)
-
-        path = join(self.dir, "TO""DO.txt")
-        todos = re.compile("^- ", re.M).findall(open(path, 'r').read())
-        print "(plus %d TODOs from TO""DO.txt)" % len(todos)
-
-    def _dump_pattern_in_path(self, pattern, path):
-        os.system("grep -nH '%s' '%s'" % (pattern, path))
 
 class pygments(Task):
     """Get a copy of pygments in externals/pygments.
