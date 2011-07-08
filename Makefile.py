@@ -50,40 +50,6 @@ class pypi_upload(Task):
         import webbrowser
         webbrowser.open_new(url)
 
-class googlecode_upload(Task):
-    """Upload sdist to Google Code project site."""
-    deps = ["sdist"]
-    def make(self):
-        helper_in_cwd = exists(join(self.dir, "googlecode_upload.py"))
-        if helper_in_cwd:
-            sys.path.insert(0, self.dir)
-        try:
-            import googlecode_upload
-        except ImportError:
-            raise MkError("couldn't import `googlecode_upload` (get it from http://support.googlecode.com/svn/trunk/scripts/googlecode_upload.py)")
-        if helper_in_cwd:
-            del sys.path[0]
-
-        sys.path.insert(0, join(self.dir, "lib"))
-        import markdown2
-        sdist_path = join(self.dir, "dist",
-            "markdown2-%s.zip" % markdown2.__version__)
-        status, reason, url = googlecode_upload.upload_find_auth(
-            sdist_path,
-            "python-markdown2", # project_name
-            "markdown2 %s source package" % markdown2.__version__, # summary
-            ["Featured", "Type-Archive"]) # labels
-        if not url:
-            raise MkError("couldn't upload sdist to Google Code: %s (%s)"
-                          % (reason, status))
-        self.log.info("uploaded sdist to `%s'", url)
-
-        project_url = "http://code.google.com/p/python-markdown2/"
-        import webbrowser
-        webbrowser.open_new(project_url)
-
-
-
 class test(Task):
     """Run all tests (except known failures)."""
     def make(self):
@@ -178,14 +144,14 @@ class announce_release(Task):
     body = r"""
         ### Where?
 
-        - Project Page: <http://code.google.com/p/python-markdown2/>
+        - Project Page: <https://github.com/trentm/python-markdown2>
         - PyPI: <http://pypi.python.org/pypi/markdown2/>
 
         ### What's new?
         
         %(whatsnew)s
         
-        Full changelog: <http://code.google.com/p/python-markdown2/source/browse/trunk/CHANGES.txt>
+        Full changelog: <https://github.com/trentm/python-markdown2/blob/master/CHANGES.txt>
         
         ### What is 'markdown2'?
         
@@ -214,7 +180,7 @@ class announce_release(Task):
 
         This implementation of Markdown implements the full "core" syntax plus a
         number of extras (e.g., code syntax coloring, footnotes) as described on
-        <http://code.google.com/p/python-markdown2/wiki/Extras>.
+        <https://github.com/trentm/python-markdown2/wiki/Extras>.
 
         Cheers,
         Trent
