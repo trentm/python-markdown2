@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 1.0.1.18 (not yet released)
+## python-markdown2 1.0.1.18
 
 - [Issue 57] Add html5 block tags (article, section, aside, et al; see
   "_html5tags" variable) to Markdown literal HTML block tag handling. Thanks
