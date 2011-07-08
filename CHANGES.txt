@@ -1,5 +1,9 @@
 # python-markdown2 Changelog
 
+## python-markdown2 1.0.1.19 (not yet released)
+
+(nothing yet)
+
 ## python-markdown2 1.0.1.18
 
 - [Issue 57] Add html5 block tags (article, section, aside, et al; see
