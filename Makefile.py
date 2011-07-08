@@ -256,6 +256,7 @@ class cut_a_release(Task):
 
     def make(self):
         import codecs
+        from mklib import sh, mk
 
         DRY_RUN = False
         version = self._get_version()
