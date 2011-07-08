@@ -239,6 +239,148 @@ class announce_release(Task):
 
 
 
+class cut_a_release(Task):
+    """automate the steps for cutting a release"""
+    proj_name = "python-markdown2"
+    version_py_path = "lib/markdown2.py"
+    version_module = "markdown2"
+    _changes_parser = re.compile(r'^## %s (?P<ver>[\d\.abc]+)'
+        r'(?P<nyr>\s+\(not yet released\))?'
+        r'(?P<body>.*?)(?=^##|\Z)' % proj_name, re.M | re.S)
+
+    def make(self):
+        import codecs
+
+        DRY_RUN = False
+        version = self._get_version()
+
+        # Confirm
+        if not DRY_RUN:
+            answer = query_yes_no("* * *\n"
+                "Are you sure you want cut a %s release?\n"
+                "This will involved commits and a release to pypi." % version,
+                default="no")
+            if answer != "yes":
+                self.log.info("user abort")
+                return
+            print "* * *"
+        self.log.info("cutting a %s release", version)
+
+        # Checks: Ensure there is a section in changes for this version.
+        changes_path = join(self.dir, "CHANGES.txt")
+        changes_txt = changes_txt_before = codecs.open(changes_path, 'r', 'utf-8').read()
+        changes_sections = self._changes_parser.findall(changes_txt)
+        top_ver = changes_sections[0][0]
+        if top_ver != version:
+            raise MkError("top section in `CHANGES.txt' is for "
+                "version %r, expected version %r: aborting"
+                % (top_ver, version))
+        top_nyr = changes_sections[0][1]
+        if not top_nyr:
+            answer = query_yes_no("\n* * *\n"
+                "The top section in `CHANGES.txt' doesn't have the expected\n"
+                "'(not yet released)' marker. Has this been released already?",
+                default="yes")
+            if answer != "no":
+                self.log.info("abort")
+                return
+            print "* * *"
+        top_body = changes_sections[0][2]
+        if top_body.strip() == "(nothing yet)":
+            raise MkError("top section body is `(nothing yet)': it looks like "
+                "nothing has been added to this release")
+
+        # Commits to prepare release.
+        changes_txt = changes_txt.replace(" (not yet released)", "", 1)
+        if not DRY_RUN and changes_txt != changes_txt_before:
+            self.log.info("prepare `CHANGES.txt' for release")
+            f = codecs.open(changes_path, 'w', 'utf-8')
+            f.write(changes_txt)
+            f.close()
+            sh.run('git commit %s -m "prepare for %s release"'
+                % (changes_path, version), self.log.debug)
+
+        # Tag version and push.
+        curr_tags = set(t for t in
+            self._capture_stdout(["git", "tag", "-l"]).split('\n') if t)
+        if not DRY_RUN and version not in curr_tags:
+            self.log.info("tag the release")
+            sh.run('git tag -a "%s" -m "version %s"' % (version, version),
+                self.log.debug)
+            sh.run('git push --tags', self.log.debug)
+
+        # Release to PyPI.
+        self.log.info("release to pypi")
+        if not DRY_RUN:
+            mk("pypi_upload")
+
+        # Commits to prepare for future dev and push.
+        next_version = self._get_next_version(version)
+        self.log.info("prepare for future dev (version %s)", next_version)
+        marker = "## %s %s\n" % (self.proj_name, version)
+        if marker not in changes_txt:
+            raise MkError("couldn't find `%s' marker in `%s' "
+                "content: can't prep for subsequent dev" % (marker, changes_path))
+        changes_txt = changes_txt.replace("## %s %s\n" % (self.proj_name, version),
+            "## %s %s (not yet released)\n\n(nothing yet)\n\n## %s %s\n" % (
+                self.proj_name, next_version, self.proj_name, version))
+        if not DRY_RUN:
+            f = codecs.open(changes_path, 'w', 'utf-8')
+            f.write(changes_txt)
+            f.close()
+
+        ver_path = join(self.dir, normpath(self.version_py_path))
+        ver_content = codecs.open(ver_path, 'r', 'utf-8').read()
+        version_tuple = self._tuple_from_version(version)
+        next_version_tuple = self._tuple_from_version(next_version)
+        marker = "__version_info__ = %r" % (version_tuple,)
+        if marker not in ver_content:
+            raise MkError("couldn't find `%s' version marker in `%s' "
+                "content: can't prep for subsequent dev" % (marker, ver_path))
+        ver_content = ver_content.replace(marker,
+            "__version_info__ = %r" % (next_version_tuple,))
+        if not DRY_RUN:
+            f = codecs.open(ver_path, 'w', 'utf-8')
+            f.write(ver_content)
+            f.close()
+
+        if not DRY_RUN:
+            sh.run('git commit %s %s -m "prep for future dev"' % (
+                changes_path, ver_path))
+            sh.run('git push')
+
+    def _capture_stdout(self, argv):
+        import subprocess
+        p = subprocess.Popen(argv, stdout=subprocess.PIPE)
+        return p.communicate()[0]
+
+    def _tuple_from_version(self, version):
+        def _intify(s):
+            try:
+                return int(s)
+            except ValueError:
+                return s
+        return tuple(_intify(b) for b in version.split('.'))
+
+    def _get_next_version(self, version):
+        last_bit = version.rsplit('.', 1)[-1]
+        try:
+            last_bit = int(last_bit)
+        except ValueError: # e.g. "1a2"
+            last_bit = int(re.split('[abc]', last_bit, 1)[-1])
+        return version[:-len(str(last_bit))] + str(last_bit + 1)
+
+    def _get_version(self):
+        lib_dir = join(dirname(abspath(__file__)), "lib")
+        sys.path.insert(0, lib_dir)
+        try:
+            mod = __import__(self.version_module)
+            return mod.__version__
+        finally:
+            del sys.path[0]
+
+
+
 #---- internal support stuff
 
 # Recipe http://code.activestate.com/recipes/576824/
