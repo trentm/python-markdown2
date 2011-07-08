@@ -20,14 +20,20 @@ from mklib.sh import run_in_dir
 
 
 class bugs(Task):
-    """Open bug database page."""
+    """open bug database page"""
     def make(self):
-        webbrowser.open("http://code.google.com/p/python-markdown2/issues/list")
+        webbrowser.open("https://github.com/trentm/python-markdown2/issues")
 
 class site(Task):
-    """Open the Google Code project page."""
+    """open project page"""
     def make(self):
-        webbrowser.open("http://code.google.com/p/python-markdown2/")
+        webbrowser.open("https://github.com/trentm/python-markdown2")
+
+class pypi(Task):
+    """open PyPI page"""
+    def make(self):
+        webbrowser.open("http://pypi.python.org/pypi/markdown2/")
+
 
 class sdist(Task):
     """python setup.py sdist"""
@@ -223,7 +229,7 @@ class announce_release(Task):
         print "=" * 70, "body"
         print body
         print "=" * 70
-        answer = _query_yes_no(
+        answer = query_yes_no(
             "Send release announcement email for v%s to %s?" % (
                 version, ", ".join(self.headers["To"])),
             default="no")
@@ -547,7 +553,7 @@ def _dedent(text, tabsize=8, skip_first_line=False):
 
 
 # Recipe: query_yes_no (1.0)
-def _query_yes_no(question, default="yes"):
+def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
     
     "question" is a string that is presented to the user.
