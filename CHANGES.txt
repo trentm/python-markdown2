@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 v1.0.1.18 (not yet released)
+## python-markdown2 1.0.1.18 (not yet released)
 
 - [Issue 57] Add html5 block tags (article, section, aside, et al; see
   "_html5tags" variable) to Markdown literal HTML block tag handling. Thanks
@@ -62,7 +62,7 @@
   is commonly (at least I did it twice) used.
 
 
-## python-markdown2 v1.0.1.17
+## python-markdown2 1.0.1.17
 
 - [Issue 36] Fix "cuddled-lists" extra handling for an
   looks-like-a-cuddled-list-but-is-indented block. See the
@@ -96,7 +96,7 @@
   Currently just supports "pre" and "code" for code *blocks*.
 
 
-## python-markdown2 v1.0.1.16
+## python-markdown2 1.0.1.16
 
 - [Issue 33] Implement a "cuddled-lists" extra that allows:
 
@@ -116,19 +116,19 @@
         </ul>
 
 
-## python-markdown2 v1.0.1.15
+## python-markdown2 1.0.1.15
 
 - [Issue 30] Fix a possible XSS via JavaScript injection in a carefully
   crafted image reference (usage of double-quotes in the URL).
 
-## python-markdown2 v1.0.1.14
+## python-markdown2 1.0.1.14
 
 - [Issue 29] Fix security hole in the md5-hashing scheme for handling HTML
   chunks during processing.
 - [Issue 27] Fix problem with underscores in footnotes content (with
   "footnotes" extra).
 
-## python-markdown2 v1.0.1.13
+## python-markdown2 1.0.1.13
 
 - [Issue 24] Set really long sentinel for max-length of link text to avoid
   problems with reasonably long ones.
@@ -136,7 +136,7 @@
   randomized obscuring of 'mailto:' link letters would sometimes result
   in emails with underscores getting misinterpreted as for italics.
 
-## python-markdown2 v1.0.1.12
+## python-markdown2 1.0.1.12
 
 - [Issue 26] Fix bug where email auto linking wouldn't work for emails with
   underscores. E.g. `Mail me: <foo_bar@example.com>` wouldn't work.
@@ -164,13 +164,13 @@
         ...     link_patterns=link_patterns)
         u'<p>Here is <a href="http://www.python.org/dev/peps/pep-0042/">PEP 42</a>.</p>\n'
 
-## python-markdown2 v1.0.1.11
+## python-markdown2 1.0.1.11
 
 - Fix syntax_color test for the latest Pygments.
 - [Issue 20] Can't assume that `sys.argv` is defined at top-level code --
   e.g. when used at a PostreSQL stored procedure. Fix that.
 
-## python-markdown2 v1.0.1.10
+## python-markdown2 1.0.1.10
 
 - Fix sys.path manipulation in setup.py so `easy_install markdown2-*.tar.gz`
   works. (Henry Precheur pointed out the problem.)
@@ -181,7 +181,7 @@
   namespaced XML tags without wrapping in a `<p>` -- i.e. treats them as a HTML
   block tag.
 
-## python-markdown2 v1.0.1.9
+## python-markdown2 1.0.1.9
 
 - Fix bug in processing text with two HTML comments, where the first comment
   is cuddled to other content. See "test/tm-cases/two_comments.text". Noted
@@ -190,12 +190,12 @@
   tags. This changed caused some bugs. Similar XML processing support will
   make it back via an "xml" extra.
 
-## python-markdown2 v1.0.1.8
+## python-markdown2 1.0.1.8
 
 - License note updates to facilitate Thomas Moschny building a package for
   Fedora Core Linux. No functional change.
 
-## python-markdown2 v1.0.1.7
+## python-markdown2 1.0.1.7
 
 - Add a proper setup.py and release to pypi:
   http://pypi.python.org/pypi/markdown2/
@@ -203,7 +203,7 @@
   dir of a source checkout (e.g. via an svn:externals) on ones Python Path
   without have the .py files at the top-level getting in the way.
 
-## python-markdown2 v1.0.1.6
+## python-markdown2 1.0.1.6
 
 - Fix Python 2.6 deprecation warning about the `md5` module.
 - Pass XML processing instructions and one-liner tags. For example:
@@ -214,7 +214,7 @@
   Limitations: they must be on one line. Test: pi_and_xinclude.
   Suggested by Wolfgang Machert.
 
-## python-markdown2 v1.0.1.5
+## python-markdown2 1.0.1.5
 
 - Add ability for 'extras' to have arguments. Internally the 'extras'
   attribute of the Markdown class is a dict (it was a set).
@@ -227,7 +227,7 @@
   This can be useful for user-supplied Markdown content for a sub-section of
   a page.
 
-## python-markdown2 v1.0.1.4
+## python-markdown2 1.0.1.4
 
 - [Issue 18] Allow spaces in the URL for link definitions.
 - [Issue 15] Fix some edge cases with backslash-escapes.
@@ -238,7 +238,7 @@
 - Add "pyshell" extra for auto-codeblock'ing Python interactive shell
   sessions even if they weren't properly indented by the tab width.
 
-## python-markdown2 v1.0.1.3
+## python-markdown2 1.0.1.3
 
 - Make the use of the `-*- markdown-extras: ... -*-` emacs-style files
   variable to set "extras" **off** be default. It can be turned on via
@@ -248,7 +248,7 @@
   causing the a unicode error with unicode in a code-colored block,
   <http://code.google.com/p/python-markdown2/issues/detail?id=3#c8>
 
-## python-markdown2 v1.0.1.2
+## python-markdown2 1.0.1.2
 
 - [Issue 8] Alleviate some of the incompat of the last change by allowing (at
   the Python module level) the usage of `safe_mode=True` to mean what it used
@@ -264,7 +264,7 @@
 - [Issue 6] Fix problem with footnotes if the reference string had uppercase
   letters.
 
-## python-markdown2 v1.0.1.1
+## python-markdown2 1.0.1.1
 
 - [Issue 3] Fix conversion of unicode strings.
 - Make the "safe_mode" replacement test overridable via subclassing: change
@@ -295,7 +295,7 @@
 - [Issue 1] Added "footnotes" extra: adds support for footnotes syntax. See
   <http://code.google.com/p/python-markdown2/wiki/Extras> for details.
 
-## python-markdown2 v1.0.1.0
+## python-markdown2 1.0.1.0
 
 - Added "code-friendly" extra: disables the use of leading and trailing `_`
   and `__` for emphasis and strong. These can easily get in the way when
