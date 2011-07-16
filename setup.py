@@ -41,7 +41,7 @@ setup(
     maintainer_email="trentm@gmail.com",
     author="Trent Mick",
     author_email="trentm@gmail.com",
-    url="http://code.google.com/p/python-markdown2/",
+    url="https://github.com/trentm/python-markdown2",
     license="MIT",
     platforms=["any"],
     py_modules=["markdown2"],

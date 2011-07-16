@@ -286,7 +286,7 @@
         regex:  mozilla\s+bug\s+(\d+)
         href:   http://bugzilla.mozilla.org/show_bug.cgi?id=\1
   
-  See <http://code.google.com/p/python-markdown2/wiki/Extras> for details.
+  See <https://github.com/trentm/python-markdown2/wiki/Extras> for details.
 - Add a "MarkdownWithExtras" class that enables all extras (except
   "code-friendly"):
     
@@ -297,9 +297,9 @@
 
 - [Issue 1] Added "code-color" extra: pygments-based (TODO: link) syntax
   coloring of code blocks. Requires the pygments Python library on sys.path.
-  See <http://code.google.com/p/python-markdown2/wiki/Extras> for details.
+  See <https://github.com/trentm/python-markdown2/wiki/Extras> for details.
 - [Issue 1] Added "footnotes" extra: adds support for footnotes syntax. See
-  <http://code.google.com/p/python-markdown2/wiki/Extras> for details.
+  <https://github.com/trentm/python-markdown2/wiki/Extras> for details.
 
 ## python-markdown2 1.0.1.0
 
