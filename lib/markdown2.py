@@ -30,7 +30,7 @@ Module usage:
 
 This implementation of Markdown implements the full "core" syntax plus a
 number of extras (e.g., code syntax coloring, footnotes) as described on
-<http://code.google.com/p/python-markdown2/wiki/Extras>.
+<https://github.com/trentm/python-markdown2/wiki/Extras>.
 """
 
 cmdln_desc = """A fast and complete Python implementation of Markdown, a
@@ -61,6 +61,8 @@ Supported extras (see -x|--extras option below):
 * toc: The returned HTML string gets a new "toc_html" attribute which is
   a Table of Contents for the document. (experimental)
 * xml: Passes one-liner processing instructions and namespaced XML tags.
+* wiki-tables: Google Code Wiki-style tables. See
+  <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
 """
 
 # Dev Notes:
@@ -739,6 +741,8 @@ class Markdown(object):
 
         if "pyshell" in self.extras:
             text = self._prepare_pyshell_blocks(text)
+        if "wiki-tables" in self.extras:
+            text = self._do_wiki_tables(text)
 
         text = self._do_code_blocks(text)
 
@@ -762,7 +766,7 @@ class Markdown(object):
              + indent + ('\n'+indent).join(lines)
              + '\n\n')
         return s
-        
+
     def _prepare_pyshell_blocks(self, text):
         """Ensure that Python interactive shell sessions are put in
         code blocks -- even if not properly indented.
@@ -778,6 +782,40 @@ class Markdown(object):
             """ % less_than_tab, re.M | re.X)
 
         return _pyshell_block_re.sub(self._pyshell_block_sub, text)
+
+    def _wiki_table_sub(self, match):
+        ttext = match.group(0).strip()
+        #print 'wiki table: %r' % match.group(0)
+        rows = []
+        for line in ttext.splitlines(0):
+            line = line.strip()[2:-2].strip()
+            row = [c.strip() for c in re.split(r'(?<!\\)\|\|', line)]
+            rows.append(row)
+        #pprint(rows)
+        hlines = ['<table>', '<tbody>']
+        for row in rows:
+            hrow = ['<tr>']
+            for cell in row:
+                hrow.append('<td>')
+                hrow.append(self._run_span_gamut(cell))
+                hrow.append('</td>')
+            hrow.append('</tr>')
+            hlines.append(''.join(hrow))
+        hlines += ['</tbody>', '</table>']
+        return '\n'.join(hlines) + '\n'
+    
+    def _do_wiki_tables(self, text):
+        # Optimization.
+        if "||" not in text:
+            return text
+        
+        less_than_tab = self.tab_width - 1
+        wiki_table_re = re.compile(r'''
+            (?:(?<=\n\n)|\A\n?)            # leading blank line
+            ^([ ]{0,%d})\|\|.+?\|\|[ ]*\n  # first line
+            (^\1\|\|.+?\|\|\n)*        # any number of subsequent lines
+            ''' % less_than_tab, re.M | re.X)
+        return wiki_table_re.sub(self._wiki_table_sub, text)
 
     def _run_span_gamut(self, text):
         # These are all the transformations that occur *within* block-level
@@ -2086,7 +2124,7 @@ def main(argv=None):
     parser.add_option("--use-file-vars",
                       help="Look for and use Emacs-style 'markdown-extras' "
                            "file var to turn on extras. See "
-                           "<http://code.google.com/p/python-markdown2/wiki/Extras>.")
+                           "<https://github.com/trentm/python-markdown2/wiki/Extras>")
     parser.add_option("--link-patterns-file",
                       help="path to a link pattern file")
     parser.add_option("--self-test", action="store_true",
