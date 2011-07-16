@@ -1,11 +1,10 @@
-- conversion to github:
-  - downloads
 - add "markdown-in-html" extra to wiki
 - add "smarty-pants" extra to wiki
 - add "html-classes" extra to wiki
+- more on the "code-color" extra wiki page
 - better "Extras" wiki page that shows a quick example of each with link for
   more details. Mention "extensions" for gjuice.
-- add description of pyshell and demote-headers extras to wiki
+- add description of demote-headers extras to wiki
 - find more unicode edge cases (look for any usage of md5() and make that
   unicode)
 - bug: can't have '<\w+' in a code span or code block with safe_mode if there
