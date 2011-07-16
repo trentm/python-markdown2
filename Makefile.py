@@ -56,6 +56,11 @@ class pypi_upload(Task):
         import webbrowser
         webbrowser.open_new(url)
 
+class clean(Task):
+    """clean generated files"""
+    def make(self):
+        run_in_dir("rm -rf build dist", self.dir, self.log.info)
+
 class test(Task):
     """Run all tests (except known failures)."""
     def make(self):
