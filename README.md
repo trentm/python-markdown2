@@ -50,11 +50,32 @@ As a module:
 
 As a script:
 
-    $ python markdown2.py foo.txt > foo.html
+    $ python markdown2.py foo.md > foo.html
 
 See the [project wiki](https://github.com/trentm/python-markdown2/wiki),
 [lib/markdown2.py](https://github.com/trentm/python-markdown2/blob/master/lib/markdown2.py)
 docstrings and/or `python markdown2.py --help` for more details.
+
+
+# Extra Syntax
+
+Many Markdown processors include support for additional optional syntax,
+and markdown2 is no exception. With markdown2 these are called "extras".
+Using the "footnotes" extra as an example, as a module:
+
+    $ python markdown2.py --extras footnotes foo.md > foo.html
+
+as a script:
+
+    >>> import markdown2
+    >>> markdown2.markdown("*boo!*", extras=["footnotes"])
+    u'<p><em>boo!</em></p>\n'
+
+There are a number of currently implemented extras for tables, footnotes,
+syntax coloring of `<pre>`-blocks, auto-linking patterns, table of contents,
+Smarty Pants (for fancy quotes, dashes, etc.) and more. See the [Extras
+wiki page](https://github.com/trentm/python-markdown2/wiki/Extras) for full
+details.
 
 
 # Project
