@@ -61,7 +61,8 @@ docstrings and/or `python markdown2.py --help` for more details.
 
 Many Markdown processors include support for additional optional syntax,
 and markdown2 is no exception. With markdown2 these are called "extras".
-Using the "footnotes" extra as an example, as a module:
+Using the "footnotes" extra as an example, here is how you use an
+extra ... as a module:
 
     $ python markdown2.py --extras footnotes foo.md > foo.html
 
