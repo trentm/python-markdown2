@@ -73,7 +73,7 @@ Supported extras (see -x|--extras option below):
 #   and 'perldoc perlre'.
 
 __version_info__ = (1, 0, 1, 19) # first three nums match Markdown.pl
-__version__ = '1.0.1.18'
+__version__ = '1.0.1.19'
 __author__ = "Trent Mick"
 
 import os
