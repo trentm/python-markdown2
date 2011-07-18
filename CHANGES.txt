@@ -1,5 +1,9 @@
 # python-markdown2 Changelog
 
+## python-markdown2 1.0.1.20 (not yet released)
+
+(nothing yet)
+
 ## python-markdown2 1.0.1.19
 
 - [Issue 66] Add "wiki-tables" extra for Google Code Wiki-style tables.
