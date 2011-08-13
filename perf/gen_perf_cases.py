@@ -1,26 +1,32 @@
-#!/usr/bin/env python2.5
+#!/usr/bin/env python
 
 import os
 from os.path import *
 import sys
 import re
-import datetime
 from glob import glob
-import operator
 import shutil
 import codecs
 
 
+SEARCH_PATH = [expanduser("~/as/code.as.com/db/aspn"), '.']
 TMP = "tmp-"
 
 def gen_aspn_cases(limit=0):
     base_dir = TMP+'aspn-cases'
     if exists(base_dir):
-        print "'%s' exists, skipping" % base_dir
+        print "'%s' exists, skipping. If you want to regenerate, please manually delete it." % base_dir
         return 
     os.makedirs(base_dir)
     sys.stdout.write("generate %s" % base_dir); sys.stdout.flush()
-    recipes_path = expanduser("~/as/code.as.com/db/aspn/recipes.pprint")
+    for recipes_path in SEARCH_PATH:
+        recipes_path = join(recipes_path, 'recipes.pprint')
+        if exists(recipes_path):
+            break
+    else:
+        print
+        print >>sys.stderr, 'Can not find recipes.pprint, please specify a path where can find the file.'
+        sys.exit(1)
     recipe_dicts = eval(open(recipes_path).read())
     for i, r in enumerate(recipe_dicts):
         sys.stdout.write('.'); sys.stdout.flush()
@@ -28,8 +34,7 @@ def gen_aspn_cases(limit=0):
         f.write(r["desc"])
         f.close()
 
-        for j, c in enumerate(sorted(r["comments"],
-                        key=operator.itemgetter("pub_date"))):
+        for j, c in enumerate(sorted(r["comments"])):
             text = _markdown_from_aspn_html(c["comment"])
             headline = c["title"].strip()
             if headline:
@@ -49,7 +54,7 @@ def gen_aspn_cases(limit=0):
 def gen_test_cases():
     base_dir = TMP+"test-cases"
     if exists(base_dir):
-        print "'%s' exists, skipping" % base_dir
+        print "'%s' exists, skipping. If you want to regenerate, please manually delete it." % base_dir
         return 
     os.makedirs(base_dir)
     print "generate %s" % base_dir
@@ -273,6 +278,9 @@ if __name__ == "__main__":
         limit = int(sys.argv[1])
     except:
         limit = 0
+    for i in range(1, len(sys.argv)):
+        # put them all in, it doesn't matter what they are.
+        SEARCH_PATH += sys.argv[i]
     gen_aspn_cases(limit)
     gen_test_cases()
 
