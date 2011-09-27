@@ -1755,21 +1755,40 @@ class Markdown(object):
         lookbehind assertion to attempt to guard against this.
         """
         link_from_hash = {}
-        for regex, repl in self.link_patterns:
+        for pattern in self.link_patterns:
             replacements = []
+
+            if len(pattern) == 3:
+                regex, repl, repl_title = pattern
+            else:
+                regex, repl = pattern
+                repl_title = link_text = None
+
             for match in regex.finditer(text):
+
                 if hasattr(repl, "__call__"):
                     href = repl(match)
                 else:
                     href = match.expand(repl)
-                replacements.append((match.span(), href))
-            for (start, end), href in reversed(replacements):
+
+                if repl_title != None:
+                    if hasattr(repl_title, "__call__"):
+                        link_text = repl_title(match)
+                    else:
+                        link_text = match.expand(repl_title)
+
+                replacements.append((match.span(), href, link_text))
+            for (start, end), href, new_text in reversed(replacements):
                 escaped_href = (
                     href.replace('"', '&quot;')  # b/c of attr quote
                         # To avoid markdown <em> and <strong>:
                         .replace('*', self._escape_table['*'])
                         .replace('_', self._escape_table['_']))
-                link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
+
+                if new_text == None:
+                    new_text = text[start:end]
+
+                link = '<a href="%s">%s</a>' % (escaped_href, new_text)
                 hash = _hash_text(link)
                 link_from_hash[hash] = link
                 text = text[:start] + hash + text[end:]
