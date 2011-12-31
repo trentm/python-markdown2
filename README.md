@@ -52,10 +52,13 @@ As a script:
 
     $ python markdown2.py foo.md > foo.html
 
+Via the command line:
+
+    $ markdown2 foo.md > foo.html
+
 See the [project wiki](https://github.com/trentm/python-markdown2/wiki),
 [lib/markdown2.py](https://github.com/trentm/python-markdown2/blob/master/lib/markdown2.py)
 docstrings and/or `python markdown2.py --help` for more details.
-
 
 # Extra Syntax (aka extensions)
 
