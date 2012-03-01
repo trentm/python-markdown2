@@ -1,3 +1,6 @@
+# python-markdown2 Makefile
+
+.PHONY: all
 all:
 
 .PHONY: test
