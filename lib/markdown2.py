@@ -72,7 +72,7 @@ Supported extras (see -x|--extras option below):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 1, 0)
+__version_info__ = (1, 1, 1)
 __version__ = '1.1.0'
 __author__ = "Trent Mick"
 

@@ -1,5 +1,9 @@
 # python-markdown2 Changelog
 
+## python-markdown2 1.1.1 (not yet released)
+
+(nothing yet)
+
 ## python-markdown2 1.1.0
 
 - [issue #76] Ensure "smarty-pants" extra doesn't destroy image links
