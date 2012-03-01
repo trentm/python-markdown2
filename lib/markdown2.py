@@ -2178,16 +2178,25 @@ def main(argv=None):
     from os.path import join, dirname, abspath, exists
     markdown_pl = join(dirname(dirname(abspath(__file__))), "test",
                        "Markdown.pl")
+    if paths == []:
+        paths = ['-']
     for path in paths:
+
+        if path == '-':
+            text = sys.stdin.read()
+        else:
+            text = open(path).read()
+
         if opts.compare:
             print "==== Markdown.pl ===="
-            perl_cmd = 'perl %s "%s"' % (markdown_pl, path)
-            o = os.popen(perl_cmd)
+            perl_cmd = 'perl %s' % markdown_pl
+            o = os.popen(perl_cmd, 'w')
+            o.write(text)
             perl_html = o.read()
             o.close()
             sys.stdout.write(perl_html)
             print "==== markdown2.py ===="
-        html = markdown_path(path, encoding=opts.encoding,
+        html = markdown(text, encoding=opts.encoding,
                              html4tags=opts.html4tags,
                              safe_mode=opts.safe_mode,
                              extras=extras, link_patterns=link_patterns,
