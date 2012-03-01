@@ -73,7 +73,7 @@ Supported extras (see -x|--extras option below):
 #   and 'perldoc perlre'.
 
 __version_info__ = (1, 1, 2)
-__version__ = '1.1.1'
+__version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
 import os
