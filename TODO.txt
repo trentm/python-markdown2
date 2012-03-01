@@ -58,7 +58,6 @@
 - googlecode wiki markup ideas?
   (http://code.google.com/p/support/wiki/WikiSyntax)
     - ~~strikeout~~
-    - ||tables||simple||syntax||
 - <http://daringfireball.net/2004/12/markdown_licensing> at bottom has a wish
   list:
     - simple "cite" for blockquote. How about:

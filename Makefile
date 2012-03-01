@@ -6,8 +6,8 @@ test:
 
 .PHONY: pygments
 pygments:
-	[[ ! -d externals/pygments ]] && (mkdir -p externals && hg clone http://dev.pocoo.org/hg/pygments-main externals/pygments)
-	(cd externals/pygments && hg pull && hg update)
+	[[ ! -d deps/pygments ]] && (mkdir -p deps && hg clone http://dev.pocoo.org/hg/pygments-main deps/pygments)
+	(cd deps/pygments && hg pull && hg update)
 
 clean:
 	rm -rf build dist MANIFEST

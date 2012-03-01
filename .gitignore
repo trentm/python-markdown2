@@ -1,6 +1,6 @@
 *.pyc
 tmp
-externals/pygments
+deps/pygments
 dist
 MANIFEST
 build

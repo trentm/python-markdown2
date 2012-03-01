@@ -8,6 +8,4 @@ include setup.py
 
 include bin/markdown2
 include test/api.doctests
-include externals/README.txt
-recursive-include externals/which *.py
 recursive-include test/tm-cases *.text *.html *.opts *.tags
