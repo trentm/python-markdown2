@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 1.1.1 (not yet released)
+## python-markdown2 1.1.1
 
 - Drop "Makefile.py" (a `mk` thing) and simplify to "Makefile".
 
