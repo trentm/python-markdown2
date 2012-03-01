@@ -1,8 +1,19 @@
 # python-markdown2 Changelog
 
-## python-markdown2 1.0.1.20 (not yet released)
+## python-markdown2 1.1.0 (not yet released)
 
-(nothing yet)
+- [issue #72] Support reading from stdin for command line tool like any
+  well-behaved unix tool, e.g.:
+
+      $ echo '*hi*' | markdown2
+      <p><em>hi</em></p>
+
+  Thanks Ryan!
+
+- Drop this "1.0.1.*" version silliness. The idea *was* that the first three
+  numbers tracked the Markdown.pl on which markdown2.py was originally based.
+  I don't believe Markdown.pl really gets releases anymore tho, so pointless.
+
 
 ## python-markdown2 1.0.1.19
 
@@ -40,13 +51,13 @@
   to differentiate the header id based on the hN number (e.g. h1 diff that
   h2). Also allow a `None` return value to not add an id to that header (and
   exclude that header from the TOC).
-  
+
   Note: If you used this hook, this is an incompatible change to the call
   signature.
 
 - Add a "markdown-in-html" extra similar to (but limited)
   <http://michelf.com/projects/php-markdown/extra/#markdown-attr>. I.e. this:
-  
+
         <div markdown="1">
         Yo **yo**!
         </div>
@@ -67,7 +78,7 @@
   Implementation by Nikhil Chelliah. Also add `\'` and `\"` escape sequences
   for forcing dumb quotes when this extra is in use.
 
-- Guard against using `True` instead of `None` as follows 
+- Guard against using `True` instead of `None` as follows
   `markdown(..., extras={'header-ids': True})`. `None` is wanted, but `True`
   is commonly (at least I did it twice) used.
 
@@ -91,10 +102,10 @@
 
   An argument can be give for the extra, which will be used as a prefix for
   the ids:
-  
-        $ cat foo.txt 
+
+        $ cat foo.txt
         # hi there
-        $ python markdown2.py foo.txt 
+        $ python markdown2.py foo.txt
         <h1>hi there</h1>
         $ python markdown2.py foo.txt -x header-ids
         <h1 id="hi-there">hi there</h1>
@@ -165,7 +176,7 @@
   and angle encoding.tags".
 - "link-patterns" extra: Add support for the href replacement being a
   callable, e.g.:
-  
+
         >>> link_patterns = [
         ...     (re.compile("PEP\s+(\d+)", re.I),
         ...      lambda m: "http://www.python.org/dev/peps/pep-%04d/" % int(m.group(1))),
@@ -230,10 +241,10 @@
   attribute of the Markdown class is a dict (it was a set).
 - Add "demote-headers" extra that will demote the markdown for, e.g., an h1
   to h2-6 by the number of the demote-headers argument.
-      
+
         >>> markdown('# this would be an h1', extras={'demote-headers': 2})
         u'<h3>this would be an h1</h3>\n'
-  
+
   This can be useful for user-supplied Markdown content for a sub-section of
   a page.
 
@@ -286,14 +297,14 @@
 - Add "link-patterns" extra: allows one to specify a list of regexes that
   should be automatically made into links. For example, one can define a
   mapping for things like "Mozilla Bug 1234":
-        
+
         regex:  mozilla\s+bug\s+(\d+)
         href:   http://bugzilla.mozilla.org/show_bug.cgi?id=\1
-  
+
   See <https://github.com/trentm/python-markdown2/wiki/Extras> for details.
 - Add a "MarkdownWithExtras" class that enables all extras (except
   "code-friendly"):
-    
+
         >>> import markdown2
         >>> converter = markdown2.MarkdownWithExtras()
         >>> converter.convert('...TEXT...')

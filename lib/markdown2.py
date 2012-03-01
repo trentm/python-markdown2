@@ -72,8 +72,8 @@ Supported extras (see -x|--extras option below):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 0, 1, 20) # first three nums match Markdown.pl
-__version__ = '1.0.1.19'
+__version_info__ = (1, 1, 0)
+__version__ = '1.1.0'
 __author__ = "Trent Mick"
 
 import os
@@ -2178,20 +2178,29 @@ def main(argv=None):
     from os.path import join, dirname, abspath, exists
     markdown_pl = join(dirname(dirname(abspath(__file__))), "test",
                        "Markdown.pl")
+    if not paths:
+        paths = ['-']
     for path in paths:
+        if path == '-':
+            text = sys.stdin.read()
+        else:
+            fp = codecs.open(path, 'r', opts.encoding)
+            text = fp.read()
+            fp.close()
         if opts.compare:
+            from subprocess import Popen, PIPE
             print "==== Markdown.pl ===="
-            perl_cmd = 'perl %s "%s"' % (markdown_pl, path)
-            o = os.popen(perl_cmd)
-            perl_html = o.read()
-            o.close()
+            p = Popen('perl %s' % markdown_pl, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
+            p.stdin.write(text)
+            p.stdin.close()
+            perl_html = p.stdout.read()
             sys.stdout.write(perl_html)
             print "==== markdown2.py ===="
-        html = markdown_path(path, encoding=opts.encoding,
-                             html4tags=opts.html4tags,
-                             safe_mode=opts.safe_mode,
-                             extras=extras, link_patterns=link_patterns,
-                             use_file_vars=opts.use_file_vars)
+        html = markdown(text,
+            html4tags=opts.html4tags,
+            safe_mode=opts.safe_mode,
+            extras=extras, link_patterns=link_patterns,
+            use_file_vars=opts.use_file_vars)
         sys.stdout.write(
             html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
         if extras and "toc" in extras:
