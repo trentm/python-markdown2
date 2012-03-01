@@ -2,8 +2,8 @@ Markdown is a light text markup format and a processor to convert that to HTML.
 The originator describes it as follows:
 
 > Markdown is a text-to-HTML conversion tool for web writers.
-> Markdown allows you to write using an easy-to-read, 
-> easy-to-write plain text format, then convert it to 
+> Markdown allows you to write using an easy-to-read,
+> easy-to-write plain text format, then convert it to
 > structurally valid XHTML (or HTML).
 >
 > -- <http://daringfireball.net/projects/markdown/>
@@ -48,9 +48,13 @@ As a module:
     >>> markdowner.convert("**boom!**")
     u'<p><strong>boom!</strong></p>\n'
 
-As a script:
+As a script (CLI):
 
     $ python markdown2.py foo.md > foo.html
+
+I think pip-based installation will enable this as well:
+
+    $ markdown2 foo.md > foo.html
 
 See the [project wiki](https://github.com/trentm/python-markdown2/wiki),
 [lib/markdown2.py](https://github.com/trentm/python-markdown2/blob/master/lib/markdown2.py)
