@@ -1,1 +1,7 @@
 ![alt text](/path/to/image.jpg)
+
+How about ![alt text](/path/to/image.jpg) in other paragraph content?
+
+How about ![](/path/to/image.jpg) sans alt text?
+
+How about a [regular link](http://example.com "with a title") here?

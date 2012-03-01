@@ -1068,11 +1068,15 @@ class Markdown(object):
                             % (url.replace('"', '&quot;'),
                                _xml_escape_attr(link_text),
                                title_str, self.empty_element_suffix)
+                        if "smarty-pants" in self.extras:
+                            result = result.replace('"', self._escape_table['"'])
                         curr_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[match.end():]
                     elif start_idx >= anchor_allowed_pos:
                         result_head = '<a href="%s"%s>' % (url, title_str)
                         result = '%s%s</a>' % (result_head, link_text)
+                        if "smarty-pants" in self.extras:
+                            result = result.replace('"', self._escape_table['"'])
                         # <img> allowed from curr_pos on, <a> from
                         # anchor_allowed_pos on.
                         curr_pos = start_idx + len(result_head)
@@ -1114,6 +1118,8 @@ class Markdown(object):
                                 % (url.replace('"', '&quot;'),
                                    link_text.replace('"', '&quot;'),
                                    title_str, self.empty_element_suffix)
+                            if "smarty-pants" in self.extras:
+                                result = result.replace('"', self._escape_table['"'])
                             curr_pos = start_idx + len(result)
                             text = text[:start_idx] + result + text[match.end():]
                         elif start_idx >= anchor_allowed_pos:
@@ -1121,6 +1127,8 @@ class Markdown(object):
                                 % (url, title_str, link_text)
                             result_head = '<a href="%s"%s>' % (url, title_str)
                             result = '%s%s</a>' % (result_head, link_text)
+                            if "smarty-pants" in self.extras:
+                                result = result.replace('"', self._escape_table['"'])
                             # <img> allowed from curr_pos on, <a> from
                             # anchor_allowed_pos on.
                             curr_pos = start_idx + len(result_head)
@@ -1681,7 +1689,7 @@ class Markdown(object):
     #   http://bumppo.net/projects/amputator/
     _ampersand_re = re.compile(r'&(?!#?[xX]?(?:[0-9a-fA-F]+|\w+);)')
     _naked_lt_re = re.compile(r'<(?![a-z/?\$!])', re.I)
-    _naked_gt_re = re.compile(r'''(?<![a-z?!/'"-])>''', re.I)
+    _naked_gt_re = re.compile(r'''(?<![a-z0-9?!/'"-])>''', re.I)
 
     def _encode_amps_and_angles(self, text):
         # Smart processing for ampersands and angle brackets that need

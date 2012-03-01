@@ -2,6 +2,9 @@
 
 ## python-markdown2 1.1.0 (not yet released)
 
+- [issue #76] Ensure "smarty-pants" extra doesn't destroy image links
+  and links with title text.
+
 - [issue #72] Support reading from stdin for command line tool like any
   well-behaved unix tool, e.g.:
 
