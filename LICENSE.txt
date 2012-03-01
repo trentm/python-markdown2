@@ -2,6 +2,7 @@ This implementation of Markdown is licensed under the MIT License:
 
     The MIT License
 
+    Copyright (c) 2012 Trent Mick
     Copyright (c) 2010 ActiveState Software Inc.
 
     Permission is hereby granted, free of charge, to any person obtaining a

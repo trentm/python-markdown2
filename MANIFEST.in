@@ -2,8 +2,8 @@ include README.txt
 include TODO.txt
 include LICENSE.txt
 include CONTRIBUTORS.txt
-include CHANGES.txt
-include Makefile.py
+include CHANGES.md
+include Makefile
 include setup.py
 
 include bin/markdown2
