@@ -10,7 +10,7 @@ import re
 
 
 TOP = dirname(dirname(abspath(__file__)))
-sys.path.insert(0, join(TOP, "externals", "which"))
+sys.path.insert(0, join(TOP, "tools", "which"))
 import which
 
 
