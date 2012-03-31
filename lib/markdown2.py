@@ -322,6 +322,38 @@ class Markdown(object):
         """
         return text
 
+    def _extract_metadata(self, text):
+
+        # fast test
+        if not text.startswith("---"):
+            return text
+
+        # is this really metadata?
+        # yes, if lines with colon in the middle or at the end, between tow '---\n'
+        metadatareg = re.compile("""^---\n((?:[^\:]+\:[^\n]*\n)+)---\n""")
+        match = metadatareg.match(text)
+        if not match:
+            return text
+
+        # split between regular text and metadata
+        textRemainder = text[len(match.group(0)):]
+        rawMetaData = match.group(1)
+
+        # extract content of each line
+        metaDataLine = re.compile("^([^\:]+)\s*\:\s*(.*)$")
+        for line in rawMetaData.split('\n'):
+            match = metaDataLine.match(line)
+
+            if not match:
+                continue
+
+            key = match.group(1)
+            value = match.group(2)
+            self.metadata[key]=value
+
+        return textRemainder
+
+
     _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
     # This regular expression is intended to match blocks like this:
     #    PREFIX Local Variables: SUFFIX
