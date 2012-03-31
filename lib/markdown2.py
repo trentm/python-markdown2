@@ -233,6 +233,8 @@ class Markdown(object):
             self.footnote_ids = []
         if "header-ids" in self.extras:
             self._count_from_header_id = {} # no `defaultdict` in Python 2.4
+        if "metadata" in self.extras:
+            self.metadata = {}
 
     def convert(self, text):
         """Convert the given text."""
@@ -281,6 +283,10 @@ class Markdown(object):
         # match consecutive blank lines with /\n+/ instead of something
         # contorted like /[ \t]*\n+/ .
         text = self._ws_only_line_re.sub("", text)
+
+        # strip metadata from head and extract
+        if "metadata" in self.extras:
+            text = self._extract_metadata(text)
 
         if self.safe_mode:
             text = self._hash_html_spans(text)
