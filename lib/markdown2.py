@@ -233,6 +233,8 @@ class Markdown(object):
             self.footnote_ids = []
         if "header-ids" in self.extras:
             self._count_from_header_id = {} # no `defaultdict` in Python 2.4
+        if "metadata" in self.extras:
+            self.metadata = {}
 
     def convert(self, text):
         """Convert the given text."""
@@ -282,6 +284,10 @@ class Markdown(object):
         # contorted like /[ \t]*\n+/ .
         text = self._ws_only_line_re.sub("", text)
 
+        # strip metadata from head and extract
+        if "metadata" in self.extras:
+            text = self._extract_metadata(text)
+
         if self.safe_mode:
             text = self._hash_html_spans(text)
 
@@ -321,6 +327,38 @@ class Markdown(object):
         unhashing of raw HTML spans.
         """
         return text
+
+    def _extract_metadata(self, text):
+
+        # fast test
+        if not text.startswith("---"):
+            return text
+
+        # is this really metadata?
+        # yes, if lines with colon in the middle or at the end, between tow '---\n'
+        metadatareg = re.compile("""^---\n((?:[^\:]+\:[^\n]*\n)+)---\n""")
+        match = metadatareg.match(text)
+        if not match:
+            return text
+
+        # split between regular text and metadata
+        textRemainder = text[len(match.group(0)):]
+        rawMetaData = match.group(1)
+
+        # extract content of each line
+        metaDataLine = re.compile("^([^\:]+)\s*\:\s*(.*)$")
+        for line in rawMetaData.split('\n'):
+            match = metaDataLine.match(line)
+
+            if not match:
+                continue
+
+            key = match.group(1)
+            value = match.group(2)
+            self.metadata[key]=value
+
+        return textRemainder
+
 
     _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
     # This regular expression is intended to match blocks like this:

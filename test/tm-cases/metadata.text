@@ -1,0 +1,9 @@
+---
+test: abc
+this is : a space test
+even :moreTest
+and: some, cvs, data, which, you, must, parse, yourself
+---
+# The real text
+
+This should be parsed as before
