@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 1.2.1 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 1.2.0
 
 - [issue #78, issue #77] Add "metadata" extra (github.com/slomo).

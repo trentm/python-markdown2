@@ -74,7 +74,7 @@ Supported extras (see -x|--extras option below):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 2, 0)
+__version_info__ = (1, 2, 1)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
