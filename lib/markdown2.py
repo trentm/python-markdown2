@@ -51,6 +51,8 @@ Supported extras (see -x|--extras option below):
   have markdown processing be done on its contents. Similar to
   <http://michelf.com/projects/php-markdown/extra/#markdown-attr> but with
   some limitations.
+* metadata: Extract metadata from a leading '---'-fenced block.
+  See <https://github.com/trentm/python-markdown2/issues/77> for details.
 * pyshell: Treats unindented Python interactive shell sessions as <code>
   blocks.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
@@ -72,7 +74,7 @@ Supported extras (see -x|--extras option below):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 1, 2)
+__version_info__ = (1, 2, 0)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
