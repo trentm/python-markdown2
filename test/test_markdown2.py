@@ -14,6 +14,13 @@ import unittest
 import codecs
 import difflib
 import doctest
+try:
+    from json import loads as json_loads
+except ImportError:
+    def json_loads(s):
+        # Total hack to get support for 2.4. "simplejson" only supports back
+        # to 2.5 now and `json` is only in the Python stdlib >=2.6.
+        return eval(s, {}, {})
 
 from testlib import TestError, TestSkipped, tag
 
@@ -43,11 +50,11 @@ class _MarkdownTestCase(unittest.TestCase):
               ---- text ----
             %s  ---- Python markdown2.py HTML ----
             %s  ---- Perl Markdown.pl HTML ----
-            %s""") % (close_though, _display(text), 
+            %s""") % (close_though, _display(text),
                       _display(python_html), _display(perl_html)))
 
     def _assertMarkdownPath(self, text_path, encoding="utf-8", opts=None,
-            toc_html_path=None):
+            toc_html_path=None, metadata_path=None):
         text = codecs.open(text_path, 'r', encoding=encoding).read()
         html_path = splitext(text_path)[0] + ".html"
         html = codecs.open(html_path, 'r', encoding=encoding).read()
@@ -55,11 +62,16 @@ class _MarkdownTestCase(unittest.TestCase):
         if toc_html_path:
             extra["toc_html"] = codecs.open(toc_html_path, 'r', encoding=encoding).read()
             extra["toc_html_path"] = toc_html_path
+        if metadata_path:
+            extra["metadata"] = json_loads(
+                codecs.open(metadata_path, 'r', encoding=encoding).read())
+            extra["metadata_path"] = metadata_path
         self._assertMarkdown(text, html, text_path, html_path, opts=opts,
             **extra)
 
     def _assertMarkdown(self, text, html, text_path=None, html_path=None,
-            opts=None, toc_html=None, toc_html_path=None):
+            opts=None, toc_html=None, toc_html_path=None, metadata=None,
+            metadata_path=None):
         """Assert that markdown2.py produces the expected HTML."""
         if text_path is None: text_path = "<text content>"
         if html_path is None: html_path = "<html content>"
@@ -69,7 +81,7 @@ class _MarkdownTestCase(unittest.TestCase):
         norm_html = norm_html_from_html(html)
         python_html = markdown2.markdown(text, **opts)
         python_norm_html = norm_html_from_html(python_html)
-        
+
         close_though = ""
         if python_norm_html != norm_html \
            and (python_norm_html.replace('\n', '')
@@ -79,7 +91,7 @@ class _MarkdownTestCase(unittest.TestCase):
         diff = u''
         if python_norm_html != norm_html:
             diff = difflib.unified_diff(
-                    norm_html.splitlines(1), 
+                    norm_html.splitlines(1),
                     python_norm_html.splitlines(1),
                     html_path,
                     "markdown2 "+text_path)
@@ -90,7 +102,7 @@ class _MarkdownTestCase(unittest.TestCase):
             %s  ---- Python markdown2.py HTML (escaping: .=space, \\n=newline) ----
             %s  ---- expected HTML (escaping: .=space, \\n=newline) ----
             %s  ---- diff ----
-            %s""") % (close_though, _display(text), 
+            %s""") % (close_though, _display(text),
                       _display(python_html), _display(html),
                       _indent(diff))
 
@@ -102,18 +114,18 @@ class _MarkdownTestCase(unittest.TestCase):
             return (unicode(obj_repr), exc.end)
         codecs.register_error("charreprreplace", charreprreplace)
 
-        self.assertEqual(python_norm_html, norm_html, 
+        self.assertEqual(python_norm_html, norm_html,
                          errmsg.encode('ascii', 'charreprreplace'))
-        
+
         if toc_html:
             python_toc_html = python_html.toc_html
             python_norm_toc_html = norm_html_from_html(python_toc_html)
             norm_toc_html = norm_html_from_html(toc_html)
-            
+
             diff = u''
             if python_norm_toc_html != norm_toc_html:
                 diff = difflib.unified_diff(
-                        norm_toc_html.splitlines(1), 
+                        norm_toc_html.splitlines(1),
                         python_norm_toc_html.splitlines(1),
                         toc_html_path,
                         "`markdown2 %s`.toc_html" % text_path)
@@ -124,11 +136,14 @@ class _MarkdownTestCase(unittest.TestCase):
                 %s  ---- Python markdown2.py TOC HTML (escaping: .=space, \\n=newline) ----
                 %s  ---- expected TOC HTML (escaping: .=space, \\n=newline) ----
                 %s  ---- diff ----
-                %s""") % (close_though, _display(text), 
+                %s""") % (close_though, _display(text),
                           _display(python_toc_html), _display(toc_html),
                           _indent(diff))
-            self.assertEqual(python_norm_toc_html, norm_toc_html, 
+            self.assertEqual(python_norm_toc_html, norm_toc_html,
                 errmsg.encode('ascii', 'charreprreplace'))
+
+        if metadata:
+            self.assertEqual(python_html.metadata, metadata)
 
     def generate_tests(cls):
         """Add test methods to this class for each test file in
@@ -151,9 +166,13 @@ class _MarkdownTestCase(unittest.TestCase):
             toc_html_path = splitext(text_path)[0] + ".toc_html"
             if not exists(toc_html_path):
                 toc_html_path = None
+            metadata_path = splitext(text_path)[0] + ".metadata"
+            if not exists(metadata_path):
+                metadata_path = None
 
-            test_func = lambda self, t=text_path, o=opts, c=toc_html_path: \
-                self._assertMarkdownPath(t, opts=o, toc_html_path=c)
+            test_func = lambda self, t=text_path, o=opts, c=toc_html_path, m=metadata_path: \
+                self._assertMarkdownPath(t, opts=o, toc_html_path=c,
+                                         metadata_path=m)
 
             tags_path = splitext(text_path)[0] + ".tags"
             if exists(tags_path):
@@ -185,7 +204,7 @@ class PHPMarkdownTestCase(_MarkdownTestCase):
 
 class PHPMarkdownExtraTestCase(_MarkdownTestCase):
     """Test cases from MDTest.
-    
+
     These are all knownfailures because these test non-standard Markdown
     syntax no implemented in markdown2.py.  See
     <http://www.michelf.com/projects/php-markdown/extra/> for details.
@@ -240,7 +259,7 @@ versions of markdown2.py this was pathologically slow:</p>
     def test_pre(self):
         self._assertMarkdown(_dedent('''\
             some starter text
-            
+
                 #!/usr/bin/python
                 print "hi"'''),
             '<p>some starter text</p>\n\n<pre><code>#!/usr/bin/python\nprint "hi"\n</code></pre>\n')
@@ -265,7 +284,7 @@ class DocTestsTestCase(unittest.TestCase):
 
 
 #---- internal support stuff
-    
+
 _xml_escape_re = re.compile(r'&#(x[0-9A-Fa-f]{2,3}|[0-9]{2,3});')
 def _xml_escape_sub(match):
     escape = match.group(1)
@@ -286,7 +305,7 @@ def norm_html_from_html(html):
 
     Part of Markdown'ing involves obfuscating email links with
     randomize encoding. Undo that obfuscation.
-    
+
     Also normalize EOLs.
     """
     if not isinstance(html, unicode):
@@ -325,18 +344,18 @@ def _markdown_with_perl(text):
 # Recipe: dedent (0.1.2)
 def _dedentlines(lines, tabsize=8, skip_first_line=False):
     """_dedentlines(lines, tabsize=8, skip_first_line=False) -> dedented lines
-    
+
         "lines" is a list of lines to dedent.
         "tabsize" is the tab width to use for indent width calculations.
         "skip_first_line" is a boolean indicating if the first line should
             be skipped for calculating the indent width and for dedenting.
             This is sometimes useful for docstrings and similar.
-    
+
     Same as dedent() except operates on a sequence of lines. Note: the
     lines list is modified **in-place**.
     """
     DEBUG = False
-    if DEBUG: 
+    if DEBUG:
         print "dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
               % (tabsize, skip_first_line)
     indents = []
@@ -401,7 +420,7 @@ def _dedent(text, tabsize=8, skip_first_line=False):
         "skip_first_line" is a boolean indicating if the first line should
             be skipped for calculating the indent width and for dedenting.
             This is sometimes useful for docstrings and similar.
-    
+
     textwrap.dedent(s), but don't expand tabs to spaces
     """
     lines = text.splitlines(1)
@@ -446,7 +465,7 @@ def _escaped_text_from_text(text, escapes="eol"):
     # - Add 'c-string' style.
     # - Add _escaped_html_from_text() with a similar call sig.
     import re
-    
+
     if isinstance(escapes, basestring):
         if escapes == "eol":
             escapes = {'\r\n': "\\r\\n\r\n", '\n': "\\n\n", '\r': "\\r\r"}
@@ -481,7 +500,7 @@ def _escaped_text_from_text(text, escapes="eol"):
 def _one_line_summary_from_text(text, length=78,
         escapes={'\n':"\\n", '\r':"\\r", '\t':"\\t"}):
     r"""Summarize the given text with one line of the given length.
-    
+
         "text" is the text to summarize
         "length" (default 78) is the max length for the summary
         "escapes" is a mapping of chars in the source text to
@@ -514,4 +533,3 @@ def test_cases():
     yield PHPMarkdownExtraTestCase
     yield DirectTestCase
     yield DocTestsTestCase
-

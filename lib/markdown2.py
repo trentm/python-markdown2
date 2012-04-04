@@ -319,6 +319,8 @@ class Markdown(object):
         rv = UnicodeWithAttrs(text)
         if "toc" in self.extras:
             rv._toc = self._toc
+        if "metadata" in self.extras:
+            rv.metadata = self.metadata
         return rv
 
     def postprocess(self, text):
@@ -336,26 +338,18 @@ class Markdown(object):
 
         # is this really metadata?
         # yes, if lines with colon in the middle or at the end, between tow '---\n'
-        metadatareg = re.compile("""^---\n((?:[^\:]+\:[^\n]*\n)+)---\n""")
+        metadatareg = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
         match = metadatareg.match(text)
         if not match:
             return text
 
         # split between regular text and metadata
         textRemainder = text[len(match.group(0)):]
-        rawMetaData = match.group(1)
+        rawMetaData = match.group(1).strip()
 
-        # extract content of each line
-        metaDataLine = re.compile("^([^\:]+)\s*\:\s*(.*)$")
         for line in rawMetaData.split('\n'):
-            match = metaDataLine.match(line)
-
-            if not match:
-                continue
-
-            key = match.group(1)
-            value = match.group(2)
-            self.metadata[key]=value
+            key, value = line.split(':', 1)
+            self.metadata[key.strip()] = value.strip()
 
         return textRemainder
 
@@ -1856,6 +1850,7 @@ class UnicodeWithAttrs(unicode):
     possibly attach some attributes. E.g. the "toc_html" attribute when
     the "toc" extra is used.
     """
+    metadata = None
     _toc = None
     @property
     def toc_html(self):
