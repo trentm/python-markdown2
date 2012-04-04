@@ -332,28 +332,29 @@ class Markdown(object):
         """
         return text
 
-    def _extract_metadata(self, text):
+    # Is metadata if the content starts with '---'-fenced `key: value`
+    # pairs. E.g. (indented for presentation):
+    #   ---
+    #   foo: bar
+    #   another-var: blah blah
+    #   ---
+    _metadata_pat = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
 
+    def _extract_metadata(self, text):
         # fast test
         if not text.startswith("---"):
             return text
-
-        # is this really metadata?
-        # yes, if lines with colon in the middle or at the end, between tow '---\n'
-        metadatareg = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
-        match = metadatareg.match(text)
+        match = self._metadata_pat.match(text)
         if not match:
             return text
 
-        # split between regular text and metadata
-        textRemainder = text[len(match.group(0)):]
-        rawMetaData = match.group(1).strip()
-
-        for line in rawMetaData.split('\n'):
+        tail = text[len(match.group(0)):]
+        metadata_str = match.group(1).strip()
+        for line in metadata_str.split('\n'):
             key, value = line.split(':', 1)
             self.metadata[key.strip()] = value.strip()
 
-        return textRemainder
+        return tail
 
 
     _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
