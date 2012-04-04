@@ -17,8 +17,11 @@ least at the time this project was started, markdown2.py was faster (see the
 Notes](https://github.com/trentm/python-markdown2/wiki/Performance-Notes)) and,
 to my knowledge, more correct (see [Testing
 Notes](https://github.com/trentm/python-markdown2/wiki/Testing-Notes)).
-That was a while ago though, so you should still consider Python-markdown for
-your usage.
+That was a while ago though, so you shouldn't discount Python-markdown from
+your consideration.
+
+Follow <a href="https://twitter.com/intent/user?screen_name=trentmick" target="_blank">@trentmick</a>
+for updates to python-markdown2.
 
 
 # Install
