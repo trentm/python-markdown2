@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 1.3.0 (not yet released)
+## python-markdown2 1.3.0
 
 - Deprecate `code-color` extra. Use the `fenced-code-block` extra and
   its cleaner mechanism for specifying the language, instead. This extra
