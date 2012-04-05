@@ -36,10 +36,15 @@ number of extras (e.g., code syntax coloring, footnotes) as described on
 cmdln_desc = """A fast and complete Python implementation of Markdown, a
 text-to-HTML conversion tool for web writers.
 
-Supported extras (see -x|--extras option below):
+Supported extra syntax options (see -x|--extras option below and
+see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
+
 * code-friendly: Disable _ and __ for em and strong.
-* code-color: Pygments-based syntax coloring of <code> sections.
 * cuddled-lists: Allow lists to be cuddled to the preceding paragraph.
+* fenced-code-blocks: Allows a code block to not have to be indented
+  by fencing it with '```' on a line before and after. Based on
+  <http://github.github.com/github-flavored-markdown/> with support for
+  syntax highlighting.
 * footnotes: Support footnotes as in use on daringfireball.net and
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
@@ -68,13 +73,11 @@ Supported extras (see -x|--extras option below):
 """
 
 # Dev Notes:
-# - There is already a Python markdown processor
-#   (http://www.freewisdom.org/projects/python-markdown/).
 # - Python's regex syntax doesn't have '\z', so I'm using '\Z'. I'm
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 2, 1)
+__version_info__ = (1, 3, 0)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -778,6 +781,8 @@ class Markdown(object):
             text = self._prepare_pyshell_blocks(text)
         if "wiki-tables" in self.extras:
             text = self._do_wiki_tables(text)
+        if "fenced-code-blocks" in self.extras:
+            text = self._do_fenced_code_blocks(text)
 
         text = self._do_code_blocks(text)
 
@@ -1433,20 +1438,31 @@ class Markdown(object):
         formatter = HtmlCodeFormatter(cssclass="codehilite", **formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
-    def _code_block_sub(self, match):
-        codeblock = match.group(1)
-        codeblock = self._outdent(codeblock)
-        codeblock = self._detab(codeblock)
-        codeblock = codeblock.lstrip('\n')  # trim leading newlines
-        codeblock = codeblock.rstrip()      # trim trailing whitespace
+    def _code_block_sub(self, match, is_fenced_code_block=False):
+        lexer_name = None
+        if is_fenced_code_block:
+            lexer_name = match.group(1)
+            if lexer_name:
+                formatter_opts = self.extras['fenced-code-blocks'] or {}
+            codeblock = match.group(2)
+            codeblock = codeblock[:-1]  # drop one trailing newline
+        else:
+            codeblock = match.group(1)
+            codeblock = self._outdent(codeblock)
+            codeblock = self._detab(codeblock)
+            codeblock = codeblock.lstrip('\n')  # trim leading newlines
+            codeblock = codeblock.rstrip()      # trim trailing whitespace
 
-        if "code-color" in self.extras and codeblock.startswith(":::"):
-            lexer_name, rest = codeblock.split('\n', 1)
-            lexer_name = lexer_name[3:].strip()
-            lexer = self._get_pygments_lexer(lexer_name)
-            codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
-            if lexer:
+            # Note: "code-color" extra is DEPRECATED.
+            if "code-color" in self.extras and codeblock.startswith(":::"):
+                lexer_name, rest = codeblock.split('\n', 1)
+                lexer_name = lexer_name[3:].strip()
+                codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
                 formatter_opts = self.extras['code-color'] or {}
+
+        if lexer_name:
+            lexer = self._get_pygments_lexer(lexer_name)
+            if lexer:
                 colored = self._color_with_pygments(codeblock, lexer,
                                                     **formatter_opts)
                 return "\n\n%s\n\n" % colored
@@ -1488,6 +1504,20 @@ class Markdown(object):
 
         return code_block_re.sub(self._code_block_sub, text)
 
+    def _fenced_code_block_sub(self, match):
+        return self._code_block_sub(match, is_fenced_code_block=True);
+
+    def _do_fenced_code_blocks(self, text):
+        """Process ```-fenced unindented code blocks ('fenced-code-blocks' extra)."""
+        fenced_code_block_re = re.compile(r'''
+            (?:\n\n|\A)
+            ^```([\w+-]+)?[ \t]*\n      # opening fence, $1 = optional lang
+            (.*?)                       # $2 = code block content
+            ^```[ \t]*\n                # closing fence
+            ''', re.M | re.X | re.S)
+
+        #print "XXX", fenced_code_block_re.findall(text)
+        return fenced_code_block_re.sub(self._fenced_code_block_sub, text)
 
     # Rules for a code span:
     # - backslash escapes are not interpreted in a code span

@@ -1,4 +1,3 @@
-- gh "fenced-code-blocks" extra
 - add "markdown-in-html" extra to wiki
 - add "smarty-pants" extra to wiki
 - add "html-classes" extra to wiki
@@ -66,4 +65,3 @@
         > blah blah
         > blah
 - look at http://markedapp.com/   screencast?
-

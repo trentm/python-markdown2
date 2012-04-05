@@ -9,7 +9,9 @@ test:
 
 .PHONY: pygments
 pygments:
-	[[ ! -d deps/pygments ]] && (mkdir -p deps && hg clone http://dev.pocoo.org/hg/pygments-main deps/pygments)
+	[[ -d deps/pygments ]] || ( \
+		mkdir -p deps && \
+		hg clone https://bitbucket.org/birkenfeld/pygments-main deps/pygments)
 	(cd deps/pygments && hg pull && hg update)
 
 clean:

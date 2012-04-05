@@ -21,7 +21,7 @@ def setup():
     lib_dir = join(top_dir, "lib")
     sys.path.insert(0, lib_dir)
 
-    pygments_dir = join(top_dir, "externals", "pygments")
+    pygments_dir = join(top_dir, "deps", "pygments")
     if exists(pygments_dir):
         sys.path.insert(0, pygments_dir)
 
@@ -39,4 +39,3 @@ if __name__ == "__main__":
     retval = testlib.harness(testdir_from_ns=testdir_from_ns,
                              default_tags=default_tags)
     sys.exit(retval)
-

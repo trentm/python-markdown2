@@ -1,8 +1,28 @@
 # python-markdown2 Changelog
 
-## python-markdown2 1.2.1 (not yet released)
+## python-markdown2 1.3.0 (not yet released)
 
-(nothing yet)
+- Deprecate `code-color` extra. Use the `fenced-code-block` extra and
+  its cleaner mechanism for specifying the language, instead. This extra
+  will be removed in v2.0 or so.
+
+- New `fenced-code-blocks` extra. It allows a code block to not have to be
+  indented by fencing it with '```' on a line before and after. Based on
+  [GFM](<http://github.github.com/github-flavored-markdown/).
+
+        Some code:
+
+        ```
+        print "hi"
+        ```
+
+  It includes support for code syntax highlighting as per GFM. This requires
+  the `pygments` Python module to be on the pythonpath.
+
+        ```python
+        if True:
+            print "hi"
+        ```
 
 
 ## python-markdown2 1.2.0
