@@ -8,9 +8,13 @@ The originator describes it as follows:
 >
 > -- <http://daringfireball.net/projects/markdown/>
 
-This is a fast and complete Python implementation of Markdown. It was written to
-closely match the behaviour of the original Perl-implemented Markdown.pl. There
-is another [Python
+This (markdown2) is a fast and complete Python implementation of Markdown. It
+was written to closely match the behaviour of the original Perl-implemented
+Markdown.pl. Markdown2 also comes with a number of extensions (called
+"extras") for things like syntax coloring, tables, header-ids. See the
+"Extra Syntax" section below.
+
+There is another [Python
 markdown.py](http://www.freewisdom.org/projects/python-markdown/). However, at
 least at the time this project was started, markdown2.py was faster (see the
 [Performance
@@ -94,7 +98,7 @@ project was moved from [Google Code](http://code.google.com/p/python-markdown2)
 to here on Github.) See also, [markdown2 on the Python Package Index
 (PyPI)](http://pypi.python.org/pypi/markdown2).
 
-The change log: <https://github.com/trentm/python-markdown2/blob/master/CHANGES.txt>
+The change log: <https://github.com/trentm/python-markdown2/blob/master/CHANGES.md>
 
 To report a bug: <https://github.com/trentm/python-markdown2/issues>
 
@@ -103,12 +107,7 @@ To report a bug: <https://github.com/trentm/python-markdown2/issues>
 
 This markdown implementation passes a fairly extensive test suite. To run it:
 
-    cd test && python test.py
-
-If you have the [mk](https://github.com/ActiveState/mk) tool installed you can
-run the test suite with all available Python versions by running:
-
-    mk test
+    make test
 
 The crux of the test suite is a number of "cases" directories -- each with a
 set of matching .text (input) and .html (expected output) files. These are:
