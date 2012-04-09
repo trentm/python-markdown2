@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # Copyright (c) 2007-2008 ActiveState Corp.
 # License: MIT (http://www.opensource.org/licenses/mit-license.php)
+from __future__ import generators
 
 r"""A fast and complete Python implementation of Markdown.
 
@@ -1885,7 +1886,6 @@ class UnicodeWithAttrs(unicode):
     """
     metadata = None
     _toc = None
-    @property
     def toc_html(self):
         """Return the HTML for the current TOC.
 
@@ -1918,7 +1918,7 @@ class UnicodeWithAttrs(unicode):
                 lines[-1] += "</li>"
             lines.append("%s</ul>" % indent())
         return '\n'.join(lines) + '\n'
-
+    toc_html = property(toc_html)
 
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
 _slugify_strip_re = re.compile(r'[^\w\s-]')
