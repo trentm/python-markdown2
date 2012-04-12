@@ -2,7 +2,7 @@
 
 ## python-markdown2 1.3.1 (not yet released)
 
-(nothing yet)
+- [issue #80] Jython 2.2.1 support fix (by github.com/clach04)
 
 
 ## python-markdown2 1.3.0
