@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 1.3.1 (not yet released)
+## python-markdown2 1.3.1
 
 - [issue #80] Jython 2.2.1 support fix (by github.com/clach04)
 
