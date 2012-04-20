@@ -2,7 +2,13 @@
 
 ## python-markdown2 1.4.1 (not yet released)
 
-(nothing yet)
+- [issue #83, 'fenced-code-blocks' and 'code-color' extras] Allow 'cssclass'
+  code coloring option (passed to pygments) to be overridden (by
+  https://github.com/kaishaku). E.g.:
+
+        import markdown2
+        html = markdown2.markdown(text,
+            extras={'fenced-code-blocks': {'cssclass': 'mycode'}})
 
 
 ## python-markdown2 1.4.0

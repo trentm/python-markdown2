@@ -1442,7 +1442,8 @@ class Markdown(object):
                 """Return the source with a code, pre, and div."""
                 return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
 
-        formatter = HtmlCodeFormatter(cssclass="codehilite", **formatter_opts)
+        formatter_opts.setdefault("cssclass", "codehilite")
+        formatter = HtmlCodeFormatter(**formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
     def _code_block_sub(self, match, is_fenced_code_block=False):
