@@ -31,8 +31,32 @@ finally:
     del sys.path[0]
 
 
+
+#---- Python version compat
+
+# Use `bytes` for byte strings and `unicode` for unicode strings (str in Py3).
+if sys.version_info[0] <= 2:
+    py3 = False
+    try:
+        bytes
+    except NameError:
+        bytes = str
+    base_string_type = basestring
+elif sys.version_info[0] >= 3:
+    py3 = True
+    unicode = str
+    base_string_type = str
+    unichr = chr
+
+
+
+#---- Test cases
+
 class _MarkdownTestCase(unittest.TestCase):
     """Helper class for Markdown tests."""
+
+    maxDiff = None
+
     def _assertMarkdownParity(self, text):
         """Assert that markdown2.py produces same output as Markdown.pl."""
         #TODO add normalization
@@ -45,7 +69,7 @@ class _MarkdownTestCase(unittest.TestCase):
                 == perl_html.replace('\n', '')):
             close_though = " (close though -- all but EOLs match)"
 
-        self.assertEqual(python_html, perl_html, _dedent(u"""\
+        self.assertEqual(python_html, perl_html, _dedent("""\
             markdown2.py didn't produce the same output as Markdown.pl%s:
               ---- text ----
             %s  ---- Python markdown2.py HTML ----
@@ -88,15 +112,15 @@ class _MarkdownTestCase(unittest.TestCase):
                 == norm_html.replace('\n', '')):
             close_though = " (close though -- all but EOLs match)"
 
-        diff = u''
+        diff = ''
         if python_norm_html != norm_html:
             diff = difflib.unified_diff(
                     norm_html.splitlines(1),
                     python_norm_html.splitlines(1),
                     html_path,
                     "markdown2 "+text_path)
-            diff = u''.join(diff)
-        errmsg = _dedent(u"""\
+            diff = ''.join(diff)
+        errmsg = _dedent("""\
             markdown2.py didn't produce the expected HTML%s:
               ---- text (escaping: .=space, \\n=newline) ----
             %s  ---- Python markdown2.py HTML (escaping: .=space, \\n=newline) ----
@@ -109,28 +133,30 @@ class _MarkdownTestCase(unittest.TestCase):
         def charreprreplace(exc):
             if not isinstance(exc, UnicodeEncodeError):
                 raise TypeError("don't know how to handle %r" % exc)
-            # repr -> remote "u'" and "'"
-            obj_repr = repr(exc.object[exc.start:exc.end])[2:-1]
+            if py3:
+                obj_repr = repr(exc.object[exc.start:exc.end])[1:-1]
+            else:
+                # repr -> remote "u'" and "'"
+                obj_repr = repr(exc.object[exc.start:exc.end])[2:-1]
             return (unicode(obj_repr), exc.end)
         codecs.register_error("charreprreplace", charreprreplace)
 
-        self.assertEqual(python_norm_html, norm_html,
-                         errmsg.encode('ascii', 'charreprreplace'))
+        self.assertEqual(python_norm_html, norm_html, errmsg)
 
         if toc_html:
             python_toc_html = python_html.toc_html
             python_norm_toc_html = norm_html_from_html(python_toc_html)
             norm_toc_html = norm_html_from_html(toc_html)
 
-            diff = u''
+            diff = ''
             if python_norm_toc_html != norm_toc_html:
                 diff = difflib.unified_diff(
                         norm_toc_html.splitlines(1),
                         python_norm_toc_html.splitlines(1),
                         toc_html_path,
                         "`markdown2 %s`.toc_html" % text_path)
-                diff = u''.join(diff)
-            errmsg = _dedent(u"""\
+                diff = ''.join(diff)
+            errmsg = _dedent("""\
                 markdown2.py didn't produce the expected TOC HTML%s:
                   ---- text (escaping: .=space, \\n=newline) ----
                 %s  ---- Python markdown2.py TOC HTML (escaping: .=space, \\n=newline) ----
@@ -159,9 +185,10 @@ class _MarkdownTestCase(unittest.TestCase):
             if exists(opts_path):
                 try:
                     opts = eval(open(opts_path, 'r').read())
-                except Exception, ex:
-                    print "WARNING: couldn't load `%s' opts file: %s" \
-                          % (opts_path, ex)
+                except Exception:
+                    _, ex, _ = sys.exc_info()
+                    print("WARNING: couldn't load `%s' opts file: %s" \
+                          % (opts_path, ex))
 
             toc_html_path = splitext(text_path)[0] + ".toc_html"
             if not exists(toc_html_path):
@@ -265,9 +292,9 @@ versions of markdown2.py this was pathologically slow:</p>
             '<p>some starter text</p>\n\n<pre><code>#!/usr/bin/python\nprint "hi"\n</code></pre>\n')
 
     def test_russian(self):
-        ko = u'\u043b\u0449' # 'ko' on russian keyboard
-        self._assertMarkdown(u"## %s" % ko,
-            u'<h2>%s</h2>\n' % ko)
+        ko = '\u043b\u0449' # 'ko' on russian keyboard
+        self._assertMarkdown("## %s" % ko,
+            '<h2>%s</h2>\n' % ko)
     test_russian.tags = ["unicode", "issue3"]
 
 
@@ -278,8 +305,11 @@ class DocTestsTestCase(unittest.TestCase):
         test = doctest.DocFileTest("api.doctests")
         test.runTest()
 
-    def test_internal(self):
-        doctest.testmod(markdown2)
+    # Don't bother on Python 3 because (a) there aren't many inline doctests,
+    # and (b) they are more to be didactic than comprehensive test suites.
+    if not py3:
+        def test_internal(self):
+            doctest.testmod(markdown2)
 
 
 
@@ -293,7 +323,7 @@ def _xml_escape_sub(match):
     else:
         return unichr(int(escape))
 
-_markdown_email_link_re = re.compile(ur'<a href="(.*?&#.*?)">(.*?)</a>', re.U)
+_markdown_email_link_re = re.compile(r'<a href="(.*?&#.*?)">(.*?)</a>', re.U)
 def _markdown_email_link_sub(match):
     href, text = match.groups()
     href = _xml_escape_re.sub(_xml_escape_sub, href)
@@ -323,7 +353,7 @@ def _display(s):
         s = s.decode("utf-8")
     s = _indent(_escaped_text_from_text(s, "whitespace"), 4)
     if not s.endswith('\n'):
-        s += u'\n'
+        s += '\n'
     return s
 
 def _markdown_with_perl(text):
@@ -356,8 +386,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
     """
     DEBUG = False
     if DEBUG:
-        print "dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
-              % (tabsize, skip_first_line)
+        print("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
+              % (tabsize, skip_first_line))
     indents = []
     margin = None
     for i, line in enumerate(lines):
@@ -374,12 +404,12 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 break
         else:
             continue # skip all-whitespace lines
-        if DEBUG: print "dedent: indent=%d: %r" % (indent, line)
+        if DEBUG: print("dedent: indent=%d: %r" % (indent, line))
         if margin is None:
             margin = indent
         else:
             margin = min(margin, indent)
-    if DEBUG: print "dedent: margin=%r" % margin
+    if DEBUG: print("dedent: margin=%r" % margin)
 
     if margin is not None and margin > 0:
         for i, line in enumerate(lines):
@@ -391,7 +421,7 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 elif ch == '\t':
                     removed += tabsize - (removed % tabsize)
                 elif ch in '\r\n':
-                    if DEBUG: print "dedent: %r: EOL -> strip up to EOL" % line
+                    if DEBUG: print("dedent: %r: EOL -> strip up to EOL" % line)
                     lines[i] = lines[i][j:]
                     break
                 else:
@@ -399,8 +429,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                                      "line %r while removing %d-space margin"
                                      % (ch, line, margin))
                 if DEBUG:
-                    print "dedent: %r: %r -> removed %d/%d"\
-                          % (line, ch, removed, margin)
+                    print("dedent: %r: %r -> removed %d/%d"\
+                          % (line, ch, removed, margin))
                 if removed == margin:
                     lines[i] = lines[i][j+1:]
                     break
@@ -466,7 +496,7 @@ def _escaped_text_from_text(text, escapes="eol"):
     # - Add _escaped_html_from_text() with a similar call sig.
     import re
 
-    if isinstance(escapes, basestring):
+    if isinstance(escapes, base_string_type):
         if escapes == "eol":
             escapes = {'\r\n': "\\r\\n\r\n", '\n': "\\n\n", '\r': "\\r\r"}
         elif escapes == "whitespace":
@@ -481,7 +511,7 @@ def _escaped_text_from_text(text, escapes="eol"):
 
     # Sort longer replacements first to allow, e.g. '\r\n' to beat '\r' and
     # '\n'.
-    escapes_keys = escapes.keys()
+    escapes_keys = list(escapes.keys())
     try:
         escapes_keys.sort(key=lambda a: len(a), reverse=True)
     except TypeError:

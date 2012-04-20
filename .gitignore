@@ -1,6 +1,7 @@
 *.pyc
 tmp
 deps/pygments
+deps/pygments3
 dist
 MANIFEST
 build
@@ -8,3 +9,4 @@ googlecode_upload.py
 perf/*.prof
 perf/tmp-*-cases
 sandbox/*.html
+__pycache__

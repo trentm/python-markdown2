@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+# Copyright (c) 2012 Trent Mick.
 # Copyright (c) 2007-2008 ActiveState Corp.
 # License: MIT (http://www.opensource.org/licenses/mit-license.php)
+
 from __future__ import generators
 
 r"""A fast and complete Python implementation of Markdown.
@@ -78,7 +80,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (1, 3, 2)
+__version_info__ = (1, 4, 0)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -94,22 +96,34 @@ except ImportError:
 import optparse
 from random import random, randint
 import codecs
-from urllib import quote
-
 
 
 #---- Python version compat
+
+try:
+    from urllib.parse import quote # python3
+except ImportError:
+    from urllib import quote # python2
 
 if sys.version_info[:2] < (2,4):
     from sets import Set as set
     def reversed(sequence):
         for i in sequence[::-1]:
             yield i
-    def _unicode_decode(s, encoding, errors='xmlcharrefreplace'):
-        return unicode(s, encoding, errors)
-else:
-    def _unicode_decode(s, encoding, errors='strict'):
-        return s.decode(encoding, errors)
+
+# Use `bytes` for byte strings and `unicode` for unicode strings (str in Py3).
+if sys.version_info[0] <= 2:
+    py3 = False
+    try:
+        bytes
+    except NameError:
+        bytes = str
+    base_string_type = basestring
+elif sys.version_info[0] >= 3:
+    py3 = True
+    unicode = str
+    base_string_type = str
+
 
 
 #---- globals
@@ -120,21 +134,13 @@ log = logging.getLogger("markdown")
 DEFAULT_TAB_WIDTH = 4
 
 
-try:
-    import uuid
-except ImportError:
-    SECRET_SALT = str(randint(0, 1000000))
-else:
-    SECRET_SALT = str(uuid.uuid4())
-def _hash_ascii(s):
-    #return md5(s).hexdigest()   # Markdown.pl effectively does this.
-    return 'md5-' + md5(SECRET_SALT + s).hexdigest()
+SECRET_SALT = bytes(randint(0, 1000000))
 def _hash_text(s):
     return 'md5-' + md5(SECRET_SALT + s.encode("utf-8")).hexdigest()
 
 # Table of hash values for escaped characters:
-g_escape_table = dict([(ch, _hash_ascii(ch))
-                       for ch in '\\`*_{}[]()>#+-.!'])
+g_escape_table = dict([(ch, _hash_text(ch))
+    for ch in '\\`*_{}[]()>#+-.!'])
 
 
 
@@ -224,8 +230,8 @@ class Markdown(object):
 
         self._escape_table = g_escape_table.copy()
         if "smarty-pants" in self.extras:
-            self._escape_table['"'] = _hash_ascii('"')
-            self._escape_table["'"] = _hash_ascii("'")
+            self._escape_table['"'] = _hash_text('"')
+            self._escape_table["'"] = _hash_text("'")
 
     def reset(self):
         self.urls = {}
@@ -471,7 +477,7 @@ class Markdown(object):
                         emacs_vars[variable] = value
 
         # Unquote values.
-        for var, val in emacs_vars.items():
+        for var, val in list(emacs_vars.items()):
             if len(val) > 1 and (val.startswith('"') and val.endswith('"')
                or val.startswith('"') and val.endswith('"')):
                 emacs_vars[var] = val[1:-1]
@@ -611,11 +617,11 @@ class Markdown(object):
                 # Delimiters for next comment block.
                 try:
                     start_idx = text.index("<!--", start)
-                except ValueError, ex:
+                except ValueError:
                     break
                 try:
                     end_idx = text.index("-->", start_idx) + 3
-                except ValueError, ex:
+                except ValueError:
                     break
 
                 # Start position for next comment block search.
@@ -955,7 +961,7 @@ class Markdown(object):
         return ''.join(tokens)
 
     def _unhash_html_spans(self, text):
-        for key, sanitized in self.html_spans.items():
+        for key, sanitized in list(self.html_spans.items()):
             text = text.replace(key, sanitized)
         return text
 
@@ -1204,7 +1210,7 @@ class Markdown(object):
             the TOC (if the "toc" extra is specified).
         """
         header_id = _slugify(text)
-        if prefix and isinstance(prefix, basestring):
+        if prefix and isinstance(prefix, base_string_type):
             header_id = prefix + '-' + header_id
         if header_id in self._count_from_header_id:
             self._count_from_header_id[header_id] += 1
@@ -1772,7 +1778,7 @@ class Markdown(object):
         return text
 
     def _encode_backslash_escapes(self, text):
-        for ch, escape in self._escape_table.items():
+        for ch, escape in list(self._escape_table.items()):
             text = text.replace("\\"+ch, escape)
         return text
 
@@ -1847,13 +1853,13 @@ class Markdown(object):
                 hash = _hash_text(link)
                 link_from_hash[hash] = link
                 text = text[:start] + hash + text[end:]
-        for hash, link in link_from_hash.items():
+        for hash, link in list(link_from_hash.items()):
             text = text.replace(hash, link)
         return text
 
     def _unescape_special_chars(self, text):
         # Swap back in all the special characters we've hidden.
-        for ch, hash in self._escape_table.items():
+        for ch, hash in list(self._escape_table.items()):
             text = text.replace(hash, ch)
         return text
 
@@ -1910,7 +1916,7 @@ class UnicodeWithAttrs(unicode):
                     if not lines[-1].endswith("</li>"):
                         lines[-1] += "</li>"
                     lines.append("%s</ul></li>" % indent())
-            lines.append(u'%s<li><a href="#%s">%s</a>' % (
+            lines.append('%s<li><a href="#%s">%s</a>' % (
                 indent(), id, name))
         while len(h_stack) > 1:
             h_stack.pop()
@@ -1931,8 +1937,8 @@ def _slugify(value):
     From Django's "django/template/defaultfilters.py".
     """
     import unicodedata
-    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(_slugify_strip_re.sub('', value).strip().lower())
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode()
+    value = _slugify_strip_re.sub('', value).strip().lower()
     return _slugify_hyphenate_re.sub('-', value)
 ## end of http://code.activestate.com/recipes/577257/ }}}
 
@@ -1970,7 +1976,7 @@ def _regex_from_encoded_pattern(s):
             except KeyError:
                 raise ValueError("unsupported regex flag: '%s' in '%s' "
                                  "(must be one of '%s')"
-                                 % (char, s, ''.join(flag_from_char.keys())))
+                                 % (char, s, ''.join(list(flag_from_char.keys()))))
         return re.compile(s[1:idx], flags)
     else: # not an encoded regex
         return re.compile(re.escape(s))
@@ -1990,8 +1996,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
     """
     DEBUG = False
     if DEBUG:
-        print "dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
-              % (tabsize, skip_first_line)
+        print("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
+              % (tabsize, skip_first_line))
     indents = []
     margin = None
     for i, line in enumerate(lines):
@@ -2008,12 +2014,12 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 break
         else:
             continue # skip all-whitespace lines
-        if DEBUG: print "dedent: indent=%d: %r" % (indent, line)
+        if DEBUG: print("dedent: indent=%d: %r" % (indent, line))
         if margin is None:
             margin = indent
         else:
             margin = min(margin, indent)
-    if DEBUG: print "dedent: margin=%r" % margin
+    if DEBUG: print("dedent: margin=%r" % margin)
 
     if margin is not None and margin > 0:
         for i, line in enumerate(lines):
@@ -2025,7 +2031,7 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 elif ch == '\t':
                     removed += tabsize - (removed % tabsize)
                 elif ch in '\r\n':
-                    if DEBUG: print "dedent: %r: EOL -> strip up to EOL" % line
+                    if DEBUG: print("dedent: %r: EOL -> strip up to EOL" % line)
                     lines[i] = lines[i][j:]
                     break
                 else:
@@ -2033,8 +2039,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                                      "line %r while removing %d-space margin"
                                      % (ch, line, margin))
                 if DEBUG:
-                    print "dedent: %r: %r -> removed %d/%d"\
-                          % (line, ch, removed, margin)
+                    print("dedent: %r: %r -> removed %d/%d"\
+                          % (line, ch, removed, margin))
                 if removed == margin:
                     lines[i] = lines[i][j+1:]
                     break
@@ -2263,20 +2269,27 @@ def main(argv=None):
             fp.close()
         if opts.compare:
             from subprocess import Popen, PIPE
-            print "==== Markdown.pl ===="
+            print("==== Markdown.pl ====")
             p = Popen('perl %s' % markdown_pl, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
-            p.stdin.write(text)
+            p.stdin.write(text.encode('utf-8'))
             p.stdin.close()
-            perl_html = p.stdout.read()
-            sys.stdout.write(perl_html)
-            print "==== markdown2.py ===="
+            perl_html = p.stdout.read().decode('utf-8')
+            if py3:
+                sys.stdout.write(perl_html)
+            else:
+                sys.stdout.write(perl_html.encode(
+                    sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
+            print("==== markdown2.py ====")
         html = markdown(text,
             html4tags=opts.html4tags,
             safe_mode=opts.safe_mode,
             extras=extras, link_patterns=link_patterns,
             use_file_vars=opts.use_file_vars)
-        sys.stdout.write(
-            html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
+        if py3:
+            sys.stdout.write(html)
+        else:
+            sys.stdout.write(html.encode(
+                sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
         if extras and "toc" in extras:
             log.debug("toc_html: " +
                 html.toc_html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
@@ -2290,7 +2303,7 @@ def main(argv=None):
             else:
                 norm_html = html
                 norm_perl_html = perl_html
-            print "==== match? %r ====" % (norm_perl_html == norm_html)
+            print("==== match? %r ====" % (norm_perl_html == norm_html))
 
 
 if __name__ == "__main__":

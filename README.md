@@ -12,7 +12,8 @@ This (markdown2) is a fast and complete Python implementation of Markdown. It
 was written to closely match the behaviour of the original Perl-implemented
 Markdown.pl. Markdown2 also comes with a number of extensions (called
 "extras") for things like syntax coloring, tables, header-ids. See the
-"Extra Syntax" section below.
+"Extra Syntax" section below. "markdown2" supports all Python versions
+from 2.4 to 3.3.
 
 There is another [Python
 markdown.py](http://www.freewisdom.org/projects/python-markdown/). However, at
@@ -32,8 +33,8 @@ for updates to python-markdown2.
 
 To install it in your Python installation run *one* of the following:
 
-    pypm install markdown2      # if you use ActivePython (activestate.com/activepython)
     pip install markdown2
+    pypm install markdown2      # if you use ActivePython (activestate.com/activepython)
     python setup.py install
 
 However, everything you need to run this is in "lib/markdown2.py". If it is
