@@ -7,6 +7,10 @@ all:
 test:
 	cd test && python testall.py
 
+.PHONY: testone
+testone:
+	cd test && python test.py -- -knownfailure
+
 .PHONY: pygments
 pygments:
 	[[ -d deps/pygments ]] || ( \
