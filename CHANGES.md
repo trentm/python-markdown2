@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 1.4.1 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 1.4.0
 
 - [issue #64] Python 3 support! markdown2.py supports Python 2 and 3 in the
