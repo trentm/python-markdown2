@@ -1,3 +1,5 @@
+https://secure.travis-ci.org/trentm/python-markdown2.png
+
 Markdown is a light text markup format and a processor to convert that to HTML.
 The originator describes it as follows:
 
@@ -27,6 +29,8 @@ your consideration.
 
 Follow <a href="https://twitter.com/intent/user?screen_name=trentmick" target="_blank">@trentmick</a>
 for updates to python-markdown2.
+
+Travis-ci.org: [![Build Status](https://secure.travis-ci.org/trentm/python-markdown2.png)](http://travis-ci.org/trentm/python-markdown2)
 
 
 # Install
