@@ -1,0 +1,5 @@
+
+    print "hi"
+
+That *single* leading line was problematic at one time. E.g. Markdown.pl
+1.0.1 suffers here.

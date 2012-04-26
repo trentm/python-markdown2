@@ -2,6 +2,9 @@
 
 ## python-markdown2 1.4.1 (not yet released)
 
+- Fix code blocks and fenced-code-blocks to work with a single leading newline
+  at the start of the input.
+
 - [issue #86, 'fenced-code-blocks' extra] Fix fenced code blocks not being
   parsed out before other syntax elements, like headers.
 

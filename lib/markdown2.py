@@ -1500,7 +1500,7 @@ class Markdown(object):
     def _do_code_blocks(self, text):
         """Process Markdown `<pre><code>` blocks."""
         code_block_re = re.compile(r'''
-            (?:\n\n|\A)
+            (?:\n\n|\A\n?)
             (               # $1 = the code block -- one or more lines, starting with a space/tab
               (?:
                 (?:[ ]{%d} | \t)  # Lines must start with a tab or a tab-width of spaces
@@ -1519,7 +1519,7 @@ class Markdown(object):
     def _do_fenced_code_blocks(self, text):
         """Process ```-fenced unindented code blocks ('fenced-code-blocks' extra)."""
         fenced_code_block_re = re.compile(r'''
-            (?:\n\n|\A)
+            (?:\n\n|\A\n?)
             ^```([\w+-]+)?[ \t]*\n      # opening fence, $1 = optional lang
             (.*?)                       # $2 = code block content
             ^```[ \t]*\n                # closing fence
