@@ -1513,19 +1513,19 @@ class Markdown(object):
 
         return code_block_re.sub(self._code_block_sub, text)
 
+    _fenced_code_block_re = re.compile(r'''
+        (?:\n\n|\A\n?)
+        ^```([\w+-]+)?[ \t]*\n      # opening fence, $1 = optional lang
+        (.*?)                       # $2 = code block content
+        ^```[ \t]*\n                # closing fence
+        ''', re.M | re.X | re.S)
+
     def _fenced_code_block_sub(self, match):
         return self._code_block_sub(match, is_fenced_code_block=True);
 
     def _do_fenced_code_blocks(self, text):
         """Process ```-fenced unindented code blocks ('fenced-code-blocks' extra)."""
-        fenced_code_block_re = re.compile(r'''
-            (?:\n\n|\A\n?)
-            ^```([\w+-]+)?[ \t]*\n      # opening fence, $1 = optional lang
-            (.*?)                       # $2 = code block content
-            ^```[ \t]*\n                # closing fence
-            ''', re.M | re.X | re.S)
-
-        return fenced_code_block_re.sub(self._fenced_code_block_sub, text)
+        return self._fenced_code_block_re.sub(self._fenced_code_block_sub, text)
 
     # Rules for a code span:
     # - backslash escapes are not interpreted in a code span
