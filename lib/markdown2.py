@@ -1305,56 +1305,51 @@ class Markdown(object):
     def _do_lists(self, text):
         # Form HTML ordered (numbered) and unordered (bulleted) lists.
 
-        for marker_pat in (self._marker_ul, self._marker_ol):
-            # Re-usable pattern to match any entire ul or ol list:
-            less_than_tab = self.tab_width - 1
-            whole_list = r'''
-                (                   # \1 = whole list
-                  (                 # \2
-                    [ ]{0,%d}
-                    (%s)            # \3 = first list item marker
-                    [ \t]+
-                    (?!\ *\3\ )     # '- - - ...' isn't a list. See 'not_quite_a_list' test case.
-                  )
-                  (?:.+?)
-                  (                 # \4
-                      \Z
-                    |
-                      \n{2,}
-                      (?=\S)
-                      (?!           # Negative lookahead for another list item marker
-                        [ \t]*
-                        %s[ \t]+
+        # Iterate over each *non-overlapping* list match.
+        pos = 0
+        while True:
+            # Find the *first* hit for either list style (ul or ol). We
+            # match ul and ol separately to avoid adjacent lists of different
+            # types running into each other (see issue #16).
+            hits = []
+            for marker_pat in (self._marker_ul, self._marker_ol):
+                less_than_tab = self.tab_width - 1
+                whole_list = r'''
+                    (                   # \1 = whole list
+                      (                 # \2
+                        [ ]{0,%d}
+                        (%s)            # \3 = first list item marker
+                        [ \t]+
+                        (?!\ *\3\ )     # '- - - ...' isn't a list. See 'not_quite_a_list' test case.
                       )
-                  )
-                )
-            ''' % (less_than_tab, marker_pat, marker_pat)
-
-            # We use a different prefix before nested lists than top-level lists.
-            # See extended comment in _process_list_items().
-            #
-            # Note: There's a bit of duplication here. My original implementation
-            # created a scalar regex pattern as the conditional result of the test on
-            # $g_list_level, and then only ran the $text =~ s{...}{...}egmx
-            # substitution once, using the scalar as the pattern. This worked,
-            # everywhere except when running under MT on my hosting account at Pair
-            # Networks. There, this caused all rebuilds to be killed by the reaper (or
-            # perhaps they crashed, but that seems incredibly unlikely given that the
-            # same script on the same server ran fine *except* under MT. I've spent
-            # more time trying to figure out why this is happening than I'd like to
-            # admit. My only guess, backed up by the fact that this workaround works,
-            # is that Perl optimizes the substition when it can figure out that the
-            # pattern will never change, and when this optimization isn't on, we run
-            # afoul of the reaper. Thus, the slightly redundant code to that uses two
-            # static s/// patterns rather than one conditional pattern.
-
-            if self.list_level:
-                sub_list_re = re.compile("^"+whole_list, re.X | re.M | re.S)
-                text = sub_list_re.sub(self._list_sub, text)
-            else:
-                list_re = re.compile(r"(?:(?<=\n\n)|\A\n?)"+whole_list,
-                                     re.X | re.M | re.S)
-                text = list_re.sub(self._list_sub, text)
+                      (?:.+?)
+                      (                 # \4
+                          \Z
+                        |
+                          \n{2,}
+                          (?=\S)
+                          (?!           # Negative lookahead for another list item marker
+                            [ \t]*
+                            %s[ \t]+
+                          )
+                      )
+                    )
+                ''' % (less_than_tab, marker_pat, marker_pat)
+                if self.list_level:  # sub-list
+                    list_re = re.compile("^"+whole_list, re.X | re.M | re.S)
+                else:
+                    list_re = re.compile(r"(?:(?<=\n\n)|\A\n?)"+whole_list,
+                                         re.X | re.M | re.S)
+                match = list_re.search(text, pos)
+                if match:
+                    hits.append((match.start(), match))
+            if not hits:
+                break
+            hits.sort()
+            match = hits[0][1]
+            start, end = match.span()
+            text = text[:start] + self._list_sub(match) + text[end:]
+            pos = end
 
         return text
 

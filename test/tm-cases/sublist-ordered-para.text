@@ -1,0 +1,31 @@
+# Fails (or used to)
+
+1. one
+2. two
+
+   - sub one
+   - sub two
+
+3. three
+
+
+# Works
+
+1. one
+2. two
+
+    - sub one
+    - sub two
+
+3. three
+
+
+# Works too
+
+1. one
+2. two
+
+   1. sub one
+   2. sub two
+
+3. three
