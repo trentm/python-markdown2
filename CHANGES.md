@@ -2,6 +2,9 @@
 
 ## python-markdown2 1.4.1 (not yet released)
 
+- [issue #86, 'fenced-code-blocks' extra] Fix fenced code blocks not being
+  parsed out before other syntax elements, like headers.
+
 - [issue #83, 'fenced-code-blocks' and 'code-color' extras] Allow 'cssclass'
   code coloring option (passed to pygments) to be overridden (by
   https://github.com/kaishaku). E.g.:

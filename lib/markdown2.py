@@ -766,6 +766,9 @@ class Markdown(object):
         # These are all the transformations that form block-level
         # tags like paragraphs, headers, and list items.
 
+        if "fenced-code-blocks" in self.extras:
+            text = self._do_fenced_code_blocks(text)
+
         text = self._do_headers(text)
 
         # Do Horizontal Rules:
@@ -788,8 +791,6 @@ class Markdown(object):
             text = self._prepare_pyshell_blocks(text)
         if "wiki-tables" in self.extras:
             text = self._do_wiki_tables(text)
-        if "fenced-code-blocks" in self.extras:
-            text = self._do_fenced_code_blocks(text)
 
         text = self._do_code_blocks(text)
 
@@ -1524,7 +1525,6 @@ class Markdown(object):
             ^```[ \t]*\n                # closing fence
             ''', re.M | re.X | re.S)
 
-        #print "XXX", fenced_code_block_re.findall(text)
         return fenced_code_block_re.sub(self._fenced_code_block_sub, text)
 
     # Rules for a code span:
