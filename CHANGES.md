@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 1.4.2 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 1.4.1
 
 - [issue #67] Fix an sub-`ul` inside a `ol` not working with an indent less
