@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 1.4.3 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 1.4.2
 
 - [issue #84, issue #87] Fix problems with fenced-code-blocks getting
