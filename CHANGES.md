@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 1.4.2 (not yet released)
+## python-markdown2 1.4.2
 
 - [issue #84, issue #87] Fix problems with fenced-code-blocks getting
   double-processed.
