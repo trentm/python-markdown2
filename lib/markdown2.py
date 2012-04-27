@@ -1505,7 +1505,6 @@ class Markdown(object):
             ((?=^[ ]{0,%d}\S)|\Z)   # Lookahead for non-space at line-start, or end of doc
             ''' % (self.tab_width, self.tab_width),
             re.M | re.X)
-
         return code_block_re.sub(self._code_block_sub, text)
 
     _fenced_code_block_re = re.compile(r'''
@@ -1582,18 +1581,12 @@ class Markdown(object):
             # Do the angle bracket song and dance:
             ('<', '&lt;'),
             ('>', '&gt;'),
-            # Now, escape characters that are magic in Markdown:
-            ('*', self._escape_table['*']),
-            ('_', self._escape_table['_']),
-            ('{', self._escape_table['{']),
-            ('}', self._escape_table['}']),
-            ('[', self._escape_table['[']),
-            (']', self._escape_table[']']),
-            ('\\', self._escape_table['\\']),
         ]
         for before, after in replacements:
             text = text.replace(before, after)
-        return text
+        hashed = _hash_text(text)
+        self._escape_table[text] = hashed
+        return hashed
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)

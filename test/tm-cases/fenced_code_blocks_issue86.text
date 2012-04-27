@@ -3,3 +3,16 @@
 
 print "hi"
 ```
+
+```
+# first comment
+a = 1
+# second comment
+b = 2
+```
+
+```
+void foo() {
+
+    x = 1;
+```

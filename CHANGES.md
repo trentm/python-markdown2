@@ -2,13 +2,14 @@
 
 ## python-markdown2 1.4.2 (not yet released)
 
-(nothing yet)
+- [issue #84, issue #87] Fix problems with fenced-code-blocks getting
+  double-processed.
 
 
 ## python-markdown2 1.4.1
 
 - [issue #67] Fix an sub-`ul` inside a `ol` not working with an indent less
-  than 4 spaces. 
+  than 4 spaces.
 
 - Fix code blocks and fenced-code-blocks to work with a single leading newline
   at the start of the input.
