@@ -233,6 +233,27 @@ class Markdown(object):
             self._escape_table['"'] = _hash_text('"')
             self._escape_table["'"] = _hash_text("'")
 
+        if 'tag-friendly-headers' in self.extras:
+            self._atx_h_re = re.compile(r'''
+                ^(\#{1,6})  # \1 = string of #'s
+                [ \t]+
+                (.+?)       # \2 = Header text
+                [ \t]*
+                (?<!\\)     # ensure not an escaped trailing '#'
+                \#*         # optional closing #'s (not counted)
+                \n+
+                ''', re.X | re.M)
+        else:
+            self._atx_h_re = re.compile(r'''
+                ^(\#{1,6})  # \1 = string of #'s
+                [ \t]*
+                (.+?)       # \2 = Header text
+                [ \t]*
+                (?<!\\)     # ensure not an escaped trailing '#'
+                \#*         # optional closing #'s (not counted)
+                \n+
+                ''', re.X | re.M)
+
     def reset(self):
         self.urls = {}
         self.titles = {}
@@ -1243,15 +1264,15 @@ class Markdown(object):
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
-    _atx_h_re = re.compile(r'''
-        ^(\#{1,6})  # \1 = string of #'s
-        [ \t]*
-        (.+?)       # \2 = Header text
-        [ \t]*
-        (?<!\\)     # ensure not an escaped trailing '#'
-        \#*         # optional closing #'s (not counted)
-        \n+
-        ''', re.X | re.M)
+    # _atx_h_re = re.compile(r'''
+    #     ^(\#{1,6})  # \1 = string of #'s
+    #     [ \t]*
+    #     (.+?)       # \2 = Header text
+    #     [ \t]*
+    #     (?<!\\)     # ensure not an escaped trailing '#'
+    #     \#*         # optional closing #'s (not counted)
+    #     \n+
+    #     ''', re.X | re.M)
     def _atx_h_sub(self, match):
         n = len(match.group(1))
         demote_headers = self.extras.get("demote-headers")
