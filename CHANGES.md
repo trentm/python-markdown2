@@ -1,8 +1,25 @@
 # python-markdown2 Changelog
 
-## python-markdown2 1.4.3 (not yet released)
+## python-markdown2 2.0.0 (not yet released)
 
-(nothing yet)
+- [issue #90] Add a `Markdown.preprocess(text) -> text` hook for subclasses.
+  This is a match for the `Markdown.postprocess(text) -> text` hook added in
+  an earlier version. (by @joestump).
+
+- [issue #90, backward incompatible change] Require a space between the '#'
+  and a text for a title. I.e.:
+
+        # This still works
+
+        #This doesn't work
+
+        ##Nor this
+
+  This keeps comments, hash tags, and ticket numbers at the beginning of the
+  line from turning into an h1. (by @joestump)
+
+  This is a backward incompatible change, however small, hence the version
+  change to 2.0.0.
 
 
 ## python-markdown2 1.4.2
