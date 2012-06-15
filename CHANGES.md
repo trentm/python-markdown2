@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.0.1 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.0.0
 
 - [issue #90] Add a `Markdown.preprocess(text) -> text` hook for subclasses.
