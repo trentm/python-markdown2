@@ -57,9 +57,9 @@ setup(
     py_modules=["markdown2"],
     package_dir={"": "lib"},
     scripts=[script],
-    description="A fast and complete Python implementaion of Markdown",
+    description="A fast and complete Python implementation of Markdown",
     classifiers=filter(None, classifiers.split("\n")),
-    long_description="""markdown2: A fast and complete Python implementaion of Markdown.
+    long_description="""markdown2: A fast and complete Python implementation of Markdown.
 
 Markdown is a text-to-HTML filter; it translates an easy-to-read /
 easy-to-write structured text format into HTML.  Markdown's text
