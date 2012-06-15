@@ -300,6 +300,8 @@ class Markdown(object):
         if "metadata" in self.extras:
             text = self._extract_metadata(text)
 
+        text = self.preprocess(text)
+
         if self.safe_mode:
             text = self._hash_html_spans(text)
 
@@ -339,6 +341,13 @@ class Markdown(object):
         """A hook for subclasses to do some postprocessing of the html, if
         desired. This is called before unescaping of special chars and
         unhashing of raw HTML spans.
+        """
+        return text
+
+    def preprocess(self, text):
+        """A hook for subclasses to do some preprocessing of the Markdown, if
+        desired. This is called after basic formatting of the text, but prior
+        to any extras, safe mode, etc. processing.
         """
         return text
 
@@ -1245,7 +1254,7 @@ class Markdown(object):
 
     _atx_h_re = re.compile(r'''
         ^(\#{1,6})  # \1 = string of #'s
-        [ \t]*
+        [ \t]+
         (.+?)       # \2 = Header text
         [ \t]*
         (?<!\\)     # ensure not an escaped trailing '#'
