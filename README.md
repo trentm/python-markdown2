@@ -13,7 +13,7 @@ was written to closely match the behaviour of the original Perl-implemented
 Markdown.pl. Markdown2 also comes with a number of extensions (called
 "extras") for things like syntax coloring, tables, header-ids. See the
 "Extra Syntax" section below. "markdown2" supports all Python versions
-from 2.4 to 3.3.
+from 2.4 to 3.3 (and pypy and jython, though I don't frequently test those).
 
 There is another [Python
 markdown.py](http://www.freewisdom.org/projects/python-markdown/). However, at
@@ -28,7 +28,7 @@ your consideration.
 Follow <a href="https://twitter.com/intent/user?screen_name=trentmick" target="_blank">@trentmick</a>
 for updates to python-markdown2.
 
-Travis-ci.org: [![Build Status](https://secure.travis-ci.org/trentm/python-markdown2.png)](http://travis-ci.org/trentm/python-markdown2)
+Travis-ci.org test status: [![Build Status](https://secure.travis-ci.org/trentm/python-markdown2.png)](http://travis-ci.org/trentm/python-markdown2)
 
 
 # Install

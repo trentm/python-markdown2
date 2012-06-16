@@ -2,7 +2,14 @@
 
 ## python-markdown2 2.0.1 (not yet released)
 
-(nothing yet)
+- Now 'tox' testing support (by github.com/msabramo):
+
+        [sudo] pip install tox
+        tox
+
+  confirming that markdown2 works with jython (not sure which version) and
+  pypy!  Also added pypy to travis-ci testing
+  (http://travis-ci.org/#!/trentm/python-markdown2).
 
 
 ## python-markdown2 2.0.0
