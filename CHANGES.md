@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.0.2 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.0.1
 
 - ["toc" extra] Unescape Markdown special chars in TOC entries. See
