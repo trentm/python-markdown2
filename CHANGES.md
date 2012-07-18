@@ -2,6 +2,9 @@
 
 ## python-markdown2 2.0.1 (not yet released)
 
+- ["toc" extra] Unescape Markdown special chars in TOC entries. See
+  <https://github.com/trentm/restdown/issues/15>.
+
 - Now 'tox' testing support (by github.com/msabramo):
 
         [sudo] pip install tox

@@ -1233,7 +1233,7 @@ class Markdown(object):
     def _toc_add_entry(self, level, id, name):
         if self._toc is None:
             self._toc = []
-        self._toc.append((level, id, name))
+        self._toc.append((level, id, self._unescape_special_chars(name)))
 
     _setext_h_re = re.compile(r'^(.+)[ \t]*\n(=+|-+)[ \t]*\n+', re.M)
     def _setext_h_sub(self, match):
