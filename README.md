@@ -37,6 +37,7 @@ To install it in your Python installation run *one* of the following:
 
     pip install markdown2
     pypm install markdown2      # if you use ActivePython (activestate.com/activepython)
+    easy_install markdown2      # if this is the best you have
     python setup.py install
 
 However, everything you need to run this is in "lib/markdown2.py". If it is
