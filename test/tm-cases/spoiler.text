@@ -1,0 +1,18 @@
+[First]
+>! This is a spoiler
+
+[Second]
+>! But this is  
+> not a spoiler
+
+[Third]
+>! A multi-line spoiler  
+>! has ! multiple times
+
+[Fourth]
+>! Alignment  
+> ! has no effect  
+ >  ! on spoilers
+
+[Last]
+> ! <- still a spoiler
