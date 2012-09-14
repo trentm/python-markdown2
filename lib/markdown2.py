@@ -1890,7 +1890,7 @@ class UnicodeWithAttrs(unicode):
     _min_header_level = 1
     _max_header_level = 6
     _number_toc = False
-    def render_toc_html(self, min_header_level=None, max_header_level=None):
+    def render_toc_html(self, min_header_level=None, max_header_level=None, number_toc=None):
         """Return the HTML for the current TOC.
 
         This expects the `_toc` attribute to have been set on this instance.
@@ -1899,6 +1899,7 @@ class UnicodeWithAttrs(unicode):
             return None
         min_header_level = self._min_header_level if min_header_level is None else min_header_level
         max_header_level = self._max_header_level if max_header_level is None else max_header_level
+        number_toc = self._number_toc if number_toc is None else number_toc
 
         def indent():
             return '  ' * (len(h_stack) - 1)
@@ -1923,7 +1924,7 @@ class UnicodeWithAttrs(unicode):
                     if not lines[-1].endswith("</li>"):
                         lines[-1] += "</li>"
                     lines.append("%s</ul></li>" % indent())
-            if self._number_toc:
+            if number_toc:
                 lines.append('%s<li>%s <a href="#%s">%s</a>' % (
                     indent(), '.'.join(str(c) for c in counters),
                     id, name))
