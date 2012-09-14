@@ -334,6 +334,11 @@ class Markdown(object):
         if "toc" in self.extras:
             rv._toc = self._toc
             rv._number_toc = self.extras["toc"] and self.extras["toc"].get("number-html-toc", False)
+            if self.extras["toc"]:
+                rv._min_header_level = self.extras["toc"].get(
+                    "min-header-level", rv._min_header_level)
+                rv._max_header_level = self.extras["toc"].get(
+                    "max-header-level", rv._max_header_level)
         if "metadata" in self.extras:
             rv.metadata = self.metadata
         return rv
@@ -1266,13 +1271,7 @@ class Markdown(object):
                 header_id_attr = ' id="%s"' % header_id
         html = self._run_span_gamut(text)
         if "toc" in self.extras and header_id:
-            min_header_level = 1
-            max_header_level = 6
-            if self.extras["toc"]:
-                min_header_level = self.extras["toc"].get("min-header-level", min_header_level)
-                max_header_level = self.extras["toc"].get("max-header-level", max_header_level)
-            if level >= min_header_level and level <= max_header_level:
-                self._toc_add_entry(level - min_header_level + 1, header_id, html)
+            self._toc_add_entry(level, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (level, header_id_attr, html, level)
 
     def _do_headers(self, text):
@@ -1888,14 +1887,18 @@ class UnicodeWithAttrs(unicode):
     """
     metadata = None
     _toc = None
+    _min_header_level = 1
+    _max_header_level = 6
     _number_toc = False
-    def toc_html(self):
+    def render_toc_html(self, min_header_level=None, max_header_level=None):
         """Return the HTML for the current TOC.
 
         This expects the `_toc` attribute to have been set on this instance.
         """
         if self._toc is None:
             return None
+        min_header_level = self._min_header_level if min_header_level is None else min_header_level
+        max_header_level = self._max_header_level if max_header_level is None else max_header_level
 
         def indent():
             return '  ' * (len(h_stack) - 1)
@@ -1903,6 +1906,9 @@ class UnicodeWithAttrs(unicode):
         h_stack = [0]   # stack of header-level numbers
         counters = []
         for level, id, name in self._toc:
+            if level < min_header_level or level > max_header_level:
+                continue
+            level = level - min_header_level + 1
             if level > h_stack[-1]:
                 lines.append("%s<ul>" % indent())
                 h_stack.append(level)
@@ -1930,7 +1936,7 @@ class UnicodeWithAttrs(unicode):
                 lines[-1] += "</li>"
             lines.append("%s</ul>" % indent())
         return '\n'.join(lines) + '\n'
-    toc_html = property(toc_html)
+    toc_html = property(render_toc_html)
 
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
 _slugify_strip_re = re.compile(r'[^\w\s-]')
