@@ -248,6 +248,8 @@ class Markdown(object):
         if "metadata" in self.extras:
             self.metadata = {}
 
+    _a_nofollow = re.compile(r'<a([^>]*:)', flags=re.IGNORECASE)
+
     def convert(self, text):
         """Convert the given text."""
         # Main function. The order in which other subs are called here is
@@ -327,6 +329,9 @@ class Markdown(object):
 
         if self.safe_mode:
             text = self._unhash_html_spans(text)
+
+        if "nofollow" in self.extras:
+            text = self._a_nofollow.sub(r'<a rel="nofollow" \1', text)
 
         text += "\n"
 
