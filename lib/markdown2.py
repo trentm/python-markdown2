@@ -1666,27 +1666,28 @@ class Markdown(object):
         text = text.replace(". . .", "&#8230;")
         return text
 
-    _block_quote_re = re.compile(r'''
+    _block_quote_base = r'''
         (                           # Wrap whole match in \1
           (
-            ^[ \t]*>[ \t]*?!?[ \t]? # '>' at the start of a line
+            ^[ \t]*>%s[ \t]?        # '>' at the start of a line
               .+\n                  # rest of the first line
             (.+\n)*                 # subsequent consecutive lines
             \n*                     # blanks
           )+
         )
-        ''', re.M | re.X)
+    '''
+    _block_quote_re = re.compile(_block_quote_base % '', re.M | re.X)
+    _block_quote_re_spoiler = re.compile(_block_quote_base % '[ \t]*?!?', re.M | re.X)
     _bq_one_level_re = re.compile('^[ \t]*>[ \t]?', re.M);
     _bq_one_level_re_spoiler = re.compile('^[ \t]*>[ \t]*?![ \t]?', re.M);
     _bq_all_lines_spoilers = re.compile(r'\A(?:^[ \t]*>[ \t]*?!.*[\n\r]*)+\Z', re.M)
-
     _html_pre_block_re = re.compile(r'(\s*<pre>.+?</pre>)', re.S)
     def _dedent_two_spaces_sub(self, match):
         return re.sub(r'(?m)^  ', '', match.group(1))
 
     def _block_quote_sub(self, match):
         bq = match.group(1)
-        is_spoiler = self._bq_all_lines_spoilers.match(bq)
+        is_spoiler = 'spoiler' in self.extras and self._bq_all_lines_spoilers.match(bq)
         # trim one level of quoting
         if is_spoiler:
             bq = self._bq_one_level_re_spoiler.sub('', bq)
@@ -1708,7 +1709,10 @@ class Markdown(object):
     def _do_block_quotes(self, text):
         if '>' not in text:
             return text
-        return self._block_quote_re.sub(self._block_quote_sub, text)
+        if 'spoiler' in self.extras:
+            return self._block_quote_re_spoiler.sub(self._block_quote_sub, text)
+        else:
+            return self._block_quote_re.sub(self._block_quote_sub, text)
 
     def _form_paragraphs(self, text):
         # Strip leading and trailing lines:
