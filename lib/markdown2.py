@@ -61,6 +61,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   some limitations.
 * metadata: Extract metadata from a leading '---'-fenced block.
   See <https://github.com/trentm/python-markdown2/issues/77> for details.
+* nofollow: Add `rel="nofollow"` to add `<a>` tags with an href. See
+  <http://en.wikipedia.org/wiki/Nofollow>.
 * pyshell: Treats unindented Python interactive shell sessions as <code>
   blocks.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
@@ -80,7 +82,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (2, 0, 2)
+__version_info__ = (2, 1, 1)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -248,6 +250,10 @@ class Markdown(object):
         if "metadata" in self.extras:
             self.metadata = {}
 
+    # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
+    # should only be used in <a> tags with an "href" attribute.
+    _a_nofollow = re.compile(r"<(a)([^>]*href=)", re.IGNORECASE)
+
     def convert(self, text):
         """Convert the given text."""
         # Main function. The order in which other subs are called here is
@@ -327,6 +333,9 @@ class Markdown(object):
 
         if self.safe_mode:
             text = self._unhash_html_spans(text)
+
+        if "nofollow" in self.extras:
+            text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
 
         text += "\n"
 

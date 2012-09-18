@@ -1,0 +1,18 @@
+[link](http://example.com)
+
+Pre-block:
+
+    Here is a raw link:
+    <a href="http://example.com/one">one</a>
+
+<p>Raw HTML links:
+<a href="http://example.com/two">two</a>
+<a href="http://example.com/three" rel="nofollow">three</a>
+<a href="http://example.com/four" rel="foo">four</a>
+<a>five</a>
+<a href="//example.com/six">six</a>
+<A HREF="http://example.com/seven">seven</A>
+<a foo=bar href="http://example.com/eight">eight</a>
+</p>
+
+
