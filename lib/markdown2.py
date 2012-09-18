@@ -1666,38 +1666,53 @@ class Markdown(object):
         text = text.replace(". . .", "&#8230;")
         return text
 
-    _block_quote_re = re.compile(r'''
+    _block_quote_base = r'''
         (                           # Wrap whole match in \1
           (
-            ^[ \t]*>[ \t]?          # '>' at the start of a line
+            ^[ \t]*>%s[ \t]?        # '>' at the start of a line
               .+\n                  # rest of the first line
             (.+\n)*                 # subsequent consecutive lines
             \n*                     # blanks
           )+
         )
-        ''', re.M | re.X)
+    '''
+    _block_quote_re = re.compile(_block_quote_base % '', re.M | re.X)
+    _block_quote_re_spoiler = re.compile(_block_quote_base % '[ \t]*?!?', re.M | re.X)
     _bq_one_level_re = re.compile('^[ \t]*>[ \t]?', re.M);
-
+    _bq_one_level_re_spoiler = re.compile('^[ \t]*>[ \t]*?![ \t]?', re.M);
+    _bq_all_lines_spoilers = re.compile(r'\A(?:^[ \t]*>[ \t]*?!.*[\n\r]*)+\Z', re.M)
     _html_pre_block_re = re.compile(r'(\s*<pre>.+?</pre>)', re.S)
     def _dedent_two_spaces_sub(self, match):
         return re.sub(r'(?m)^  ', '', match.group(1))
 
     def _block_quote_sub(self, match):
         bq = match.group(1)
-        bq = self._bq_one_level_re.sub('', bq)  # trim one level of quoting
-        bq = self._ws_only_line_re.sub('', bq)  # trim whitespace-only lines
+        is_spoiler = 'spoiler' in self.extras and self._bq_all_lines_spoilers.match(bq)
+        # trim one level of quoting
+        if is_spoiler:
+            bq = self._bq_one_level_re_spoiler.sub('', bq)
+        else:
+            bq = self._bq_one_level_re.sub('', bq)
+        # trim whitespace-only lines
+        bq = self._ws_only_line_re.sub('', bq)
         bq = self._run_block_gamut(bq)          # recurse
 
         bq = re.sub('(?m)^', '  ', bq)
         # These leading spaces screw with <pre> content, so we need to fix that:
         bq = self._html_pre_block_re.sub(self._dedent_two_spaces_sub, bq)
 
-        return "<blockquote>\n%s\n</blockquote>\n\n" % bq
+        if is_spoiler:
+            return '<blockquote class="spoiler">\n%s\n</blockquote>\n\n' % bq
+        else:
+            return '<blockquote>\n%s\n</blockquote>\n\n' % bq
 
     def _do_block_quotes(self, text):
         if '>' not in text:
             return text
-        return self._block_quote_re.sub(self._block_quote_sub, text)
+        if 'spoiler' in self.extras:
+            return self._block_quote_re_spoiler.sub(self._block_quote_sub, text)
+        else:
+            return self._block_quote_re.sub(self._block_quote_sub, text)
 
     def _form_paragraphs(self, text):
         # Strip leading and trailing lines:
