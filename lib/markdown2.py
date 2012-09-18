@@ -1244,34 +1244,28 @@ class Markdown(object):
             self._toc = []
         self._toc.append((level, id, self._unescape_special_chars(name)))
 
-    _setext_h_re = re.compile(r'^(.+)[ \t]*\n(=+|-+)[ \t]*\n+', re.M)
-    def _setext_h_sub(self, match):
-        n = {"=": 1, "-": 2}[match.group(2)[0]]
-        demote_headers = self.extras.get("demote-headers")
-        if demote_headers:
-            n = min(n + demote_headers, 6)
-        header_id_attr = ""
-        if "header-ids" in self.extras:
-            header_id = self.header_id_from_text(match.group(1),
-                self.extras["header-ids"], n)
-            if header_id:
-                header_id_attr = ' id="%s"' % header_id
-        html = self._run_span_gamut(match.group(1))
-        if "toc" in self.extras and header_id:
-            self._toc_add_entry(n, header_id, html)
-        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
-
-    _atx_h_re = re.compile(r'''
-        ^(\#{1,6})  # \1 = string of #'s
+    
+    _h_re = re.compile(r'''
+        (^(.+)[ \t]*\n(=+|-+)[ \t]*\n+)
+        |
+        (^(\#{1,6})  # \1 = string of #'s
         [ \t]+
         (.+?)       # \2 = Header text
         [ \t]*
         (?<!\\)     # ensure not an escaped trailing '#'
         \#*         # optional closing #'s (not counted)
         \n+
+        )
         ''', re.X | re.M)
-    def _atx_h_sub(self, match):
-        n = len(match.group(1))
+
+    def _h_sub(self, match):
+        if match.group(1) is not None:
+            return self._setext_h_sub(match)
+        else:
+            return self._atx_h_sub(match)
+
+    def _setext_h_sub(self, match):
+        n = {"=": 1, "-": 2}[match.group(3)[0]]
         demote_headers = self.extras.get("demote-headers")
         if demote_headers:
             n = min(n + demote_headers, 6)
@@ -1286,6 +1280,22 @@ class Markdown(object):
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
+    def _atx_h_sub(self, match):
+        n = len(match.group(5))
+        demote_headers = self.extras.get("demote-headers")
+        if demote_headers:
+            n = min(n + demote_headers, 6)
+        header_id_attr = ""
+        if "header-ids" in self.extras:
+            header_id = self.header_id_from_text(match.group(6),
+                self.extras["header-ids"], n)
+            if header_id:
+                header_id_attr = ' id="%s"' % header_id
+        html = self._run_span_gamut(match.group(6))
+        if "toc" in self.extras and header_id:
+            self._toc_add_entry(n, header_id, html)
+        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
+
     def _do_headers(self, text):
         # Setext-style headers:
         #     Header 1
@@ -1293,7 +1303,6 @@ class Markdown(object):
         #
         #     Header 2
         #     --------
-        text = self._setext_h_re.sub(self._setext_h_sub, text)
 
         # atx-style headers:
         #   # Header 1
@@ -1301,8 +1310,8 @@ class Markdown(object):
         #   ## Header 2 with closing hashes ##
         #   ...
         #   ###### Header 6
-        text = self._atx_h_re.sub(self._atx_h_sub, text)
 
+        text = self._h_re.sub(self._h_sub, text)
         return text
 
 
