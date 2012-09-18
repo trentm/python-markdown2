@@ -1,8 +1,12 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.0.2 (not yet released)
+## python-markdown2 2.1.0 (not yet released)
 
-(nothing yet)
+- ["nofollow" extra, issue #74, pull #104] Add `rel="nofollow"` support
+  (mostly by https://github.com/cdman):
+
+        $ echo '[link](http://example)' | markdown2 -x nofollow
+        <p><a rel="nofollow" href="http://example">link</a></p>
 
 
 ## python-markdown2 2.0.1
