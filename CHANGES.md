@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.1.0 (not yet released)
+## python-markdown2 2.1.0
 
 - ["nofollow" extra, issue #74, pull #104] Add `rel="nofollow"` support
   (mostly by https://github.com/cdman):
