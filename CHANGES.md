@@ -8,6 +8,8 @@
         $ echo '[link](http://example)' | markdown2 -x nofollow
         <p><a rel="nofollow" href="http://example">link</a></p>
 
+   Limitation: This *can* add a duplicate 'rel' attribute to raw HTML links
+   in the input.
 
 ## python-markdown2 2.0.1
 
