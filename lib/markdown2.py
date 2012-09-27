@@ -342,6 +342,12 @@ class Markdown(object):
         rv = UnicodeWithAttrs(text)
         if "toc" in self.extras:
             rv._toc = self._toc
+            rv._number_toc = self.extras["toc"] and self.extras["toc"].get("number-html-toc", False)
+            if self.extras["toc"]:
+                rv._min_header_level = self.extras["toc"].get(
+                    "min-header-level", rv._min_header_level)
+                rv._max_header_level = self.extras["toc"].get(
+                    "max-header-level", rv._max_header_level)
         if "metadata" in self.extras:
             rv.metadata = self.metadata
         return rv
@@ -1247,19 +1253,7 @@ class Markdown(object):
     _setext_h_re = re.compile(r'^(.+)[ \t]*\n(=+|-+)[ \t]*\n+', re.M)
     def _setext_h_sub(self, match):
         n = {"=": 1, "-": 2}[match.group(2)[0]]
-        demote_headers = self.extras.get("demote-headers")
-        if demote_headers:
-            n = min(n + demote_headers, 6)
-        header_id_attr = ""
-        if "header-ids" in self.extras:
-            header_id = self.header_id_from_text(match.group(1),
-                self.extras["header-ids"], n)
-            if header_id:
-                header_id_attr = ' id="%s"' % header_id
-        html = self._run_span_gamut(match.group(1))
-        if "toc" in self.extras and header_id:
-            self._toc_add_entry(n, header_id, html)
-        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
+        return self._h_sub(n, match.group(1))
 
     _atx_h_re = re.compile(r'''
         ^(\#{1,6})  # \1 = string of #'s
@@ -1272,19 +1266,22 @@ class Markdown(object):
         ''', re.X | re.M)
     def _atx_h_sub(self, match):
         n = len(match.group(1))
+        return self._h_sub(n, match.group(2))
+
+    def _h_sub(self, level, text):
         demote_headers = self.extras.get("demote-headers")
         if demote_headers:
-            n = min(n + demote_headers, 6)
+            level = min(level + demote_headers, 6)
         header_id_attr = ""
         if "header-ids" in self.extras:
-            header_id = self.header_id_from_text(match.group(2),
-                self.extras["header-ids"], n)
+            header_id = self.header_id_from_text(text,
+                self.extras["header-ids"], level)
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
-        html = self._run_span_gamut(match.group(2))
+        html = self._run_span_gamut(text)
         if "toc" in self.extras and header_id:
-            self._toc_add_entry(n, header_id, html)
-        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
+            self._toc_add_entry(level, header_id, html)
+        return "<h%d%s>%s</h%d>\n\n" % (level, header_id_attr, html, level)
 
     def _do_headers(self, text):
         # Setext-style headers:
@@ -1899,39 +1896,58 @@ class UnicodeWithAttrs(unicode):
     """
     metadata = None
     _toc = None
-    def toc_html(self):
+    _min_header_level = 1
+    _max_header_level = 6
+    _number_toc = False
+    def render_toc_html(self, min_header_level=None, max_header_level=None, number_toc=None):
         """Return the HTML for the current TOC.
 
         This expects the `_toc` attribute to have been set on this instance.
         """
         if self._toc is None:
             return None
+        min_header_level = self._min_header_level if min_header_level is None else min_header_level
+        max_header_level = self._max_header_level if max_header_level is None else max_header_level
+        number_toc = self._number_toc if number_toc is None else number_toc
 
         def indent():
             return '  ' * (len(h_stack) - 1)
         lines = []
         h_stack = [0]   # stack of header-level numbers
+        counters = []
         for level, id, name in self._toc:
+            if level < min_header_level or level > max_header_level:
+                continue
+            level = level - min_header_level + 1
             if level > h_stack[-1]:
                 lines.append("%s<ul>" % indent())
                 h_stack.append(level)
+                counters.append(1)
             elif level == h_stack[-1]:
                 lines[-1] += "</li>"
+                counters[-1] += 1
             else:
                 while level < h_stack[-1]:
                     h_stack.pop()
+                    counters.pop()
                     if not lines[-1].endswith("</li>"):
                         lines[-1] += "</li>"
                     lines.append("%s</ul></li>" % indent())
-            lines.append('%s<li><a href="#%s">%s</a>' % (
-                indent(), id, name))
+                counters[-1] += 1
+            if number_toc:
+                lines.append('%s<li>%s <a href="#%s">%s</a>' % (
+                    indent(), '.'.join(str(c) for c in counters),
+                    id, name))
+            else:
+                lines.append('%s<li><a href="#%s">%s</a>' % (
+                    indent(), id, name))
         while len(h_stack) > 1:
             h_stack.pop()
             if not lines[-1].endswith("</li>"):
                 lines[-1] += "</li>"
             lines.append("%s</ul>" % indent())
         return '\n'.join(lines) + '\n'
-    toc_html = property(toc_html)
+    toc_html = property(render_toc_html)
 
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
 _slugify_strip_re = re.compile(r'[^\w\s-]')
