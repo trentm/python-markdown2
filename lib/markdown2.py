@@ -1924,6 +1924,7 @@ class UnicodeWithAttrs(unicode):
                     if not lines[-1].endswith("</li>"):
                         lines[-1] += "</li>"
                     lines.append("%s</ul></li>" % indent())
+                counters[-1] += 1
             if number_toc:
                 lines.append('%s<li>%s <a href="#%s">%s</a>' % (
                     indent(), '.'.join(str(c) for c in counters),
