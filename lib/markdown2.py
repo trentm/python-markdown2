@@ -786,6 +786,8 @@ class Markdown(object):
 
         if "fenced-code-blocks" in self.extras:
             text = self._do_fenced_code_blocks(text)
+            # We must do html block hash before _do_code_blocks because _do_fenced_code_blocks may produce indented code.
+            text = self._hash_html_blocks(text)
 
         text = self._do_headers(text)
 
