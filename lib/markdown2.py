@@ -325,6 +325,7 @@ class Markdown(object):
         text = self._run_block_gamut(text)
 
         if "footnotes" in self.extras:
+            text = self._sort_footnotes(text)
             text = self._add_footnotes(text)
 
         text = self.postprocess(text)
@@ -1738,6 +1739,24 @@ class Markdown(object):
 
         return "\n\n".join(grafs)
 
+    def _sort_footnotes(self, text):
+        """Because _do_links is not applied to the text in text flow order, footnotes are not generated in proper order, we have to sort them before _add_footnotes.
+        """
+        _footnote_tag_re = re.compile(r'''<sup class="footnote-ref" id="fnref-(.+)"><a href="#fn-\1">(\d+)</a></sup>''')
+        self.footnote_ids = []
+        i = 0
+        def _repl(match):
+            id = match.group(1)
+            num = match.group(2)
+            if id in self.footnotes:
+                nonlocal i
+                i += 1
+                self.footnote_ids.append(id)
+                return match.string[match.start(0):match.start(2)] + str(i) + match.string[match.end(2):match.end(0)]
+            else:
+                return match.string[match.start():match.end()]
+        return _footnote_tag_re.sub(_repl, text)        
+    
     def _add_footnotes(self, text):
         if self.footnotes:
             footer = [
