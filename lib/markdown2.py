@@ -1744,15 +1744,12 @@ class Markdown(object):
         """
         _footnote_tag_re = re.compile(r'''<sup class="footnote-ref" id="fnref-(.+)"><a href="#fn-\1">(\d+)</a></sup>''')
         self.footnote_ids = []
-        i = 0
         def _repl(match):
             id = match.group(1)
             num = match.group(2)
             if id in self.footnotes:
-                nonlocal i
-                i += 1
                 self.footnote_ids.append(id)
-                return match.string[match.start(0):match.start(2)] + str(i) + match.string[match.end(2):match.end(0)]
+                return match.string[match.start(0):match.start(2)] + str(len(self.footnote_ids)) + match.string[match.end(2):match.end(0)]
             else:
                 return match.string[match.start():match.end()]
         return _footnote_tag_re.sub(_repl, text)        
