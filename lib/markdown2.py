@@ -1605,9 +1605,7 @@ class Markdown(object):
         ]
         for before, after in replacements:
             text = text.replace(before, after)
-        hashed = _hash_text(text)
-        self._escape_table[text] = hashed
-        return hashed
+        return text
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
