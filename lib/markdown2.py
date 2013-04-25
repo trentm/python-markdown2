@@ -365,22 +365,79 @@ class Markdown(object):
     #   ---
     #   foo: bar
     #   another-var: blah blah
+    #   yet-another:
+    #   - value1
+    #   - value2
     #   ---
-    _metadata_pat = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
 
     def _extract_metadata(self, text):
-        # fast test
-        if not text.startswith("---"):
-            return text
-        match = self._metadata_pat.match(text)
-        if not match:
+        """ Extract metadata from text.
+
+        Example text:
+
+        ---
+        layout: post
+        title: "Test post"
+        date: 2013-03-21 14:56
+        comments: true
+        categories:
+        - cat 1
+        - cat 2
+        ---
+        This is regular
+        text
+        and should not be affected
+
+        :type text: str
+        :param text: Text string to extract metadata from
+        :returns: str
+            If metadata was parsed the text will be stripped from all metadata
+        """
+        if not text.startswith('---'):
             return text
 
-        tail = text[len(match.group(0)):]
-        metadata_str = match.group(1).strip()
-        for line in metadata_str.split('\n'):
-            key, value = line.split(':', 1)
-            self.metadata[key.strip()] = value.strip()
+        try:
+            raw_metadata = text.split('---')[1].split('\n')
+            tail = '---'.join(text.split('---')[2:])
+
+            if tail.startswith('\n'):
+                tail = tail[1:]
+
+            if len(raw_metadata) == 0:
+                return text
+        except IndexError:
+            return text
+
+        multi_value_key = None
+        for line in raw_metadata:
+            line = line.strip()
+
+            if (line.find(':')+1 == len(line) and not multi_value_key):
+                # If this is a multi_value_key
+                # just store the key and go to the next line to get the value
+                multi_value_key = line.split(':')[0]
+                continue
+
+            elif multi_value_key and line.startswith('-'):
+                if not multi_value_key in self.metadata:
+                    self.metadata[str(multi_value_key)] = []
+                self.metadata[str(multi_value_key).strip()].append(
+                    str(line.split('-')[1]))
+
+            elif multi_value_key:
+                self.metadata[str(multi_value_key).strip()] = str('')
+
+            else:
+                try:
+                    key, value = line.split(':', 1)
+                    self.metadata[str(key.strip())] = str(value.strip())
+                except ValueError:
+                    pass
+
+                if multi_value_key:
+                    self.metadata[str(multi_value_key).strip()] = str('')
+
+                multi_value_key = None
 
         return tail
 
