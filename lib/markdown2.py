@@ -1005,9 +1005,9 @@ class Markdown(object):
           \(            # literal paren
             [ \t]*
             (?P<url>            # \1
-                <.*?>
+                <[^ \t'"]*>
                 |
-                .*?
+                [^ \t'"]*
             )
             [ \t]*
             (                   # \2
