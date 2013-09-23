@@ -913,7 +913,10 @@ class Markdown(object):
             text = self._do_smart_punctuation(text)
 
         # Do hard breaks:
-        text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
+        if "break-on-newline" in self.extras:
+            text = re.sub(r" *\n", "<br%s\n" % self.empty_element_suffix, text)
+        else:
+            text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
 
         return text
 
