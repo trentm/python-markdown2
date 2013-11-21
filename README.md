@@ -106,6 +106,16 @@ The change log: <https://github.com/trentm/python-markdown2/blob/master/CHANGES.
 
 To report a bug: <https://github.com/trentm/python-markdown2/issues>
 
+# Contributing
+
+We welcome pull requests from the community. Please take a look at the [TODO](https://github.com/trentm/python-markdown2/blob/master/TODO.txt) for opportunities to help this project. For those wishing to submit a pull request to `python-markdown2` please ensure it fulfills the following requirements:
+
+* It must pass PEP8.
+* It must include relevant test coverage.
+* Bug fixes must include a regression test that exercises the bug.
+* The entire test suite must pass.
+* The README and/or docs are updated accordingly.
+
 
 # Test Suite
 
