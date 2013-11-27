@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.1.1 (not yet released)
 
-(nothing yet)
+- [issue #135] Fix fenced code blocks odd rendering.
 
 
 ## python-markdown2 2.1.0
