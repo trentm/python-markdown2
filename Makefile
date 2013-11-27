@@ -1,4 +1,5 @@
 # python-markdown2 Makefile
+SHELL=/bin/bash
 
 .PHONY: all
 all:
