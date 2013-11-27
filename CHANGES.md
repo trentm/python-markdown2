@@ -3,6 +3,7 @@
 ## python-markdown2 2.1.1 (not yet released)
 
 - [issue #135] Fix fenced code blocks odd rendering.
+- [pull #138] specify shell in Makefile
 
 
 ## python-markdown2 2.1.0
