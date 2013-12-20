@@ -3,3 +3,5 @@ For example:
     if cond:
         print doit()
         
+![the google logo][logo]
+[logo]: http://www.google.com/images/logo.gif
