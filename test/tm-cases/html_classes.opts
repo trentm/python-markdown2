@@ -1,6 +1,8 @@
 {'extras': {
     'html-classes': {
-        'pre': 'syntaxcolor'
+        'pre': 'syntaxcolor',
+        'code': 'codesyntaxcolor',
+        'img': 'custom-image-class'
     },
 }}
 
