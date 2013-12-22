@@ -1507,16 +1507,10 @@ class Markdown(object):
         """Get the appropriate ' class="..."' string (note the leading
         space), if any, for the given tag.
         """
-        if "html-classes" not in self.extras:
+        html_classes_from_tag = self.extras.get("html-classes", "")
+        if not html_classes_from_tag or tag not in html_classes_from_tag:
             return ""
-        try:
-            html_classes_from_tag = self.extras["html-classes"]
-        except TypeError:
-            return ""
-        else:
-            if tag in html_classes_from_tag:
-                return ' class="%s"' % html_classes_from_tag[tag]
-        return ""
+        return ' class="%s"' % html_classes_from_tag[tag]
 
     def _do_code_blocks(self, text):
         """Process Markdown `<pre><code>` blocks."""
