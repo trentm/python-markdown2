@@ -5,6 +5,7 @@
 - [issue #135] Fix fenced code blocks odd rendering.
 - [pull #138] specify shell in Makefile
 - [pull #130] break-on-newline extra
+- [pull #140] Allow html-classes for img
 
 
 ## python-markdown2 2.1.0
