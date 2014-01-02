@@ -48,7 +48,7 @@ def testall():
         ver_str = "%s.%s" % ver
         print "-- test with Python %s (%s)" % (ver_str, python)
         assert ' ' not in python
-        rv = os.system("%s test.py -- -knownfailure" % python)
+        rv = os.system("MACOSX_DEPLOYMENT_TARGET= %s test.py -- -knownfailure" % python)
         if rv:
             sys.exit(os.WEXITSTATUS(rv))
 
