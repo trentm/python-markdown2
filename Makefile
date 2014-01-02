@@ -27,6 +27,14 @@ pygments:
 clean:
 	rm -rf build dist MANIFEST
 
+
+.PHONY: versioncheck
+versioncheck:
+	[[ `grep '^__version_info__' lib/markdown2.py | cut -d'(' -f2 | cut -d')' -f1 | sed 's/, /./g'` \
+	    == `grep '^## ' CHANGES.md | head -1 | awk '{print $$3}'` ]]
+	@echo Version check ok.
+
 .PHONY: cutarelease
-cutarelease:
+cutarelease: versioncheck
 	./tools/cutarelease.py -f lib/markdown2.py
+
