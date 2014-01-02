@@ -6,6 +6,7 @@
 - [pull #138] specify shell in Makefile
 - [pull #130] break-on-newline extra
 - [pull #140] Allow html-classes for img
+- [pull #122] Allow parentheses in urls
 
 
 ## python-markdown2 2.1.0
