@@ -1006,6 +1006,10 @@ class Markdown(object):
             raise MarkdownError("invalid value for 'safe_mode': %r (must be "
                                 "'escape' or 'replace')" % self.safe_mode)
 
+    """
+    The expression [^ \t'"]* is used instead of .* because of special cases
+    for links. Specifically: inline links, quotes in links, and odd anchors.
+    """
     _tail_of_inline_link_re = re.compile(r'''
           # Match tail of: [text](/url/) or [text](/url/ "title")
           \(            # literal paren
