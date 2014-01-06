@@ -1379,7 +1379,7 @@ class Markdown(object):
             match = hits[0][1]
             start, end = match.span()
             text = text[:start] + self._list_sub(match) + text[end:]
-            pos = end
+            #pos = end # to resolve this issue -> https://github.com/trentm/python-markdown2/issues/111
 
         return text
 
