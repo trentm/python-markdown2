@@ -1010,23 +1010,38 @@ class Markdown(object):
     The expression [^ \t'"]* is used instead of .* because of special cases
     for links. Specifically: inline links, quotes in links, and odd anchors.
     """
-    _tail_of_inline_link_re = re.compile(r'''
-          # Match tail of: [text](/url/) or [text](/url/ "title")
+    _tail_of_inline_link_re_str = r'''
           \(            # literal paren
             [ \t]*
             (?P<url>            # \1
-                <[^ \t'"]*>
+                <[^{char_blacklist}]*>
                 |
-                [^ \t'"]*
+                [^{char_blacklist}]*
             )
-            [ \t]*
+            {title_separator}
             (                   # \2
+              {title_prefix}
               (['"])            # quote char = \3
               (?P<title>.*?)
               \3                # matching quote
             )?                  # title is optional
           \)
-        ''', re.X | re.S)
+        ''';
+    _tail_of_inline_link_re = re.compile(
+          # Match tail of: [text](/url/) or [text](/url/ "title")
+          _tail_of_inline_link_re_str.format(
+              char_blacklist=r''' \t'"''',
+              title_separator=r'''[ \t]*''',
+              title_prefix="",
+          ), re.X)
+    _tail_of_inline_link_wth_whtspc_re = re.compile(
+          # Special case of the above where url contains whitespace
+          # but no closing parensthesis
+          _tail_of_inline_link_re_str.format(
+              char_blacklist=r'''\)'"''',
+              title_separator="",
+              title_prefix=r'''[ \t]+''',
+          ), re.X)
     _tail_of_reference_link_re = re.compile(r'''
           # Match tail of: [text][id]
           [ ]?          # one optional space
@@ -1118,7 +1133,14 @@ class Markdown(object):
 
             # Inline anchor or img?
             if text[p] == '(': # attempt at perf improvement
-                match = self._tail_of_inline_link_re.match(text, p)
+                m1 = self._tail_of_inline_link_re.match(text, p)
+                m2 = self._tail_of_inline_link_wth_whtspc_re.match(text, p)
+                if m1 and m2:
+                    match = m1 if m1.end() >= m2.end() else m2
+                elif m1:
+                    match = m1
+                else:
+                    match = m2
                 if match:
                     # Handle an inline anchor or img.
                     is_img = start_idx > 0 and text[start_idx-1] == "!"
