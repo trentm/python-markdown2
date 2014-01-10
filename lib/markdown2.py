@@ -1006,42 +1006,15 @@ class Markdown(object):
             raise MarkdownError("invalid value for 'safe_mode': %r (must be "
                                 "'escape' or 'replace')" % self.safe_mode)
 
-    """
-    The expression [^ \t'"]* is used instead of .* because of special cases
-    for links. Specifically: inline links, quotes in links, and odd anchors.
-    """
-    _tail_of_inline_link_re_str = r'''
-          \(            # literal paren
-            [ \t]*
-            (?P<url>            # \1
-                <[^{char_blacklist}]*>
-                |
-                [^{char_blacklist}]*
-            )
-            {title_separator}
-            (                   # \2
-              {title_prefix}
-              (['"])            # quote char = \3
+    _inline_link_title = re.compile(r'''
+            (                   # \1
+              [ \t]+
+              (['"])            # quote char = \2
               (?P<title>.*?)
-              \3                # matching quote
+              \2
             )?                  # title is optional
-          \)
-        ''';
-    _tail_of_inline_link_re = re.compile(
-          # Match tail of: [text](/url/) or [text](/url/ "title")
-          _tail_of_inline_link_re_str.format(
-              char_blacklist=r''' \t'"''',
-              title_separator=r'''[ \t]*''',
-              title_prefix="",
-          ), re.X)
-    _tail_of_inline_link_wth_whtspc_re = re.compile(
-          # Special case of the above where url contains whitespace
-          # but no closing parensthesis
-          _tail_of_inline_link_re_str.format(
-              char_blacklist=r'''\)'"''',
-              title_separator="",
-              title_prefix=r'''[ \t]+''',
-          ), re.X)
+          \)$
+        ''', re.X | re.S)
     _tail_of_reference_link_re = re.compile(r'''
           # Match tail of: [text][id]
           [ ]?          # one optional space
@@ -1050,6 +1023,52 @@ class Markdown(object):
             (?P<id>.*?)
           \]
         ''', re.X | re.S)
+
+    _whitespace = re.compile(r'\s*')
+
+    _strip_anglebrackets = re.compile(r'<(.*)>.*')
+
+    def _find_non_whitespace(self, text, start):
+        """Returns the index of the first non-whitespace character in text
+        after (and including) start
+        """
+        match = self._whitespace.match(text, start)
+        return match.end()
+
+    def _find_balanced(self, text, start, open_c, close_c):
+        """Returns the index where the open_c and close_c characters balance
+        out - the same number of open_c and close_c are encountered - or the
+        end of string if it's reached before the balance point is found.
+        """
+        i = start
+        l = len(text)
+        count = 1
+        while count > 0 and i < l:
+            if text[i] == open_c:
+                count += 1
+            elif text[i] == close_c:
+                count -= 1
+            i += 1
+        return i
+
+    def _extract_url_and_title(self, text, start):
+        """Extracts the url and (optional) title from the tail of a link"""
+        # text[start] equals the opening parenthesis
+        idx = self._find_non_whitespace(text, start+1)
+        if idx == len(text):
+            return None, None, None
+        end_idx = idx
+        has_anglebrackets = text[idx] == "<"
+        if has_anglebrackets:
+            end_idx = self._find_balanced(text, end_idx+1, "<", ">")
+        end_idx = self._find_balanced(text, end_idx, "(", ")")
+        match = self._inline_link_title.search(text, idx, end_idx)
+        if not match:
+            return None, None, None
+        url, title = text[idx:match.start()], match.group("title")
+        if has_anglebrackets:
+            url = self._strip_anglebrackets.sub(r'\1', url)
+        return url, title, end_idx
 
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
@@ -1133,23 +1152,13 @@ class Markdown(object):
 
             # Inline anchor or img?
             if text[p] == '(': # attempt at perf improvement
-                m1 = self._tail_of_inline_link_re.match(text, p)
-                m2 = self._tail_of_inline_link_wth_whtspc_re.match(text, p)
-                if m1 and m2:
-                    match = m1 if m1.end() >= m2.end() else m2
-                elif m1:
-                    match = m1
-                else:
-                    match = m2
-                if match:
+                url, title, url_end_idx = self._extract_url_and_title(text, p)
+                if url is not None:
                     # Handle an inline anchor or img.
                     is_img = start_idx > 0 and text[start_idx-1] == "!"
                     if is_img:
                         start_idx -= 1
 
-                    url, title = match.group("url"), match.group("title")
-                    if url and url[0] == '<':
-                        url = url[1:-1]  # '<url>' -> 'url'
                     # We've got to encode these to avoid conflicting
                     # with italics/bold.
                     url = url.replace('*', self._escape_table['*']) \
@@ -1170,7 +1179,7 @@ class Markdown(object):
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
                         curr_pos = start_idx + len(result)
-                        text = text[:start_idx] + result + text[match.end():]
+                        text = text[:start_idx] + result + text[url_end_idx:]
                     elif start_idx >= anchor_allowed_pos:
                         result_head = '<a href="%s"%s>' % (url, title_str)
                         result = '%s%s</a>' % (result_head, link_text)
@@ -1180,7 +1189,7 @@ class Markdown(object):
                         # anchor_allowed_pos on.
                         curr_pos = start_idx + len(result_head)
                         anchor_allowed_pos = start_idx + len(result)
-                        text = text[:start_idx] + result + text[match.end():]
+                        text = text[:start_idx] + result + text[url_end_idx:]
                     else:
                         # Anchor not allowed here.
                         curr_pos = start_idx + 1
