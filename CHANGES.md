@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.2.1 (not yet released)
 
-(nothing yet)
+- [issue #142 pull #141] Fix parentheses and spaces in urls.
 
 
 ## python-markdown2 2.2.0
