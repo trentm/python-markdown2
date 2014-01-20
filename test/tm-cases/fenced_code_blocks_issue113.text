@@ -1,4 +1,4 @@
-```javascript
+```
 <script type="text/javascript" src="{{ static_url('shadowbox/shadowbox.js') }}">
 </script>
 <script type="text/javascript">
