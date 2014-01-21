@@ -1564,6 +1564,9 @@ class Markdown(object):
               )+
             )
             ((?=^[ ]{0,%d}\S)|\Z)   # Lookahead for non-space at line-start, or end of doc
+            # Lookahead to make sure this block isn't already in a code block.
+            # Needed when syntax highlighting is being used.
+            (?![^<]*\</code\>)
             ''' % (self.tab_width, self.tab_width),
             re.M | re.X)
         return code_block_re.sub(self._code_block_sub, text)
