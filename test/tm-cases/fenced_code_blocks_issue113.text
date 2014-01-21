@@ -1,0 +1,10 @@
+```
+<script type="text/javascript" src="{{ static_url('shadowbox/shadowbox.js') }}">
+</script>
+<script type="text/javascript">
+Shadowbox.init({ handleOversize: "drag" });
+window.onload = function() {
+    Shadowbox.setup(".entry-content img", { gallery: "{{post.title}}", counterType: "skip" });
+};
+</script>
+```

@@ -4,6 +4,7 @@
 
 - [issue #142 pull #141] Fix parentheses and spaces in urls.
 - [issue #88 issue #95 pull #145] Fix code blocks in code blocks with syntax highlighting.
+- [issue #113 issue #127 via pull #144] Fix fenced-code-blocks html and code output.
 
 
 ## python-markdown2 2.2.0

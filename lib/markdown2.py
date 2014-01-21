@@ -308,14 +308,14 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
+        if "fenced-code-blocks" in self.extras:
+            text = self._do_fenced_code_blocks(text)
+
         if self.safe_mode:
             text = self._hash_html_spans(text)
 
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
-
-        if "fenced-code-blocks" in self.extras:
-            text = self._do_fenced_code_blocks(text)
 
         # Strip link definitions, store in hashes.
         if "footnotes" in self.extras:
