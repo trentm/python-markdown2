@@ -1306,7 +1306,7 @@ class Markdown(object):
 
     _atx_h_re = re.compile(r'''
         ^(\#{1,6})  # \1 = string of #'s
-        [ \t]+
+        [ \t]*
         (.+?)       # \2 = Header text
         [ \t]*
         (?<!\\)     # ensure not an escaped trailing '#'
@@ -1314,6 +1314,7 @@ class Markdown(object):
         \n+
         ''', re.X | re.M)
     def _atx_h_sub(self, match):
+        print 'atx match found!'
         n = len(match.group(1))
         demote_headers = self.extras.get("demote-headers")
         if demote_headers:
