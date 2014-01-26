@@ -1287,18 +1287,21 @@ class Markdown(object):
             self._toc = []
         self._toc.append((level, id, self._unescape_special_chars(name)))
 
-    _h_re = re.compile(r'''
+    _h_re_base = r'''
         (^(.+)[ \t]*\n(=+|-+)[ \t]*\n+)
         |
         (^(\#{1,6})  # \1 = string of #'s
-        [ \t]+
+        [ \t]%s
         (.+?)       # \2 = Header text
         [ \t]*
         (?<!\\)     # ensure not an escaped trailing '#'
         \#*         # optional closing #'s (not counted)
         \n+
         )
-        ''', re.X | re.M)
+        '''
+
+    _h_re = re.compile(_h_re_base % '*', re.X | re.M)
+    _h_re_tag_friendly = re.compile(_h_re_base % '+', re.X | re.M)
 
     def _h_sub(self, match):
         if match.group(1) is not None:
@@ -1339,9 +1342,9 @@ class Markdown(object):
         #   ...
         #   ###### Header 6
 
-        text = self._h_re.sub(self._h_sub, text)
-        return text
-
+        if 'tag-friendly' in self.extras:
+            return self._h_re_tag_friendly.sub(self._h_sub, text)
+        return self._h_re.sub(self._h_sub, text)
 
     _marker_ul_chars  = '*+-'
     _marker_any = r'(?:[%s]|\d+\.)' % _marker_ul_chars
