@@ -1158,6 +1158,10 @@ class Markdown(object):
                     is_img = start_idx > 0 and text[start_idx-1] == "!"
                     if is_img:
                         start_idx -= 1
+                        img_is_start = start_idx <= 0 or \
+                            text[start_idx-1] == "\n"
+                        img_is_end = url_end_idx >= len(text) or \
+                            text[url_end_idx] == "\n"
 
                     # We've got to encode these to avoid conflicting
                     # with italics/bold.
@@ -1171,7 +1175,13 @@ class Markdown(object):
                     else:
                         title_str = ''
                     if is_img:
-                        img_class_str = self._html_class_str_from_tag("img")
+                        tag_search = "img"
+                        if img_is_start:
+                            tag_search += " start"
+                        if img_is_end:
+                            tag_search += " end"
+                        img_class_str = self._html_class_str_from_tag(
+                            tag_search)
                         result = '<img src="%s" alt="%s"%s%s%s' \
                             % (url.replace('"', '&quot;'),
                                _xml_escape_attr(link_text),
@@ -1545,6 +1555,10 @@ class Markdown(object):
         else:
             if tag in html_classes_from_tag:
                 return ' class="%s"' % html_classes_from_tag[tag]
+            elif ' ' in tag:
+                stag = tag.split(' ', 1)[0]
+                if stag in html_classes_from_tag:
+                    return ' class="%s"' % html_classes_from_tag[stag]
         return ""
 
     def _do_code_blocks(self, text):
