@@ -726,9 +726,14 @@ class Markdown(object):
             """ % less_than_tab, re.X | re.M | re.U)
         return _link_def_re.sub(self._extract_link_def_sub, text)
 
+    def resolve_url(self, url):
+        """Override for a custom url resolver."""
+        return url
+
     def _extract_link_def_sub(self, match):
         id, url, title = match.groups()
         key = id.lower()    # Link IDs are case-insensitive
+        url = self.resolve_url(url)
         self.urls[key] = self._encode_amps_and_angles(url)
         if title:
             self.titles[key] = title
@@ -1068,6 +1073,7 @@ class Markdown(object):
         url, title = text[idx:match.start()], match.group("title")
         if has_anglebrackets:
             url = self._strip_anglebrackets.sub(r'\1', url)
+        url = self.resolve_url(url)
         return url, title, end_idx
 
     def _do_links(self, text):
