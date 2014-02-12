@@ -1837,7 +1837,7 @@ class Markdown(object):
 
     _auto_link_re = re.compile(r'<((https?|ftp):[^\'">\s]+)>', re.I)
     def _auto_link_sub(self, match):
-        g1 = match.group(1)
+        g1 = self.resolve_url(match.group(1))
         return '<a href="%s">%s</a>' % (g1, g1)
 
     _auto_email_link_re = re.compile(r"""
