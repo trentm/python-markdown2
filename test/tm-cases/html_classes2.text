@@ -1,0 +1,15 @@
+![](start1.jpg) With text flowing after.
+
+With text flowing before. ![](end1.jpg)
+
+![](standalone1.jpg)
+
+![ref1][] With text flowing after.
+
+With text flowing before. ![ref2][]
+
+![ref3][]
+
+[ref1]: start2.jpg
+[ref2]: end2.jpg
+[ref3]: standalone2.jpg

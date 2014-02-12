@@ -1213,6 +1213,10 @@ class Markdown(object):
                     is_img = start_idx > 0 and text[start_idx-1] == "!"
                     if is_img:
                         start_idx -= 1
+                        img_is_start = start_idx <= 0 or \
+                            text[start_idx-1] == "\n"
+                        img_is_end = match.end() >= len(text) or \
+                            text[match.end()] == "\n"
                     link_id = match.group("id").lower()
                     if not link_id:
                         link_id = link_text.lower()  # for links like [this][]
@@ -1232,7 +1236,13 @@ class Markdown(object):
                         else:
                             title_str = ''
                         if is_img:
-                            img_class_str = self._html_class_str_from_tag("img")
+                            tag_search = "img"
+                            if img_is_start:
+                                tag_search += " start"
+                            if img_is_end:
+                                tag_search += " end"
+                            img_class_str = self._html_class_str_from_tag(
+                                tag_search)
                             result = '<img src="%s" alt="%s"%s%s%s' \
                                 % (url.replace('"', '&quot;'),
                                    link_text.replace('"', '&quot;'),

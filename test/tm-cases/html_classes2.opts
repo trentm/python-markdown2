@@ -1,0 +1,8 @@
+{'extras': {
+    'html-classes': {
+        'img start': 'start-class',
+        'img end': 'end-class',
+        'img start end': 'start-end-class',
+    },
+}}
+
