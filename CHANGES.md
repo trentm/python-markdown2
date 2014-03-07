@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.2.1 (not yet released)
+## python-markdown2 2.2.1
 
 - [issue #142 pull #141] Fix parentheses and spaces in urls.
 - [issue #88 issue #95 pull #145] Fix code blocks in code blocks with syntax highlighting.
