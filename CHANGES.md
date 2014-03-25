@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.2.2 (not yet released)
 
-(nothing yet)
+- [pull 156] Footnotes XML compatibility.
 
 
 ## python-markdown2 2.2.1
