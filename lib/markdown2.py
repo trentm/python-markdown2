@@ -1797,7 +1797,7 @@ class Markdown(object):
                     '&#8617;</a>' % (id, i+1))
                 if footer[-1].endswith("</p>"):
                     footer[-1] = footer[-1][:-len("</p>")] \
-                        + '&nbsp;' + backlink + "</p>"
+                        + '&#160;' + backlink + "</p>"
                 else:
                     footer.append("\n<p>%s</p>" % backlink)
                 footer.append('</li>')
