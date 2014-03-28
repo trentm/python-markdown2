@@ -776,12 +776,7 @@ class Markdown(object):
             re.X | re.M)
         return footnote_def_re.sub(self._extract_footnote_def_sub, text)
 
-
-    _hr_data = [
-        ('*', re.compile(r"^[ ]{0,3}\*(.*?)$", re.M)),
-        ('-', re.compile(r"^[ ]{0,3}\-(.*?)$", re.M)),
-        ('_', re.compile(r"^[ ]{0,3}\_(.*?)$", re.M)),
-    ]
+    _hr_re = re.compile(r'^[ ]{0,3}([-_*][ ]{0,2}){3,}$', re.M)
 
     def _run_block_gamut(self, text):
         # These are all the transformations that form block-level
@@ -798,13 +793,7 @@ class Markdown(object):
         # Markdown.pl 1.0.1's hr regexes limit the number of spaces between the
         # hr chars to one or two. We'll reproduce that limit here.
         hr = "\n<hr"+self.empty_element_suffix+"\n"
-        for ch, regex in self._hr_data:
-            if ch in text:
-                for m in reversed(list(regex.finditer(text))):
-                    tail = m.group(1).rstrip()
-                    if not tail.strip(ch + ' ') and tail.count("   ") == 0:
-                        start, end = m.span()
-                        text = text[:start] + hr + text[end:]
+        text = re.sub(self._hr_re, hr, text)
 
         text = self._do_lists(text)
 
