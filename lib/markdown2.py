@@ -1883,12 +1883,14 @@ class Markdown(object):
                     href = match.expand(repl)
                 replacements.append((match.span(), href))
             for (start, end), href in reversed(replacements):
-                escaped_href = (
-                    href.replace('"', '&quot;')  # b/c of attr quote
+                link_info = [
+                    (item.replace('"', '&quot;')  # b/c of attr quote
                         # To avoid markdown <em> and <strong>:
                         .replace('*', self._escape_table['*'])
                         .replace('_', self._escape_table['_']))
-                link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
+                    for item in (href, text[start:end])
+                ]
+                link = '<a href="%s">%s</a>' % (link_info[0], link_info[1])
                 hash = _hash_text(link)
                 link_from_hash[hash] = link
                 text = text[:start] + hash + text[end:]
