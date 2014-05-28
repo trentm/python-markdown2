@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 #!/usr/bin/env python
 # Copyright (c) 2012 Trent Mick.
 # Copyright (c) 2007-2008 ActiveState Corp.
@@ -1901,10 +1902,10 @@ class Markdown(object):
             text = text.replace(hash, link)
         return text
 
+    _do_auto_all_links_pattern = re.compile(r"""(href=(\"|\'))?(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))""")
     def _do_auto_all_links(self, text):
-        link_pattern = re.compile(r'(href=(\"|\'))?(((http|https|ftp|ftps):\/\/)?([\d\w\.-]+)\.([a-z\.]{2,6})(\/[\w \.-]*)*\/?(\?[\w\=\&]*)?)')
         replacements = []
-        for match in link_pattern.finditer(text):
+        for match in self._do_auto_all_links_pattern.finditer(text):
             if not match.group(1) and match.group(3):
                 href = match.expand(r'\3')
                 replacements.append((match.span(), href))
