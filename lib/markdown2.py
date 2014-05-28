@@ -894,6 +894,9 @@ class Markdown(object):
         if "link-patterns" in self.extras:
             text = self._do_link_patterns(text)
 
+        if "auto-all-links" in self.extras:
+            text = self._do_auto_all_links(text)
+
         text = self._encode_amps_and_angles(text)
 
         text = self._do_italics_and_bold(text)
@@ -1896,6 +1899,32 @@ class Markdown(object):
                 text = text[:start] + hash + text[end:]
         for hash, link in list(link_from_hash.items()):
             text = text.replace(hash, link)
+        return text
+
+    def _do_auto_all_links(self, text):
+        link_pattern = re.compile(r'(href=(\"|\'))?(((http|https|ftp|ftps):\/\/)?([\d\w\.-]+)\.([a-z\.]{2,6})(\/[\w \.-]*)*\/?(\?[\w\=\&]*)?)')
+        replacements = []
+        for match in link_pattern.finditer(text):
+            if not match.group(1) and match.group(3):
+                href = match.expand(r'\3')
+                replacements.append((match.span(), href))
+
+        link_from_hash = {}
+        for (start, end), href in reversed(replacements):
+            link_info = [
+                    (item.replace('"', '&quot;')  # b/c of attr quote
+                        # To avoid markdown <em> and <strong>:
+                        .replace('*', self._escape_table['*'])
+                        .replace('_', self._escape_table['_']))
+                    for item in (href, text[start:end])
+                ]
+            link = '<a href="%s">%s</a>' % (link_info[0], link_info[1])
+            hash = _hash_text(link)
+            link_from_hash[hash] = link
+            text = text[:start] + hash + text[end:]
+
+        for link_hash, link in list(link_from_hash.items()):
+            text = text.replace(link_hash, link)
         return text
 
     def _unescape_special_chars(self, text):
