@@ -4,6 +4,7 @@
 
 - [pull #156] Footnotes XML compatibility.
 - [pull #157] Horizontal rule minimum length.
+- [pull #162] Fix escaping fenced code block with safe mode
 
 
 ## python-markdown2 2.2.1
