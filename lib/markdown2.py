@@ -1641,8 +1641,9 @@ class Markdown(object):
         self._escape_table[text] = hashed
         return hashed
 
-    _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
-    _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
+    # see https://code.google.com/p/pagedown/source/browse/Markdown.Converter.js#1165
+    _strong_re = re.compile(r"(^|[\W_])(?:(?!\1)|(?=^))(\*|_)\2(?=\S)([^\r]*?\S)\2\2(?!\2)(?=[\W_]|$)", re.S)
+    _em_re = re.compile(r"(^|[\W_])(?:(?!\1)|(?=^))(\*|_)(?=\S)((?:(?!\2)[^\r])*?\S)\2(?!\2)(?=[\W_]|$)", re.S)
     _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
     _code_friendly_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
     def _do_italics_and_bold(self, text):
@@ -1651,8 +1652,8 @@ class Markdown(object):
             text = self._code_friendly_strong_re.sub(r"<strong>\1</strong>", text)
             text = self._code_friendly_em_re.sub(r"<em>\1</em>", text)
         else:
-            text = self._strong_re.sub(r"<strong>\2</strong>", text)
-            text = self._em_re.sub(r"<em>\2</em>", text)
+            text = self._strong_re.sub(r"\1<strong>\3</strong>", text)
+            text = self._em_re.sub(r"\1<em>\3</em>", text)
         return text
 
     # "smarty-pants" extra: Very liberal in interpreting a single prime as an
