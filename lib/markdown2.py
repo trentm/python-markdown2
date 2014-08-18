@@ -1515,8 +1515,20 @@ class Markdown(object):
                 formatter_opts = self.extras['code-color'] or {}
 
         if lexer_name:
+            def unhash_code( codeblock ):
+                for key, sanitized in list(self.html_spans.items()):
+                    codeblock = codeblock.replace(key, sanitized)
+                replacements = [
+                    ("&amp;", "&"),
+                    ("&lt;", "<"),
+                    ("&gt;", ">")
+                ]
+                for old, new in replacements:
+                    codeblock = codeblock.replace(old, new)
+                return codeblock
             lexer = self._get_pygments_lexer(lexer_name)
             if lexer:
+                codeblock = unhash_code( codeblock )
                 colored = self._color_with_pygments(codeblock, lexer,
                                                     **formatter_opts)
                 return "\n\n%s\n\n" % colored
