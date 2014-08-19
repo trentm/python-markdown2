@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.2.2 (not yet released)
+## python-markdown2 2.2.2
 
 - [pull #156] Footnotes XML compatibility.
 - [pull #157] Horizontal rule minimum length.
