@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.2.3 (not yet released)
 
-(nothing yet)
+- [issue #165] Fix an edge case in list parsing.
 
 
 ## python-markdown2 2.2.2

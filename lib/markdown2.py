@@ -1398,8 +1398,9 @@ class Markdown(object):
             hits.sort()
             match = hits[0][1]
             start, end = match.span()
-            text = text[:start] + self._list_sub(match) + text[end:]
-            pos = end
+            middle = self._list_sub(match)
+            text = text[:start] + middle + text[end:]
+            pos = start + len(middle) # start pos for next attempted match
 
         return text
 
