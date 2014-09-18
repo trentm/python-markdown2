@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.3.1 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.3.0
 
 - New "tables" extra for table syntax that matches GFM
