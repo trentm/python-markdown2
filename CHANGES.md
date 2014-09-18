@@ -1,8 +1,19 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.2.4 (not yet released)
+## python-markdown2 2.3.0 (not yet released)
 
-(nothing yet)
+- New "tables" extra for table syntax that matches GFM
+  <https://help.github.com/articles/github-flavored-markdown#tables> and
+  PHP-Markdown Extra <https://michelf.ca/projects/php-markdown/extra/#table>.
+  For example:
+
+        | Header 1 | *Header* 2 |
+        | -------- | -------- |
+        | `Cell 1` | [Cell 2](http://example.com) link |
+        | Cell 3   | **Cell 4** |
+
+  See <https://github.com/trentm/python-markdown2/blob/master/test/tm-cases/tables.text>
+  for examples and edge cases.
 
 
 ## python-markdown2 2.2.3

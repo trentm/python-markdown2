@@ -1,0 +1,128 @@
+# table no pipes
+
+Header 1 | Header 2
+-------- | --------
+  Cell 1 | Cell 2
+  Cell 3 | Cell 4
+
+
+# tables with leading pipe
+
+| Header 1 | Header 2
+| -------- | --------
+| Cell 1 | Cell 2
+| Cell 3 | Cell 4
+
+# tables with full bars
+
+| Header 1 | Header 2 |
+| -------- | -------- |
+| Cell 1 | Cell 2 |
+| Cell 3 | Cell 4 |
+
+
+# tables with mixed bars
+
+Header 1 | Header 2
+| -------- | --------
+Cell 1 | Cell 2 |
+| Cell 3 | Cell 4 |
+
+
+# tables with bars and leading spacing
+
+ | Header 1 | Header 2 |
+ | -------- | -------- |
+ | Cell 1 | Cell 2 |
+ | Cell 3 | Cell 4 |
+
+*Note:* This fails in GFM but works with PHP-Markdown.
+
+
+# table with cuddled following content
+
+| Header 1 | Header 2 |
+| -------- | -------- |
+| Cell 1 | Cell 2 |
+| Cell 3 | Cell 4 |
+after
+
+*Note:* This passes GFM, but fails in PHP-Markdown.
+
+
+# FAIL: table with cuddled leading content
+
+before
+| Header 1 | Header 2 |
+| -------- | -------- |
+| Cell 1 | Cell 2 |
+| Cell 3 | Cell 4 |
+
+# single column single leading bar
+
+| Header 1
+| --------
+| Cell 1
+| Cell 3
+
+# single column single trailing bar
+
+Header 1 |
+-------- |
+Cell 1 |
+Cell 3 |
+
+# single column full bars
+
+| Header 1 |
+| -------- |
+| Cell 1 |
+| Cell 3 |
+
+
+# narrow col 1
+
+| H |
+| - |
+| 1 |
+| 2 |
+
+*Note:* This works in PHP-Markdown, fails in GFM.
+
+# narrow col 2
+
+| He |
+| -- |
+| 1 |
+| 2 |
+
+*Note:* This works in PHP-Markdown, fails in GFM.
+
+# narrow col 3
+
+| He |
+| --- |
+| 1 |
+| 2 |
+
+*Note:* Works in both PHP-Markdown and GFM.
+
+# FAIL: no dash
+
+| He |
+| :: |
+| 1 |
+| 2 |
+
+*Note*: This fails in GFM and *sort of* works in PHP-Markdown, where it
+sets to align=center. I'm going to make this *fail* in markdown2.py, i.e.
+the rule is it must have at least a single dash in there.
+
+
+# table with markup in cells
+
+| Header 1 | *Header* 2 |
+| -------- | -------- |
+| `Cell 1` | [Cell 2](http://example.com) link |
+| Cell 3 | **Cell 4** |
+

@@ -1,0 +1,285 @@
+<h1>table no pipes</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th>Header 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+  <td>Cell 2</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td>Cell 4</td>
+</tr>
+</tbody>
+</table>
+
+<h1>tables with leading pipe</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th>Header 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+  <td>Cell 2</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td>Cell 4</td>
+</tr>
+</tbody>
+</table>
+
+<h1>tables with full bars</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th>Header 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+  <td>Cell 2</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td>Cell 4</td>
+</tr>
+</tbody>
+</table>
+
+<h1>tables with mixed bars</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th>Header 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+  <td>Cell 2</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td>Cell 4</td>
+</tr>
+</tbody>
+</table>
+
+<h1>tables with bars and leading spacing</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th>Header 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+  <td>Cell 2</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td>Cell 4</td>
+</tr>
+</tbody>
+</table>
+
+<p><em>Note:</em> This fails in GFM but works with PHP-Markdown.</p>
+
+<h1>table with cuddled following content</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th>Header 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+  <td>Cell 2</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td>Cell 4</td>
+</tr>
+</tbody>
+</table>
+
+<p>after</p>
+
+<p><em>Note:</em> This passes GFM, but fails in PHP-Markdown.</p>
+
+<h1>FAIL: table with cuddled leading content</h1>
+
+<p>before
+| Header 1 | Header 2 |
+| -------- | -------- |
+| Cell 1 | Cell 2 |
+| Cell 3 | Cell 4 |</p>
+
+<h1>single column single leading bar</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+</tr>
+</tbody>
+</table>
+
+<h1>single column single trailing bar</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+</tr>
+</tbody>
+</table>
+
+<h1>single column full bars</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+</tr>
+</tbody>
+</table>
+
+<h1>narrow col 1</h1>
+
+<table>
+<thead>
+<tr>
+  <th>H</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+</tr>
+<tr>
+  <td>2</td>
+</tr>
+</tbody>
+</table>
+
+<p><em>Note:</em> This works in PHP-Markdown, fails in GFM.</p>
+
+<h1>narrow col 2</h1>
+
+<table>
+<thead>
+<tr>
+  <th>He</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+</tr>
+<tr>
+  <td>2</td>
+</tr>
+</tbody>
+</table>
+
+<p><em>Note:</em> This works in PHP-Markdown, fails in GFM.</p>
+
+<h1>narrow col 3</h1>
+
+<table>
+<thead>
+<tr>
+  <th>He</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+</tr>
+<tr>
+  <td>2</td>
+</tr>
+</tbody>
+</table>
+
+<p><em>Note:</em> Works in both PHP-Markdown and GFM.</p>
+
+<h1>FAIL: no dash</h1>
+
+<p>| He |
+| :: |
+| 1 |
+| 2 |</p>
+
+<p><em>Note</em>: This fails in GFM and <em>sort of</em> works in PHP-Markdown, where it
+sets to align=center. I'm going to make this <em>fail</em> in markdown2.py, i.e.
+the rule is it must have at least a single dash in there.</p>
+
+<h1>table with markup in cells</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th><em>Header</em> 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>Cell 1</code></td>
+  <td><a href="http://example.com">Cell 2</a> link</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td><strong>Cell 4</strong></td>
+</tr>
+</tbody>
+</table>
