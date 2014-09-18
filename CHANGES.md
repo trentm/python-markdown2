@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.3.0 (not yet released)
+## python-markdown2 2.3.0
 
 - New "tables" extra for table syntax that matches GFM
   <https://help.github.com/articles/github-flavored-markdown#tables> and
