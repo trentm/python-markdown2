@@ -20,6 +20,10 @@
   See <https://github.com/trentm/python-markdown2/blob/master/test/tm-cases/tables.text>
   for examples and edge cases.
 
+  If you have documents using the 'wiki-tables' syntax and want to convert to the
+  'tables' syntax, there is a script to help with that here:
+  <https://github.com/trentm/python-markdown2/blob/master/tools/wiki-tables-to-tables.py>
+
 
 ## python-markdown2 2.2.3
 

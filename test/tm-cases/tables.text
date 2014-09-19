@@ -126,3 +126,12 @@ the rule is it must have at least a single dash in there.
 | `Cell 1` | [Cell 2](http://example.com) link |
 | Cell 3 | **Cell 4** |
 
+
+# table in blockquote
+
+> | One | Two | Three |
+> | --- | --- | --- |
+> |grinch|stole|xmas|
+> |green|**eggs**|ham|
+>
+> -- Dr. Seuss
