@@ -81,6 +81,16 @@ def wiki_tables_to_tables(path):
 
     text = codecs.open(path, 'rb', 'utf8').read()
 
+    # If there is a leading markdown2 metadata block with;
+    #    markdown2extras: ..., wiki-tables, ...
+    # then update that to 'tables'.
+    _metadata_pat = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
+    match = _metadata_pat.match(text)
+    if match:
+        metadata_str = match.group(0)
+        if re.search(r'^markdown2extras\s*:.*?\bwiki-tables\b', metadata_str, re.M):
+            text = text.replace('wiki-tables', 'tables', 1)
+
     less_than_tab = 3
     wiki_table_re = re.compile(r'''
         (?:(?<=\n\n)|\A\n?)            # leading blank line
@@ -97,7 +107,8 @@ def wiki_tables_to_tables(path):
 def main(argv):
     for path in argv[1:]:
         tables = wiki_tables_to_tables(path)
-        sys.stdout.write(tables)
+        sys.stdout.write(tables.encode(
+            sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
 
 if __name__ == "__main__":
     sys.exit( main(sys.argv) )
