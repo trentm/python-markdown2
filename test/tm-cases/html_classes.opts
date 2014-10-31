@@ -1,8 +1,13 @@
-{'extras': {
-    'html-classes': {
-        'pre': 'syntaxcolor',
-        'code': 'codesyntaxcolor',
-        'img': 'custom-image-class'
-    },
-}}
+{
+  "extras": {
+    "tables": {},
+    "wiki-tables": {},
+    "html-classes": {
+      "pre": "syntaxcolor",
+      "code": "codesyntaxcolor",
+      "img": "custom-image-class",
+      "table": "table table-striped"
+    }
+  }
+}
 
