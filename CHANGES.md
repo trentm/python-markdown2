@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.1 (not yet released)
 
-(nothing yet)
+- [pull #131] Markdown spoiler feature
 
 
 ## python-markdown2 2.3.0
