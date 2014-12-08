@@ -1,3 +1,13 @@
+| Header 1 | *Header* 2 |
+| -------- | -------- |
+| `Cell 1` | [Cell 2](http://example.com) link |
+| Cell 3 | **Cell 4** |
+
+|| *Year* || *Temperature (low)* || *Temperature (high)* ||
+|| 1900 || -10 || 25 ||
+|| 1910 || -15 || 30 ||
+|| 1920 || -10 || 32 ||
+
 For example:
 
     if cond:
@@ -5,3 +15,4 @@ For example:
         
 ![the google logo][logo]
 [logo]: http://www.google.com/images/logo.gif
+

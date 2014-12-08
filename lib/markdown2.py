@@ -53,8 +53,9 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
   the header text.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
-  string to use for a "class" tag attribute. Currently only supports
-  "pre" and "code" tags. Add an issue if you require this for other tags.
+  string to use for a "class" tag attribute. Currently only supports "img",
+  "table", "pre" and "code" tags. Add an issue if you require this for other
+  tags.
 * markdown-in-html: Allow the use of `markdown="1"` in a block HTML tag to
   have markdown processing be done on its contents. Similar to
   <http://michelf.com/projects/php-markdown/extra/#markdown-attr> but with
@@ -864,7 +865,7 @@ class Markdown(object):
                 align_from_col_idx[col_idx] = ' align="right"'
 
         # thead
-        hlines = ['<table>', '<thead>', '<tr>']
+        hlines = ['<table%s>' % self._html_class_str_from_tag('table'), '<thead>', '<tr>']
         cols = [cell.strip() for cell in head.strip('| \t\n').split('|')]
         for col_idx, col in enumerate(cols):
             hlines.append('  <th%s>%s</th>' % (
@@ -928,7 +929,7 @@ class Markdown(object):
             row = [c.strip() for c in re.split(r'(?<!\\)\|\|', line)]
             rows.append(row)
         #pprint(rows)
-        hlines = ['<table>', '<tbody>']
+        hlines = ['<table%s>' % self._html_class_str_from_tag('table'), '<tbody>']
         for row in rows:
             hrow = ['<tr>']
             for cell in row:
