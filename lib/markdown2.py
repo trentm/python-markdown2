@@ -70,6 +70,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * smarty-pants: Replaces ' and " with curly quotation marks or curly
   apostrophes.  Replaces --, ---, ..., and . . . with en dashes, em dashes,
   and ellipses.
+* spoiler: A special kind of blockquote commonly hidden behind a
+  click on SO. Syntax per <http://meta.stackexchange.com/a/72878>.
 * toc: The returned HTML string gets a new "toc_html" attribute which is
   a Table of Contents for the document. (experimental)
 * xml: Passes one-liner processing instructions and namespaced XML tags.
