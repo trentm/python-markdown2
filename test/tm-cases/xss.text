@@ -1,0 +1,18 @@
+<script>alert(1)</script>
+
+[link](http://example.com"onclick="alert(1))
+
+[link2](http://example.com "title"onclick="alert(1)")
+
+[link3](http://example.com><script>alert(1)</script>)
+
+[link4 ><script>alert(1)</script>](http://example.com><script>alert(1)</script>)
+
+
+![img](http://example.com"onclick="alert(1))
+
+![img2](http://example.com "text"onclick="alert(1)")
+
+![img3](http://example.com><script>alert(1)</script>)
+
+<img.src="javascript:alert(1)"

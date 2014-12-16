@@ -737,7 +737,7 @@ class Markdown(object):
     def _extract_link_def_sub(self, match):
         id, url, title = match.groups()
         key = id.lower()    # Link IDs are case-insensitive
-        self.urls[key] = self._encode_amps_and_angles(url)
+        self.urls[key] = url
         if title:
             self.titles[key] = title
         return ""
@@ -1242,7 +1242,7 @@ class Markdown(object):
                     if is_img:
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
-                            % (url.replace('"', '&quot;'),
+                            % (_xml_escape_attr(url),
                                _xml_escape_attr(link_text),
                                title_str, img_class_str, self.empty_element_suffix)
                         if "smarty-pants" in self.extras:
@@ -1250,7 +1250,7 @@ class Markdown(object):
                         curr_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[url_end_idx:]
                     elif start_idx >= anchor_allowed_pos:
-                        result_head = '<a href="%s"%s>' % (url, title_str)
+                        result_head = '<a href="%s"%s>' % (_xml_escape_attr(url), title_str)
                         result = '%s%s</a>' % (result_head, link_text)
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
@@ -1293,7 +1293,7 @@ class Markdown(object):
                         if is_img:
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
-                                % (url.replace('"', '&quot;'),
+                                % (_xml_escape_attr(url),
                                    link_text.replace('"', '&quot;'),
                                    title_str, img_class_str, self.empty_element_suffix)
                             if "smarty-pants" in self.extras:
@@ -1302,8 +1302,8 @@ class Markdown(object):
                             text = text[:start_idx] + result + text[match.end():]
                         elif start_idx >= anchor_allowed_pos:
                             result = '<a href="%s"%s>%s</a>' \
-                                % (url, title_str, link_text)
-                            result_head = '<a href="%s"%s>' % (url, title_str)
+                                % (_xml_escape_attr(url), title_str, link_text)
+                            result_head = '<a href="%s"%s>' % (_xml_escape_attr(url), title_str)
                             result = '%s%s</a>' % (result_head, link_text)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])

@@ -1,2 +1,7 @@
 ![a][b]
 [b]: http://static.reddit.com/reddit.com.header.png" onload="alert('javascript injected')
+
+[a][c]
+[c]: http://example.com" onclick="alert('javascript injected')
+
+[a](http://example.com" onclick="alert('javascript injected'))
