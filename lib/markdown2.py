@@ -977,6 +977,7 @@ class Markdown(object):
 
         text = self._encode_amps_and_angles(text)
 
+        text = self._do_strike(text)
         text = self._do_italics_and_bold(text)
 
         if "smarty-pants" in self.extras:
@@ -1731,6 +1732,11 @@ class Markdown(object):
         hashed = _hash_text(text)
         self._escape_table[text] = hashed
         return hashed
+
+    _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
+    def _do_strike(self, text):
+        text = self._strike_re.sub(r"<strike>\1</strike>", text)
+        return text
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
