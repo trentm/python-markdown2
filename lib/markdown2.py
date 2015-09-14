@@ -977,7 +977,9 @@ class Markdown(object):
 
         text = self._encode_amps_and_angles(text)
 
-        text = self._do_strike(text)
+        if "strike" in self.extras:
+            text = self._do_strike(text)
+
         text = self._do_italics_and_bold(text)
 
         if "smarty-pants" in self.extras:
