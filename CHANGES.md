@@ -4,6 +4,7 @@
 
 - [pull #131] Markdown "spoiler" extra
 - [pull #170] html-classes support for table tags
+- [pull #190] "strike" extra
 
 
 ## python-markdown2 2.3.0
