@@ -853,10 +853,13 @@ class Markdown(object):
         return _pyshell_block_re.sub(self._pyshell_block_sub, text)
 
     def _table_sub(self, match):
+        trim_space_re = '^[ \t\n]+|[ \t\n]+$'
+        trim_bar_re = '^\||\|$'
+
         head, underline, body = match.groups()
 
         # Determine aligns for columns.
-        cols = [cell.strip() for cell in underline.strip(' \t\n').strip('|').split('|')]
+        cols = [cell.strip() for cell in re.sub(trim_bar_re, "", re.sub(trim_space_re, "", underline)).split('|')]
         align_from_col_idx = {}
         for col_idx, col in enumerate(cols):
             if col[0] == ':' and col[-1] == ':':
@@ -868,7 +871,7 @@ class Markdown(object):
 
         # thead
         hlines = ['<table%s>' % self._html_class_str_from_tag('table'), '<thead>', '<tr>']
-        cols = [cell.strip() for cell in head.strip(' \t\n').strip('|').split('|')]
+        cols = [cell.strip() for cell in re.sub(trim_bar_re, "", re.sub(trim_space_re, "", head)).split('|')]
         for col_idx, col in enumerate(cols):
             hlines.append('  <th%s>%s</th>' % (
                 align_from_col_idx.get(col_idx, ''),
@@ -881,7 +884,7 @@ class Markdown(object):
         hlines.append('<tbody>')
         for line in body.strip('\n').split('\n'):
             hlines.append('<tr>')
-            cols = [cell.strip() for cell in line.strip(' \t\n').strip('|').split('|')]
+            cols = [cell.strip() for cell in re.sub(trim_bar_re, "", re.sub(trim_space_re, "", line)).split('|')]
             for col_idx, col in enumerate(cols):
                 hlines.append('  <td%s>%s</td>' % (
                     align_from_col_idx.get(col_idx, ''),
