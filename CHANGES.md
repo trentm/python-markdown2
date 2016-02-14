@@ -5,6 +5,7 @@
 - [pull #131] Markdown "spoiler" extra
 - [pull #170] html-classes support for table tags
 - [pull #190] "strike" extra
+- [pull #201] Allow empty table cells
 
 
 ## python-markdown2 2.3.0
