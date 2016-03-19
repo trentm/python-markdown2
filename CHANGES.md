@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.3.2 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.3.1
 
 - [pull #131] Markdown "spoiler" extra
