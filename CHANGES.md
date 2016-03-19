@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.3.1 (not yet released)
+## python-markdown2 2.3.1
 
 - [pull #131] Markdown "spoiler" extra
 - [pull #170] html-classes support for table tags
