@@ -286,7 +286,8 @@ class Markdown(object):
                     self.extras[ename] = earg
 
         # Standardize line endings:
-        text = re.sub("\r\n|\r", "\n", text)
+        text = text.replace("\r\n", "\n")
+        text = text.replace("\r", "\n")
 
         # Make sure $text ends with a couple of newlines:
         text += "\n\n"
