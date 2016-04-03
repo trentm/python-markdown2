@@ -2440,7 +2440,7 @@ def main(argv=None):
                 sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
         if extras and "toc" in extras:
             log.debug("toc_html: " +
-                html.toc_html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
+                str(html.toc_html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace')))
         if opts.compare:
             test_dir = join(dirname(dirname(abspath(__file__))), "test")
             if exists(join(test_dir, "test_markdown2.py")):
