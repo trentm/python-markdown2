@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.2 (not yet released)
 
-(nothing yet)
+- [pull #204] toc extra Python 3 error
 
 
 ## python-markdown2 2.3.1
