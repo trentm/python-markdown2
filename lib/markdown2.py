@@ -286,7 +286,8 @@ class Markdown(object):
                     self.extras[ename] = earg
 
         # Standardize line endings:
-        text = re.sub("\r\n|\r", "\n", text)
+        text = text.replace("\r\n", "\n")
+        text = text.replace("\r", "\n")
 
         # Make sure $text ends with a couple of newlines:
         text += "\n\n"
@@ -2440,7 +2441,7 @@ def main(argv=None):
                 sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
         if extras and "toc" in extras:
             log.debug("toc_html: " +
-                html.toc_html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
+                str(html.toc_html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace')))
         if opts.compare:
             test_dir = join(dirname(dirname(abspath(__file__))), "test")
             if exists(join(test_dir, "test_markdown2.py")):
