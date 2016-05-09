@@ -507,14 +507,19 @@ class Markdown(object):
 
         return emacs_vars
 
-    # Cribbed from a post by Bart Lateur:
-    # <http://www.nntp.perl.org/group/perl.macperl.anyperl/154>
-    _detab_re = re.compile(r'(.*?)\t', re.M)
-    def _detab_sub(self, match):
-        g1 = match.group(1)
-        return g1 + (' ' * (self.tab_width - len(g1) % self.tab_width))
+    def _detab_line(self, line):
+        r"""Recusively convert tabs to spaces in a single line.
+
+        Called from _detab()."""
+        if not '\t' in line:
+            return line
+        chunk1, chunk2 = line.split('\t', 1)
+        chunk1 += (' ' * (self.tab_width - len(chunk1) % self.tab_width))
+        output = chunk1 + chunk2
+        return self._detab_line(output)
+
     def _detab(self, text):
-        r"""Remove (leading?) tabs from a file.
+        r"""Iterate text line by line and convert tabs to spaces.
 
             >>> m = Markdown()
             >>> m._detab("\tfoo")
@@ -530,7 +535,10 @@ class Markdown(object):
         """
         if '\t' not in text:
             return text
-        return self._detab_re.subn(self._detab_sub, text)[0]
+        output = []
+        for line in text.splitlines():
+            output.append(self._detab_line(line))
+        return '\n'.join(output)
 
     # I broke out the html5 tags here and add them to _block_tags_a and
     # _block_tags_b.  This way html5 tags are easy to keep track of.
