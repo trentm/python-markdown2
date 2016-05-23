@@ -4,6 +4,7 @@
 
 - [pull #204] toc extra Python 3 error
 - [pull #207] Performance improvements
+- [pull #210] Leading paragraph with fenced code blocks
 
 
 ## python-markdown2 2.3.1
