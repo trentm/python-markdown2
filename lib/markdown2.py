@@ -125,7 +125,6 @@ elif sys.version_info[0] >= 3:
     base_string_type = str
 
 
-
 # ---- globals
 
 DEBUG = False
@@ -143,9 +142,7 @@ g_escape_table = dict([(ch, _hash_text(ch))
     for ch in '\\`*_{}[]()>#+-.!'])
 
 
-
 # ---- exceptions
-
 class MarkdownError(Exception):
     pass
 
@@ -253,6 +250,11 @@ class Markdown(object):
     # should only be used in <a> tags with an "href" attribute.
     _a_nofollow = re.compile(r"<(a)([^>]*href=)", re.IGNORECASE)
 
+    # Opens the linked document in a new window or tab
+    # should only used in <a> tags with an "target" attribute.
+    # same with _a_nofollow
+    _a_blank = _a_nofollow
+
     def convert(self, text):
         """Convert the given text."""
         # Main function. The order in which other subs are called here is
@@ -342,6 +344,9 @@ class Markdown(object):
 
         if "nofollow" in self.extras:
             text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
+
+        if "link-with-blank" in self.extras:
+            text = self._a_blank.sub(r'<\1 target="_blank"\2', text)
 
         text += "\n"
 
