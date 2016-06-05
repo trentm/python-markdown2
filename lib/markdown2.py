@@ -345,7 +345,7 @@ class Markdown(object):
         if "nofollow" in self.extras:
             text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
 
-        if "link-with-blank" in self.extras:
+        if "target-blank-links" in self.extras:
             text = self._a_blank.sub(r'<\1 target="_blank"\2', text)
 
         text += "\n"
