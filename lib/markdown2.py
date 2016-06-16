@@ -1150,6 +1150,9 @@ class Markdown(object):
         url, title = text[idx:match.start()], match.group("title")
         if has_anglebrackets:
             url = self._strip_anglebrackets.sub(r'\1', url)
+        url = url.replace('"', '').replace("'", "")
+        if url.startswith('javascript:'):
+            url = url[11:]
         return url, title, end_idx
 
     def _do_links(self, text):
