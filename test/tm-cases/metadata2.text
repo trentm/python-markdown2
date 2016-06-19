@@ -1,0 +1,9 @@
+test: abc
+this-is : a hyphen test
+    leading~space	: is okay 
+ And: some, cvs, data, which, you, must, parse, yourself
+empty   :
+
+# The real text
+
+This should be parsed as before
