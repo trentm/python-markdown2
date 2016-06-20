@@ -6,6 +6,7 @@
 - [pull #207] Performance improvements
 - [pull #210] Leading paragraph with fenced code blocks
 - [pull #212] Target blank links extra
+- [pull #215] Optional metadata fences
 
 
 ## python-markdown2 2.3.1
