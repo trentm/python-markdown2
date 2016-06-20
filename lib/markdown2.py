@@ -371,18 +371,29 @@ class Markdown(object):
         """
         return text
 
-    # Is metadata if the content starts with '---'-fenced `key: value`
+    # Is metadata if the content starts with optional '---'-fenced `key: value`
     # pairs. E.g. (indented for presentation):
     #   ---
     #   foo: bar
     #   another-var: blah blah
     #   ---
-    _metadata_pat = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
+    #   # header
+    # or:
+    #   foo: bar
+    #   another-var: blah blah
+    #   
+    #   # header
+
+    _metadata_pat = re.compile(r"""
+        ^
+        (?:---[\ \t]*\n)?                       # optional "---"
+        ((?:[ \t]*[^ \t:]+[\ \t]*:[^\n]*\n)+)   # "key: value" pairs
+        (?:---[ \t]*)?                          # optional "---"
+        \n""",
+        re.VERBOSE
+    )
 
     def _extract_metadata(self, text):
-        # fast test
-        if not text.startswith("---"):
-            return text
         match = self._metadata_pat.match(text)
         if not match:
             return text
