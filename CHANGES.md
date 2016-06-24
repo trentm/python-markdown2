@@ -7,6 +7,7 @@
 - [pull #210] Leading paragraph with fenced code blocks
 - [pull #212] Target blank links extra
 - [pull #215] Optional metadata fences
+- [pull #218] Github style task list
 
 
 ## python-markdown2 2.3.1
