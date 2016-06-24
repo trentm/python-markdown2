@@ -1515,7 +1515,12 @@ class Markdown(object):
         ''' % (_marker_any, _marker_any),
         re.M | re.X | re.S)
 
-    _task_list_warpper_str = r'''<p><input type="checkbox" class="task-list-item-checkbox" %sdisabled>%s</p>'''
+    _task_list_warpper_str = r'''	<li class="task-list-item">
+        <p><input type="checkbox" class="task-list-item-checkbox" %sdisabled>
+            %s
+        </p>
+    </li>
+'''
 
     _last_li_endswith_two_eols = False
     def _list_item_sub(self, match):
@@ -1533,10 +1538,11 @@ class Markdown(object):
         if "tasklist" in self.extras:
             task_list_marker = match.group(4)
             if task_list_marker == '[x]':
-                item = self._task_list_warpper_str % ('checked ', item)
+                return self._task_list_warpper_str % ('checked ', item)
             elif task_list_marker == '[ ]':
-                item = self._task_list_warpper_str % ('', item)
-        return "<li>%s</li>\n" % item
+                return self._task_list_warpper_str % ('', item)
+        else:
+            return "<li>%s</li>\n" % item
 
     def _process_list_items(self, list_str):
         # Process the contents of a single ordered or unordered list,
