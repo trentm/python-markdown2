@@ -1508,15 +1508,18 @@ class Markdown(object):
         (\n)?                   # leading line = \1
         (^[ \t]*)               # leading whitespace = \2
         (?P<marker>%s) [ \t]+   # list marker = \3
-        ((?:.+?)                # list item text = \4
-         (\n{1,2}))             # eols = \5
+        (\[[\ x]\])[ \t]+       # tasklist marker = \4
+        ((?:.+?)                # list item text = \5
+         (\n{1,2}))             # eols = \6
         (?= \n* (\Z | \2 (?P<next_marker>%s) [ \t]+))
         ''' % (_marker_any, _marker_any),
         re.M | re.X | re.S)
 
+    _task_list_warpper_str = r'''<p><input type="checkbox" class="task-list-item-checkbox" %sdisabled>%s</p>'''
+
     _last_li_endswith_two_eols = False
     def _list_item_sub(self, match):
-        item = match.group(4)
+        item = match.group(5)
         leading_line = match.group(1)
         if leading_line or "\n\n" in item or self._last_li_endswith_two_eols:
             item = self._run_block_gamut(self._outdent(item))
@@ -1526,7 +1529,13 @@ class Markdown(object):
             if item.endswith('\n'):
                 item = item[:-1]
             item = self._run_span_gamut(item)
-        self._last_li_endswith_two_eols = (len(match.group(5)) == 2)
+        self._last_li_endswith_two_eols = (len(match.group(6)) == 2)
+        if "tasklist" in self.extras:
+            task_list_marker = match.group(4)
+            if task_list_marker == '[x]':
+                item = self._task_list_warpper_str % ('checked ', item)
+            elif task_list_marker == '[ ]':
+                item = self._task_list_warpper_str % ('', item)
         return "<li>%s</li>\n" % item
 
     def _process_list_items(self, list_str):
