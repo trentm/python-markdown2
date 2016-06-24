@@ -1509,10 +1509,25 @@ class Markdown(object):
         (^[ \t]*)               # leading whitespace = \2
         (?P<marker>%s) [ \t]+   # list marker = \3
         ((?:.+?)                # list item text = \4
-         (\n{1,2}))             # eols = \5
+        (\n{1,2}))              # eols = \5
         (?= \n* (\Z | \2 (?P<next_marker>%s) [ \t]+))
         ''' % (_marker_any, _marker_any),
         re.M | re.X | re.S)
+
+    _task_list_item_re = re.compile(r'''
+        (\[[\ x]\])[ \t]+       # tasklist marker = \1
+        (.*)                   # list item text = \2
+    ''', re.M | re.X | re.S)
+
+    _task_list_warpper_str = r'<p><input type="checkbox" class="task-list-item-checkbox" %sdisabled>%s</p>'
+
+    def _task_list_item_sub(self, match):
+        marker = match.group(1)
+        item_text = match.group(2)
+        if marker == '[x]':
+                return self._task_list_warpper_str % ('checked ', item_text)
+        elif marker == '[ ]':
+                return self._task_list_warpper_str % ('', item_text)
 
     _last_li_endswith_two_eols = False
     def _list_item_sub(self, match):
@@ -1527,6 +1542,10 @@ class Markdown(object):
                 item = item[:-1]
             item = self._run_span_gamut(item)
         self._last_li_endswith_two_eols = (len(match.group(5)) == 2)
+
+        if "task_list" in self.extras:
+            item = self._task_list_item_re.sub(self._task_list_item_sub, item)
+
         return "<li>%s</li>\n" % item
 
     def _process_list_items(self, list_str):
