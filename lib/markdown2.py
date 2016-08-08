@@ -50,6 +50,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   syntax highlighting.
 * footnotes: Support footnotes as in use on daringfireball.net and
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
+* numbering: Support of generic counters.  Non standard extension to
+  allow sequential numbering of figures, tables, equations, exhibits etc.
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
   the header text.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
@@ -322,6 +324,11 @@ class Markdown(object):
         if "fenced-code-blocks" in self.extras and self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
+        # Because numbering references aren't links (yet?) then we can do everything associated with counters
+        # before we get started
+        if "numbering" in self.extras:
+            text = self._do_numbering(text)
+
         # Strip link definitions, store in hashes.
         if "footnotes" in self.extras:
             # Must do footnotes first because an unlucky footnote defn
@@ -381,7 +388,7 @@ class Markdown(object):
     # or:
     #   foo: bar
     #   another-var: blah blah
-    #   
+    #
     #   # header
 
     _metadata_pat = re.compile(r"""
@@ -759,6 +766,83 @@ class Markdown(object):
         if title:
             self.titles[key] = title
         return ""
+
+    def _do_numbering(self, text):
+        ''' We handle the special extension for generic numbering for
+            tables, figures etc.
+
+            We do two passes through the document.
+            Firstly find all the definitions of an id. These
+            look like [#name text_1 @idname text_2].
+
+            If the counter 'countername' doesn't exist then we create it and
+            initialise it at 1.
+            Then we create a reference called 'idname' which refers to the
+            current value of the counter(val).  We replace the
+            entire match with
+
+            <figcaption class="name">text_1 val text_2</figgcaption>
+
+            Then Increment the counter and continue. On the second pass,
+            we look for reference links of the form [@idname].
+            When we find them, we replace the entire match with
+
+            <span class="name">val</span>
+
+            The counters and ids are defined as a word (\w+).
+            The optional text can't contain ']' or '@'
+
+            Using CSS, one can style the figcaption for each counter
+            differently and style the references differently too.
+        '''
+        # First pass to define all the references
+        self.regex_defns = re.compile(r'''
+            \[\#(\w+)\s* # the counter.  Open square plus hash plus a word \1
+            ([^@]*)\s*   # Some optional characters, that aren't an @. \2
+            @(\w+)       # the id.  Should this be normed? \3
+            ([^\]]*)\]   # The rest of the text up to the terminating ] \4
+            ''', re.VERBOSE)
+        self.regex_subs = re.compile(r"\[@(\w+)\s*\]")  # [@ref_id]
+        counters = {}
+        references = {}
+        replacements = []
+        definition_html = '<figcaption class="{}">{}{}{}</figcaption>'
+        reference_html = '<span class="{}">{}</span>'
+        for match in self.regex_defns.finditer(text):
+            # We must have four match groups otherwise this isn't a numbering reference
+            if len(match.groups()) != 4:
+                continue
+            counter = match.group(1)
+            text_before = match.group(2)
+            ref_id = match.group(3)
+            text_after = match.group(4)
+            print('Counter  : "{}"'.format(counter))
+            print('Pre Text : "{}"'.format(text_before))
+            print('Reference: "{}"'.format(ref_id))
+            print('Post Text: "{}"'.format(text_after))
+            number = counters.get(counter, 1)
+            references[ref_id] = (number, counter)
+            replacements.append((match.start(0),
+                                 definition_html.format(counter,
+                                                        text_before,
+                                                        number,
+                                                        text_after),
+                                 match.end(0)))
+            counters[counter] = number + 1
+        for repl in reversed(replacements):
+            text = text[:repl[0]] + repl[1] + text[repl[2]:]
+
+        # Second pass to replace the references with the right
+        # value of the counter
+        for match in reversed(list(self.regex_subs.finditer(text))):
+            number, counter = references.get(match.group(1), (None, None))
+            if number is not None:
+                repl = reference_html.format(counter, number)
+            else:
+                repl = reference_html.format('countererror',
+                                             '?' + match.group(1) + '?')
+            text = text[:match.start()] + repl + text[match.end():]
+        return text
 
     def _extract_footnote_def_sub(self, match):
         id, text = match.groups()
