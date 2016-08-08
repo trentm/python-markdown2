@@ -806,8 +806,8 @@ class Markdown(object):
         counters = {}
         references = {}
         replacements = []
-        definition_html = '<figcaption class="{}">{}{}{}</figcaption>'
-        reference_html = '<span class="{}">{}</span>'
+        definition_html = '<figcaption class="{}" id="counter-ref-{}">{}{}{}</figcaption>'
+        reference_html = '<a class="{}" href="#counter-ref-{}">{}</a>'
         for match in self.regex_defns.finditer(text):
             # We must have four match groups otherwise this isn't a numbering reference
             if len(match.groups()) != 4:
@@ -820,6 +820,7 @@ class Markdown(object):
             references[ref_id] = (number, counter)
             replacements.append((match.start(0),
                                  definition_html.format(counter,
+                                                        ref_id,
                                                         text_before,
                                                         number,
                                                         text_after),
@@ -830,14 +831,23 @@ class Markdown(object):
 
         # Second pass to replace the references with the right
         # value of the counter
+        # Fwiw, it's vaguely annoying to have to turn the iterator into
+        # a list and then reverse it but I can't think of a better thing to do.
         for match in reversed(list(self.regex_subs.finditer(text))):
             number, counter = references.get(match.group(1), (None, None))
             if number is not None:
-                repl = reference_html.format(counter, number)
+                repl = reference_html.format(match.group(1),
+                                             counter,
+                                             number)
             else:
-                repl = reference_html.format('countererror',
+                repl = reference_html.format(match.group(1),
+                                             'countererror',
                                              '?' + match.group(1) + '?')
+            if "smarty-pants" in self.extras:
+                repl = repl.replace('"', self._escape_table['"'])
+
             text = text[:match.start()] + repl + text[match.end():]
+        print(text)
         return text
 
     def _extract_footnote_def_sub(self, match):
