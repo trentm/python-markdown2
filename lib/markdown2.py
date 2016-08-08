@@ -816,10 +816,6 @@ class Markdown(object):
             text_before = match.group(2)
             ref_id = match.group(3)
             text_after = match.group(4)
-            print('Counter  : "{}"'.format(counter))
-            print('Pre Text : "{}"'.format(text_before))
-            print('Reference: "{}"'.format(ref_id))
-            print('Post Text: "{}"'.format(text_after))
             number = counters.get(counter, 1)
             references[ref_id] = (number, counter)
             replacements.append((match.start(0),
