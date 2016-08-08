@@ -866,8 +866,8 @@ class Markdown(object):
         for match in reversed(list(self.regex_subs.finditer(text))):
             number, counter = references.get(match.group(1), (None, None))
             if number is not None:
-                repl = reference_html.format(match.group(1),
-                                             counter,
+                repl = reference_html.format(counter,
+                                             match.group(1),
                                              number)
             else:
                 repl = reference_html.format(match.group(1),
@@ -877,7 +877,6 @@ class Markdown(object):
                 repl = repl.replace('"', self._escape_table['"'])
 
             text = text[:match.start()] + repl + text[match.end():]
-        print(text)
         return text
 
     def _extract_footnote_def_sub(self, match):
