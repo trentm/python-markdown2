@@ -770,60 +770,6 @@ class Markdown(object):
     def _do_numbering(self, text):
         ''' We handle the special extension for generic numbering for
             tables, figures etc.
-
-            We do two passes through the document.
-            Firstly find all the definitions of an id. These
-            look like [#name text_1 @idname text_2].
-
-            If the counter 'countername' doesn't exist then we create it and
-            initialise it at 1.
-            Then we create a reference called 'idname' which refers to the
-            current value of the counter(val).  We replace the
-            entire match with
-
-            <figcaption class="name" id="counter-ref-idname">text_1 val text_2</figgcaption>
-
-            Then Increment the counter and continue. On the second pass,
-            we look for reference links of the form [@idname].
-            When we find them, we replace the entire match with
-
-            <a class="name" href="#counter-ref-idname">val</span>
-
-            The counters and ids are defined as a word (\w+).
-            The optional text can't contain ']' or '@'
-
-            Using CSS, one can style the figcaption for each counter
-            differently and style the references differently too.
-            See the wiki article (when it's written) for details.
-
-            There is nothing formal linking an id to a counter.
-            If you define an id "spam" in counter "foocounter" and
-            another "spam" in "barcounter" then the results will
-            be...odd.
-
-            Also, this lack of semantics means you can do stupid things.
-
-                <img src="foo.png"></img>
-                [#tablecounter Image @nicefigure: blah blah]
-
-                Equation [@nicefigure] isn't an equation.
-
-            and so on.  The easy solution is not to be stupid.
-
-            Don't put numbers in your link definitions.  If you
-            call an image @imageone and refer to it in the text
-            and then add another image above it then the Markdown
-            will be confusing.  Give images, figures, tables
-            ids that reflect their contents.
-
-            Fwiw, this is a weakness in the current Footnotes
-            implementation.  It's tempting to *number* the footnotes
-            rather than name them.  All sorts of pain is generated
-            by this.
-
-            Finally, if this change is accepted into the main branch and
-            released almost all of the documentation above will be moved
-            into a Wiki entry on "numbering" but for now it's here
         '''
         # First pass to define all the references
         self.regex_defns = re.compile(r'''
