@@ -1,0 +1,40 @@
+<p>This is an image with a caption</p>
+
+<p><img src="https://consequenceofsound.files.wordpress.com/2015/10/screen-shot-2015-10-17-at-6-57-13-pm.png?w=807"</img></p>
+
+<figcaption class="imagenumbers" id="counter-ref-rickroll">Image 1: Let's Rick Roll You</figcaption>
+
+<p>And we can refer to the rickrolling image as Image <a class="imagenumbers" href="#counter-ref-rickroll">1</a>.  There is a second image of something else</p>
+
+<p><img src="https://wonderifyouwonder.files.wordpress.com/2012/02/anchor.jpg"></img></p>
+
+<figcaption class="imagenumbers" id="counter-ref-kent">Figure 2: I for one welcome our new insect overlords</figcaption>
+
+<p>So we can refer to Figure <a class="imagenumbers" href="#counter-ref-rickroll">1</a> and Figure <a class="imagenumbers" href="#counter-ref-kent">2</a> separately.</p>
+
+<h1>Here is a table</h1>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th>Header 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+  <td>Cell 2</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td>Cell 4</td>
+</tr>
+</tbody>
+</table>
+
+<figcaption class="tablenumbers" id="counter-ref-exampletable">Table 1: An example table</figcaption>
+
+<p>Which we can refer to as table <a class="tablenumbers" href="#counter-ref-exampletable">1</a></p>
+
+<p>And so we are done.</p>
