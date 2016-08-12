@@ -5,6 +5,6 @@ python:
   - "pypy"
   - "3.2"
 # command to install dependencies
-install: pip install --use-mirrors Pygments==1.6
+install: pip install Pygments==1.6
 # command to run tests
 script: make testone
