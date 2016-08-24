@@ -391,25 +391,31 @@ class Markdown(object):
     #
     #   # header
 
-    _metadata_pat = re.compile(r"""
-        ^
-        (?:---[\ \t]*\n)?                       # optional "---"
-        ((?:[ \t]*[^ \t:]+[\ \t]*:[^\n]*\n)+)   # "key: value" pairs
-        (?:---[ \t]*)?                          # optional "---"
-        \n""",
-        re.VERBOSE
-    )
+    _metadata_pat = re.compile("^---\W(?P<metadata>[\S+:\S+\s]+\n)---\n")
+    _key_val_pat = re.compile("[\S\w]+\s*:(?! >)[ \t]*.*\n?", re.MULTILINE)
+    # this allows key: >
+    #                   value
+    #                   conutiues over multiple lines
+    _key_val_block_pat = re.compile(
+        "(\w+:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)")
 
     def _extract_metadata(self, text):
+        # fast test
+        if not text.startswith("---"):
+            return text
         match = self._metadata_pat.match(text)
         if not match:
             return text
-
         tail = text[len(match.group(0)):]
-        metadata_str = match.group(1).strip()
-        for line in metadata_str.split('\n'):
-            key, value = line.split(':', 1)
-            self.metadata[key.strip()] = value.strip()
+        metadata_str = match.groupdict()['metadata']
+
+        kv = re.findall(self._key_val_pat, metadata_str)
+        kvm = re.findall(self._key_val_block_pat, metadata_str)
+        kvm = [item.replace(": >\n", ":", 1) for item in kvm]
+
+        for item in kv + kvm:
+            k, v = item.split(":", 1)
+            self.metadata[k.strip()] = v.strip()
 
         return tail
 
