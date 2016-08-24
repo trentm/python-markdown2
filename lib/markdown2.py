@@ -390,25 +390,31 @@ class Markdown(object):
     #   another-var: blah blah
     #
     #   # header
-
-    _metadata_pat = re.compile("^---\W(?P<metadata>[\S+:\S+\s]+\n)---\n")
+    p = re.compile(r'^(?:---[\ \t]*\n)?(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)|([\S\w]+\s*:(?! >)[ \t]*.*\n?)(?:---[\ \t]*\n)?', re.MULTILINE)
+    _meta_data_pattern = p
     _key_val_pat = re.compile("[\S\w]+\s*:(?! >)[ \t]*.*\n?", re.MULTILINE)
     # this allows key: >
     #                   value
     #                   conutiues over multiple lines
     _key_val_block_pat = re.compile(
-        "(\w+:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)")
+        "(\w+:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE)
 
     def _extract_metadata(self, text):
-        # fast test, the specification requires the metadata to be at top
-        # and clearly marked with opening and closing 3 dashes
-        if not text.startswith("---"):
-            return text
-        match = self._metadata_pat.match(text)
+        from itertools import chain
+        match = re.findall(self._meta_data_pattern, text)
+
         if not match:
             return text
-        tail = text[len(match.group(0)):]
-        metadata_str = match.groupdict()['metadata']
+
+        metadata_str = "".join(chain.from_iterable(match))
+        last_item = list(filter(None, match[-1]))[0]
+        end_of_metadata = text.index(last_item)+len(last_item)
+        if text.startswith("---"):
+            # add 8 charachters for opening and closing
+            # and since indexing starts at 0 we add a step
+            tail = text[end_of_metadata+4:]
+        else:
+            tail = text[end_of_metadata:]
 
         kv = re.findall(self._key_val_pat, metadata_str)
         kvm = re.findall(self._key_val_block_pat, metadata_str)
