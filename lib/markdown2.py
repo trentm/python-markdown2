@@ -104,6 +104,7 @@ except ImportError:
 import optparse
 from random import random, randint
 import codecs
+from itertools import chain
 
 
 # ---- Python version compat
@@ -125,7 +126,6 @@ elif sys.version_info[0] >= 3:
     py3 = True
     unicode = str
     base_string_type = str
-
 
 # ---- globals
 
@@ -397,16 +397,14 @@ class Markdown(object):
     #                   value
     #                   conutiues over multiple lines
     _key_val_block_pat = re.compile(
-        "(\w+:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE)
+        "(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE)
 
     def _extract_metadata(self, text):
-        from itertools import chain
         match = re.findall(self._meta_data_pattern, text)
 
         if not match:
             return text
 
-        metadata_str = "".join(chain.from_iterable(match))
         last_item = list(filter(None, match[-1]))[0]
         end_of_metadata = text.index(last_item)+len(last_item)
         if text.startswith("---"):
@@ -416,13 +414,14 @@ class Markdown(object):
         else:
             tail = text[end_of_metadata:]
 
-        kv = re.findall(self._key_val_pat, metadata_str)
-        kvm = re.findall(self._key_val_block_pat, metadata_str)
+        kv = re.findall(self._key_val_pat, text)
+        kvm = re.findall(self._key_val_block_pat, text)
         kvm = [item.replace(": >\n", ":", 1) for item in kvm]
 
         for item in kv + kvm:
             k, v = item.split(":", 1)
             self.metadata[k.strip()] = v.strip()
+
         return tail
 
     _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
