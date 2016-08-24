@@ -400,7 +400,8 @@ class Markdown(object):
         "(\w+:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)")
 
     def _extract_metadata(self, text):
-        # fast test
+        # fast test, the specification requires the metadata to be at top
+        # and clearly marked with opening and closing 3 dashes
         if not text.startswith("---"):
             return text
         match = self._metadata_pat.match(text)
@@ -416,7 +417,6 @@ class Markdown(object):
         for item in kv + kvm:
             k, v = item.split(":", 1)
             self.metadata[k.strip()] = v.strip()
-
         return tail
 
     _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
