@@ -1,4 +1,3 @@
-
 test: abc
 this-is : a hyphen test
     leading~space	: is okay 
