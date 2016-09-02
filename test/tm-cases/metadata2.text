@@ -3,6 +3,10 @@ this-is : a hyphen test
     leading~space	: is okay 
  And: some, cvs, data, which, you, must, parse, yourself
 empty   :
+another long: >
+  long value
+  that goes multiline
+another: example
 
 # The real text
 

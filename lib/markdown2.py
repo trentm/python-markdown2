@@ -104,6 +104,7 @@ except ImportError:
 import optparse
 from random import random, randint
 import codecs
+from itertools import chain
 
 
 # ---- Python version compat
@@ -125,7 +126,6 @@ elif sys.version_info[0] >= 3:
     py3 = True
     unicode = str
     base_string_type = str
-
 
 # ---- globals
 
@@ -390,26 +390,36 @@ class Markdown(object):
     #   another-var: blah blah
     #
     #   # header
-
-    _metadata_pat = re.compile(r"""
-        ^
-        (?:---[\ \t]*\n)?                       # optional "---"
-        ((?:[ \t]*[^ \t:]+[\ \t]*:[^\n]*\n)+)   # "key: value" pairs
-        (?:---[ \t]*)?                          # optional "---"
-        \n""",
-        re.VERBOSE
-    )
+    _meta_data_pattern = re.compile(r'^(?:---[\ \t]*\n)?(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)|([\S\w]+\s*:(?! >)[ \t]*.*\n?)(?:---[\ \t]*\n)?', re.MULTILINE)
+    _key_val_pat = re.compile("[\S\w]+\s*:(?! >)[ \t]*.*\n?", re.MULTILINE)
+    # this allows key: >
+    #                   value
+    #                   conutiues over multiple lines
+    _key_val_block_pat = re.compile(
+        "(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE)
 
     def _extract_metadata(self, text):
-        match = self._metadata_pat.match(text)
+        match = re.findall(self._meta_data_pattern, text)
+
         if not match:
             return text
 
-        tail = text[len(match.group(0)):]
-        metadata_str = match.group(1).strip()
-        for line in metadata_str.split('\n'):
-            key, value = line.split(':', 1)
-            self.metadata[key.strip()] = value.strip()
+        last_item = list(filter(None, match[-1]))[0]
+        end_of_metadata = text.index(last_item)+len(last_item)
+        if text.startswith("---"):
+            # add 8 charachters for opening and closing
+            # and since indexing starts at 0 we add a step
+            tail = text[end_of_metadata+4:]
+        else:
+            tail = text[end_of_metadata:]
+
+        kv = re.findall(self._key_val_pat, text)
+        kvm = re.findall(self._key_val_block_pat, text)
+        kvm = [item.replace(": >\n", ":", 1) for item in kvm]
+
+        for item in kv + kvm:
+            k, v = item.split(":", 1)
+            self.metadata[k.strip()] = v.strip()
 
         return tail
 

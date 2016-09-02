@@ -3,5 +3,7 @@
   "leading~space": "is okay",
   "And": "some, cvs, data, which, you, must, parse, yourself",
   "this-is": "a hyphen test",
-  "empty": ""
+  "empty": "",
+  "and some": "long value\n that goes multiline",
+  "another": "example"
 }
