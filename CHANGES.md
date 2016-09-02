@@ -9,6 +9,7 @@
 - [pull #215] Optional metadata fences
 - [pull #218] Github style task list
 - [pull #220] Numbering extra
+- [pull #224] Metadata in blocks
 
 
 ## python-markdown2 2.3.1
