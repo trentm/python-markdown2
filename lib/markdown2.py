@@ -50,14 +50,14 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   syntax highlighting.
 * footnotes: Support footnotes as in use on daringfireball.net and
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
-* numbering: Support of generic counters.  Non standard extension to
-  allow sequential numbering of figures, tables, equations, exhibits etc.
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
   the header text.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
   string to use for a "class" tag attribute. Currently only supports "img",
   "table", "pre" and "code" tags. Add an issue if you require this for other
   tags.
+* link-patterns: Auto-link given regex patterns in text (e.g. bug number
+  references, revision number references).
 * markdown-in-html: Allow the use of `markdown="1"` in a block HTML tag to
   have markdown processing be done on its contents. Similar to
   <http://michelf.com/projects/php-markdown/extra/#markdown-attr> but with
@@ -66,23 +66,28 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   See <https://github.com/trentm/python-markdown2/issues/77> for details.
 * nofollow: Add `rel="nofollow"` to add `<a>` tags with an href. See
   <http://en.wikipedia.org/wiki/Nofollow>.
+* numbering: Support of generic counters.  Non standard extension to
+  allow sequential numbering of figures, tables, equations, exhibits etc.
 * pyshell: Treats unindented Python interactive shell sessions as <code>
   blocks.
-* link-patterns: Auto-link given regex patterns in text (e.g. bug number
-  references, revision number references).
 * smarty-pants: Replaces ' and " with curly quotation marks or curly
   apostrophes.  Replaces --, ---, ..., and . . . with en dashes, em dashes,
   and ellipses.
 * spoiler: A special kind of blockquote commonly hidden behind a
   click on SO. Syntax per <http://meta.stackexchange.com/a/72878>.
-* toc: The returned HTML string gets a new "toc_html" attribute which is
-  a Table of Contents for the document. (experimental)
-* xml: Passes one-liner processing instructions and namespaced XML tags.
+* tag-friendly: Requires atx style headers to have a space between the # and 
+  the header text. Useful for applications that require twitter style tags to 
+  pass through the parser.
 * tables: Tables using the same format as GFM
   <https://help.github.com/articles/github-flavored-markdown#tables> and
   PHP-Markdown Extra <https://michelf.ca/projects/php-markdown/extra/#table>.
+* toc: The returned HTML string gets a new "toc_html" attribute which is
+  a Table of Contents for the document. (experimental)
+* use-file-vars: Look for an Emacs-style markdown-extras file variable to turn
+  on Extras.
 * wiki-tables: Google Code Wiki-style tables. See
   <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
+* xml: Passes one-liner processing instructions and namespaced XML tags.
 """
 
 # Dev Notes:
