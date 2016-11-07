@@ -75,8 +75,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   and ellipses.
 * spoiler: A special kind of blockquote commonly hidden behind a
   click on SO. Syntax per <http://meta.stackexchange.com/a/72878>.
-* tag-friendly: Requires atx style headers to have a space between the # and 
-  the header text. Useful for applications that require twitter style tags to 
+* tag-friendly: Requires atx style headers to have a space between the # and
+  the header text. Useful for applications that require twitter style tags to
   pass through the parser.
 * tables: Tables using the same format as GFM
   <https://help.github.com/articles/github-flavored-markdown#tables> and
@@ -109,7 +109,6 @@ except ImportError:
 import optparse
 from random import random, randint
 import codecs
-from itertools import chain
 
 
 # ---- Python version compat
@@ -1243,6 +1242,7 @@ class Markdown(object):
             url = self._strip_anglebrackets.sub(r'\1', url)
         return url, title, end_idx
 
+    _safe_protocols = re.compile(r'(https?|ftp):', re.I)
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
 
@@ -1354,7 +1354,10 @@ class Markdown(object):
                         curr_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[url_end_idx:]
                     elif start_idx >= anchor_allowed_pos:
-                        result_head = '<a href="%s"%s>' % (url, title_str)
+                        if self.safe_mode and not self._safe_protocols.match(url):
+                            result_head = '<a href="#"%s>' % (title_str)
+                        else:
+                            result_head = '<a href="%s"%s>' % (url, title_str)
                         result = '%s%s</a>' % (result_head, link_text)
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
@@ -1404,9 +1407,10 @@ class Markdown(object):
                             curr_pos = start_idx + len(result)
                             text = text[:start_idx] + result + text[match.end():]
                         elif start_idx >= anchor_allowed_pos:
-                            result = '<a href="%s"%s>%s</a>' \
-                                % (url, title_str, link_text)
-                            result_head = '<a href="%s"%s>' % (url, title_str)
+                            if self.safe_mode and not self._safe_protocols.match(url):
+                                result_head = '<a href="#"%s>' % (title_str)
+                            else:
+                                result_head = '<a href="%s"%s>' % (url, title_str)
                             result = '%s%s</a>' % (result_head, link_text)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
