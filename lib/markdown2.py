@@ -109,6 +109,10 @@ except ImportError:
 import optparse
 from random import random, randint
 import codecs
+try:
+    from urllib import quote_plus
+except ImportError:
+    from urllib.parse import quote_plus
 
 
 # ---- Python version compat
@@ -1346,9 +1350,11 @@ class Markdown(object):
                     if is_img:
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
-                            % (url.replace('"', '&quot;'),
+                            % (_urlencode(url, safe_mode=self.safe_mode),
                                _xml_escape_attr(link_text),
-                               title_str, img_class_str, self.empty_element_suffix)
+                               title_str,
+                               img_class_str,
+                               self.empty_element_suffix)
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
                         curr_pos = start_idx + len(result)
@@ -1357,8 +1363,8 @@ class Markdown(object):
                         if self.safe_mode and not self._safe_protocols.match(url):
                             result_head = '<a href="#"%s>' % (title_str)
                         else:
-                            result_head = '<a href="%s"%s>' % (url, title_str)
-                        result = '%s%s</a>' % (result_head, link_text)
+                            result_head = '<a href="%s"%s>' % (_urlencode(url, safe_mode=self.safe_mode), title_str)
+                        result = '%s%s</a>' % (result_head, _xml_escape_attr(link_text))
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
                         # <img> allowed from curr_pos on, <a> from
@@ -1399,9 +1405,11 @@ class Markdown(object):
                         if is_img:
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
-                                % (url.replace('"', '&quot;'),
-                                   link_text.replace('"', '&quot;'),
-                                   title_str, img_class_str, self.empty_element_suffix)
+                                % (_urlencode(url, safe_mode=self.safe_mode),
+                                   _xml_escape_attr(link_text),
+                                   title_str,
+                                   img_class_str,
+                                   self.empty_element_suffix)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
                             curr_pos = start_idx + len(result)
@@ -1410,7 +1418,7 @@ class Markdown(object):
                             if self.safe_mode and not self._safe_protocols.match(url):
                                 result_head = '<a href="#"%s>' % (title_str)
                             else:
-                                result_head = '<a href="%s"%s>' % (url, title_str)
+                                result_head = '<a href="%s"%s>' % (_urlencode(url, safe_mode=self.safe_mode), title_str)
                             result = '%s%s</a>' % (result_head, link_text)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
@@ -2444,6 +2452,15 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % hex(ord(ch))[1:]
     else:
         return '&#%s;' % ord(ch)
+
+
+def _urlencode(attr, safe_mode=False):
+    """Replace special characters in string using the %xx escape."""
+    if safe_mode:
+        escaped = quote_plus(attr).replace('+', ' ')
+    else:
+        escaped = attr.replace('"', '%22')
+    return escaped
 
 
 # ---- mainline
