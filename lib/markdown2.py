@@ -75,8 +75,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   and ellipses.
 * spoiler: A special kind of blockquote commonly hidden behind a
   click on SO. Syntax per <http://meta.stackexchange.com/a/72878>.
-* tag-friendly: Requires atx style headers to have a space between the # and 
-  the header text. Useful for applications that require twitter style tags to 
+* tag-friendly: Requires atx style headers to have a space between the # and
+  the header text. Useful for applications that require twitter style tags to
   pass through the parser.
 * tables: Tables using the same format as GFM
   <https://help.github.com/articles/github-flavored-markdown#tables> and
@@ -109,7 +109,10 @@ except ImportError:
 import optparse
 from random import random, randint
 import codecs
-from itertools import chain
+try:
+    from urllib import quote_plus
+except ImportError:
+    from urllib.parse import quote_plus
 
 
 # ---- Python version compat
@@ -1243,6 +1246,7 @@ class Markdown(object):
             url = self._strip_anglebrackets.sub(r'\1', url)
         return url, title, end_idx
 
+    _safe_protocols = re.compile(r'(https?|ftp):', re.I)
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
 
@@ -1346,16 +1350,21 @@ class Markdown(object):
                     if is_img:
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
-                            % (url.replace('"', '&quot;'),
+                            % (_urlencode(url, safe_mode=self.safe_mode),
                                _xml_escape_attr(link_text),
-                               title_str, img_class_str, self.empty_element_suffix)
+                               title_str,
+                               img_class_str,
+                               self.empty_element_suffix)
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
                         curr_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[url_end_idx:]
                     elif start_idx >= anchor_allowed_pos:
-                        result_head = '<a href="%s"%s>' % (url, title_str)
-                        result = '%s%s</a>' % (result_head, link_text)
+                        if self.safe_mode and not self._safe_protocols.match(url):
+                            result_head = '<a href="#"%s>' % (title_str)
+                        else:
+                            result_head = '<a href="%s"%s>' % (_urlencode(url, safe_mode=self.safe_mode), title_str)
+                        result = '%s%s</a>' % (result_head, _xml_escape_attr(link_text))
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
                         # <img> allowed from curr_pos on, <a> from
@@ -1396,17 +1405,20 @@ class Markdown(object):
                         if is_img:
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
-                                % (url.replace('"', '&quot;'),
-                                   link_text.replace('"', '&quot;'),
-                                   title_str, img_class_str, self.empty_element_suffix)
+                                % (_urlencode(url, safe_mode=self.safe_mode),
+                                   _xml_escape_attr(link_text),
+                                   title_str,
+                                   img_class_str,
+                                   self.empty_element_suffix)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
                             curr_pos = start_idx + len(result)
                             text = text[:start_idx] + result + text[match.end():]
                         elif start_idx >= anchor_allowed_pos:
-                            result = '<a href="%s"%s>%s</a>' \
-                                % (url, title_str, link_text)
-                            result_head = '<a href="%s"%s>' % (url, title_str)
+                            if self.safe_mode and not self._safe_protocols.match(url):
+                                result_head = '<a href="#"%s>' % (title_str)
+                            else:
+                                result_head = '<a href="%s"%s>' % (_urlencode(url, safe_mode=self.safe_mode), title_str)
                             result = '%s%s</a>' % (result_head, link_text)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
@@ -2440,6 +2452,15 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % hex(ord(ch))[1:]
     else:
         return '&#%s;' % ord(ch)
+
+
+def _urlencode(attr, safe_mode=False):
+    """Replace special characters in string using the %xx escape."""
+    if safe_mode:
+        escaped = quote_plus(attr).replace('+', ' ')
+    else:
+        escaped = attr.replace('"', '%22')
+    return escaped
 
 
 # ---- mainline
