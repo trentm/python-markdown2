@@ -10,6 +10,7 @@
 - [pull #218] Github style task list
 - [pull #220] Numbering extra
 - [pull #224] Metadata in blocks
+- [pull #230] safe_mode changes
 
 
 ## python-markdown2 2.3.1
