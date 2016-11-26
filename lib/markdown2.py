@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 #!/usr/bin/env python
 # Copyright (c) 2012 Trent Mick.
 # Copyright (c) 2007-2008 ActiveState Corp.
@@ -1738,7 +1740,7 @@ class Markdown(object):
                     codeblock = codeblock.replace(old, new)
                 return codeblock
             lexer = self._get_pygments_lexer(lexer_name)
-            if lexer:
+            if lexer and self.extras.get('no-code-highlighting', True) is True:
                 codeblock = unhash_code( codeblock )
                 colored = self._color_with_pygments(codeblock, lexer,
                                                     **formatter_opts)
