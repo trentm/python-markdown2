@@ -1363,7 +1363,8 @@ class Markdown(object):
                         if self.safe_mode and not self._safe_protocols.match(url):
                             result_head = '<a href="#"%s>' % (title_str)
                         else:
-                            result_head = '<a href="%s"%s>' % (_urlencode(url, safe_mode=self.safe_mode), title_str)
+                            a_tag_id = url.replace('#', '')
+                            result_head = '<a id="%s" href="%s"%s>' % (a_tag_id, _urlencode(url, safe_mode=self.safe_mode), title_str)
                         result = '%s%s</a>' % (result_head, _xml_escape_attr(link_text))
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
