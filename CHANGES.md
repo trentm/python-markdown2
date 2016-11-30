@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.3.2 (not yet released)
+## python-markdown2 2.3.2
 
 - [pull #204] toc extra Python 3 error
 - [pull #207] Performance improvements
