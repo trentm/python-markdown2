@@ -20,6 +20,8 @@ blah
 
 [link7][1]
 
+![ok img](http://example.com/image.gif?h=200&amp;w=500)
+
 ![img](http://example.com"onclick="alert(1))
 
 ![img2](http://example.com "text"onclick="alert(1)")
@@ -29,3 +31,7 @@ blah
 <img src="javascript:alert(1)"
 
 [1]: javascript:alert('XSS')
+
+![ok img](http://example.com/image.gif?h=200&w=500)
+
+[link ok](http://example.com)
