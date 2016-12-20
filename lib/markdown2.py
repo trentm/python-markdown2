@@ -405,21 +405,24 @@ class Markdown(object):
     #                   conutiues over multiple lines
     _key_val_block_pat = re.compile(
         "(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE)
+    _meta_data_fence_pattern = re.compile(r'^---[\ \t]*\n', re.MULTILINE)
+    _meta_data_newline = re.compile("^\n", re.MULTILINE)
 
     def _extract_metadata(self, text):
-        match = re.findall(self._meta_data_pattern, text)
-
-        if not match:
-            return text
-
-        last_item = list(filter(None, match[-1]))[0]
-        end_of_metadata = text.index(last_item)+len(last_item)
         if text.startswith("---"):
-            # add 8 charachters for opening and closing
-            # and since indexing starts at 0 we add a step
-            tail = text[end_of_metadata+4:]
+            fence_splits = re.split(self._meta_data_fence_pattern, text, maxsplit=2)
+            metadata_content = fence_splits[1]
+            match = re.findall(self._meta_data_pattern, metadata_content)
+            if not match:
+                return text
+            tail = fence_splits[2]
         else:
-            tail = text[end_of_metadata:]
+            metadata_split = re.split(self._meta_data_newline, text, maxsplit=1)
+            metadata_content = metadata_split[0]
+            match = re.findall(self._meta_data_pattern, metadata_content)
+            if not match:
+                return text
+            tail = metadata_split[1]
 
         kv = re.findall(self._key_val_pat, text)
         kvm = re.findall(self._key_val_block_pat, text)
