@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.3 (not yet released)
 
-(nothing yet)
+- [pull #236] Fix for safe_mode links regression
 
 
 ## python-markdown2 2.3.2

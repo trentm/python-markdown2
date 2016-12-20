@@ -1353,7 +1353,7 @@ class Markdown(object):
                     if is_img:
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
-                            % (_urlencode(url, safe_mode=self.safe_mode),
+                            % (_html_escape_url(url, safe_mode=self.safe_mode),
                                _xml_escape_attr(link_text),
                                title_str,
                                img_class_str,
@@ -1366,7 +1366,7 @@ class Markdown(object):
                         if self.safe_mode and not self._safe_protocols.match(url):
                             result_head = '<a href="#"%s>' % (title_str)
                         else:
-                            result_head = '<a href="%s"%s>' % (_urlencode(url, safe_mode=self.safe_mode), title_str)
+                            result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
                         result = '%s%s</a>' % (result_head, _xml_escape_attr(link_text))
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
@@ -1408,7 +1408,7 @@ class Markdown(object):
                         if is_img:
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
-                                % (_urlencode(url, safe_mode=self.safe_mode),
+                                % (_html_escape_url(url, safe_mode=self.safe_mode),
                                    _xml_escape_attr(link_text),
                                    title_str,
                                    img_class_str,
@@ -1421,7 +1421,7 @@ class Markdown(object):
                             if self.safe_mode and not self._safe_protocols.match(url):
                                 result_head = '<a href="#"%s>' % (title_str)
                             else:
-                                result_head = '<a href="%s"%s>' % (_urlencode(url, safe_mode=self.safe_mode), title_str)
+                                result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
                             result = '%s%s</a>' % (result_head, link_text)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
@@ -2457,12 +2457,15 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % ord(ch)
 
 
-def _urlencode(attr, safe_mode=False):
-    """Replace special characters in string using the %xx escape."""
+def _html_escape_url(attr, safe_mode=False):
+    """Replace special characters that are potentially malicious in url string."""
+    escaped = (attr
+        .replace('"', '&quot;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;'))
     if safe_mode:
-        escaped = quote_plus(attr).replace('+', ' ')
-    else:
-        escaped = attr.replace('"', '%22')
+        escaped = escaped.replace('+', ' ')
+        escaped = escaped.replace("'", "&#39;")
     return escaped
 
 
