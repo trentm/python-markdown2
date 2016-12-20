@@ -406,19 +406,23 @@ class Markdown(object):
     _key_val_block_pat = re.compile(
         "(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE)
     _meta_data_fence_pattern = re.compile(r'^---[\ \t]*\n', re.MULTILINE)
+    _meta_data_newline = re.compile("^\n", re.MULTILINE)
 
     def _extract_metadata(self, text):
-        if not text.startswith("---"):
-            return text
-
-        fence_splits = re.split(self._meta_data_fence_pattern, text, maxsplit=2)
-        metadata_content = fence_splits[1]
-        match = re.findall(self._meta_data_pattern, metadata_content)
-
-        if not match:
-            return text
-
-        tail = fence_splits[2]
+        if text.startswith("---"):
+            fence_splits = re.split(self._meta_data_fence_pattern, text, maxsplit=2)
+            metadata_content = fence_splits[1]
+            match = re.findall(self._meta_data_pattern, metadata_content)
+            if not match:
+                return text
+            tail = fence_splits[2]
+        else:
+            metadata_split = re.split(self._meta_data_newline, text, maxsplit=1)
+            metadata_content = metadata_split[0]
+            match = re.findall(self._meta_data_pattern, metadata_content)
+            if not match:
+                return text
+            tail = metadata_split[1]
 
         kv = re.findall(self._key_val_pat, text)
         kvm = re.findall(self._key_val_block_pat, text)
