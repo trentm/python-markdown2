@@ -167,8 +167,6 @@ class _MarkdownTestCase(unittest.TestCase):
                           _indent(diff))
             self.assertEqual(python_norm_toc_html, norm_toc_html,
                 errmsg.encode('utf-8', 'charreprreplace'))
-            # self.assertEqual(python_norm_toc_html, norm_toc_html,
-            #     errmsg.encode('ascii', 'charreprreplace'))
 
         if metadata:
             self.assertEqual(python_html.metadata, metadata)
