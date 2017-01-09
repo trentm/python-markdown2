@@ -4,6 +4,7 @@
 
 - [pull #236] Fix for safe_mode links regression
 - [pull #235] Fix for overgreedy regex in metadata
+- [pull #237] Fix for header-ids extra non-alpha character issue
 
 
 ## python-markdown2 2.3.2
