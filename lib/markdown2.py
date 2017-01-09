@@ -1466,6 +1466,9 @@ class Markdown(object):
             header_id += '-%s' % self._count_from_header_id[header_id]
         else:
             self._count_from_header_id[header_id] = 1
+            if 0 == len(header_id):
+                header_id += '-%s' % self._count_from_header_id[header_id]
+
         return header_id
 
     _toc = None
