@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.3.3 (not yet released)
+## python-markdown2 2.3.3
 
 - [pull #236] Fix for safe_mode links regression
 - [pull #235] Fix for overgreedy regex in metadata
