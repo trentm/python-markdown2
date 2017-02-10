@@ -1617,7 +1617,7 @@ class Markdown(object):
         (.*)                   # list item text = \2
     ''', re.M | re.X | re.S)
 
-    _task_list_warpper_str = r'<p><input type="checkbox" class="task-list-item-checkbox" %sdisabled>%s</p>'
+    _task_list_warpper_str = r'<input type="checkbox" class="task-list-item-checkbox" %sdisabled> %s'
 
     def _task_list_item_sub(self, match):
         marker = match.group(1)
