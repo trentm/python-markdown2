@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.4 (not yet released)
 
-(nothing yet)
+- [pull #243] task list extra visual changes
 
 
 ## python-markdown2 2.3.3
