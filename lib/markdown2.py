@@ -258,10 +258,20 @@ class Markdown(object):
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
-    _a_nofollow = re.compile(r"<(a)([^>]*href=)", re.IGNORECASE)
+    _a_nofollow = re.compile(r"""
+        <(a)
+        (
+            [^>]*
+            href=   # href is required
+            ['"]?   # HTML5 attribute values do not have to be quoted
+            [^#'"]  # We don't want to match href values that start with # (like footnotes)
+        )
+        """,
+        re.IGNORECASE | re.VERBOSE
+    )
 
     # Opens the linked document in a new window or tab
-    # should only used in <a> tags with an "target" attribute.
+    # should only used in <a> tags with an "href" attribute.
     # same with _a_nofollow
     _a_blank = _a_nofollow
 
