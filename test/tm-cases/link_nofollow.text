@@ -1,5 +1,9 @@
 [link](http://example.com)
 
+[foo](http://example.com/test#fragment)
+
+[bar](#fragment)
+
 Pre-block:
 
     Here is a raw link:
@@ -13,6 +17,9 @@ Pre-block:
 <a href="//example.com/six">six</a>
 <A HREF="http://example.com/seven">seven</A>
 <a foo=bar href="http://example.com/eight">eight</a>
+<a href="http://example.com/test#fragment">nine</a>
+<a href="#fragment">ten</a>
 </p>
+
 
 
