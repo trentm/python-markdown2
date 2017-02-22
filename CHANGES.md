@@ -3,6 +3,7 @@
 ## python-markdown2 2.3.4 (not yet released)
 
 - [pull #243] task list extra visual changes
+- [pull #245] Don't let "target-blank-lines" break footnotes
 
 
 ## python-markdown2 2.3.3
