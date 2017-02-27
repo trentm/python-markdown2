@@ -95,7 +95,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (2, 3, 3)
+__version_info__ = (2, 3, 4)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -258,10 +258,20 @@ class Markdown(object):
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
-    _a_nofollow = re.compile(r"<(a)([^>]*href=)", re.IGNORECASE)
+    _a_nofollow = re.compile(r"""
+        <(a)
+        (
+            [^>]*
+            href=   # href is required
+            ['"]?   # HTML5 attribute values do not have to be quoted
+            [^#'"]  # We don't want to match href values that start with # (like footnotes)
+        )
+        """,
+        re.IGNORECASE | re.VERBOSE
+    )
 
     # Opens the linked document in a new window or tab
-    # should only used in <a> tags with an "target" attribute.
+    # should only used in <a> tags with an "href" attribute.
     # same with _a_nofollow
     _a_blank = _a_nofollow
 
@@ -1466,6 +1476,9 @@ class Markdown(object):
             header_id += '-%s' % self._count_from_header_id[header_id]
         else:
             self._count_from_header_id[header_id] = 1
+            if 0 == len(header_id):
+                header_id += '-%s' % self._count_from_header_id[header_id]
+
         return header_id
 
     _toc = None
@@ -1614,7 +1627,7 @@ class Markdown(object):
         (.*)                   # list item text = \2
     ''', re.M | re.X | re.S)
 
-    _task_list_warpper_str = r'<p><input type="checkbox" class="task-list-item-checkbox" %sdisabled>%s</p>'
+    _task_list_warpper_str = r'<input type="checkbox" class="task-list-item-checkbox" %sdisabled> %s'
 
     def _task_list_item_sub(self, match):
         marker = match.group(1)

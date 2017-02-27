@@ -1,8 +1,16 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.3.3 (not yet released)
+## python-markdown2 2.3.4 (not yet released)
+
+- [pull #243] task list extra visual changes
+- [pull #245] Don't let "target-blank-lines" break footnotes
+
+
+## python-markdown2 2.3.3
 
 - [pull #236] Fix for safe_mode links regression
+- [pull #235] Fix for overgreedy regex in metadata
+- [pull #237] Fix for header-ids extra non-alpha character issue
 
 
 ## python-markdown2 2.3.2
