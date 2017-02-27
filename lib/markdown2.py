@@ -49,7 +49,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   <http://github.github.com/github-flavored-markdown/> with support for
   syntax highlighting.
 * footnotes: Support footnotes as in use on daringfireball.net and
-  implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).     #TODO modify documentation
+  implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
   the header text.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
@@ -2055,6 +2055,7 @@ class Markdown(object):
                 footer.append(self._run_block_gamut(self.footnotes[id]))
                 try:
                     backlink = ('<a href="#fnref-%s" ' +
+                            'class="footnoteBackLink" ' +
                             footnote_title +
                             footnote_link_text) % (id, i+1)
                 except Exception as E:
