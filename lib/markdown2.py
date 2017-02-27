@@ -49,7 +49,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   <http://github.github.com/github-flavored-markdown/> with support for
   syntax highlighting.
 * footnotes: Support footnotes as in use on daringfireball.net and
-  implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
+  implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).     #TODO modify documentation
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
   the header text.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
@@ -2037,15 +2037,35 @@ class Markdown(object):
                 '<hr' + self.empty_element_suffix,
                 '<ol>',
             ]
+
+            try:
+                footnote_title = self.footnote_title
+            except Exception:
+                footnote_title = 'title="Jump back to footnote %d in the text.">'
+
+            try:
+                footnote_link_text = self.footnote_link_text
+            except Exception:
+                footnote_link_text = '&#8617;</a>'
+
             for i, id in enumerate(self.footnote_ids):
                 if i != 0:
                     footer.append('')
                 footer.append('<li id="fn-%s">' % id)
                 footer.append(self._run_block_gamut(self.footnotes[id]))
-                backlink = ('<a href="#fnref-%s" '
-                    'class="footnoteBackLink" '
-                    'title="Jump back to footnote %d in the text.">'
-                    '&#8617;</a>' % (id, i+1))
+                try:
+                    backlink = ('<a href="#fnref-%s" ' +
+                            footnote_title +
+                            footnote_link_text) % (id, i+1)
+                except Exception as E:
+                    log.debug("Footnote error. `footnote_title` or "
+                              "`footnote_link_text` must include parameter. "
+                              "Using defaults.")
+                    backlink = ('<a href="#fnref-%s" '
+                        'class="footnoteBackLink" '
+                        'title="Jump back to footnote %d in the text.">'
+                        '&#8617;</a>' % (id, i+1))
+
                 if footer[-1].endswith("</p>"):
                     footer[-1] = footer[-1][:-len("</p>")] \
                         + '&#160;' + backlink + "</p>"
