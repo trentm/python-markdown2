@@ -2040,13 +2040,13 @@ class Markdown(object):
 
             try:
                 footnote_title = self.footnote_title
-            except Exception:
-                footnote_title = 'title="Jump back to footnote %d in the text.">'
+            except AttributeError:
+                footnote_title = 'title="Jump back to footnote %d in the text."'
 
             try:
                 footnote_link_text = self.footnote_link_text
-            except Exception:
-                footnote_link_text = '&#8617;</a>'
+            except AttributeError:
+                footnote_link_text = '&#8617;'
 
             for i, id in enumerate(self.footnote_ids):
                 if i != 0:
@@ -2056,9 +2056,10 @@ class Markdown(object):
                 try:
                     backlink = ('<a href="#fnref-%s" ' +
                             'class="footnoteBackLink" ' +
-                            footnote_title +
-                            footnote_link_text) % (id, i+1)
-                except Exception as E:
+                            footnote_title + '>' +
+                            footnote_link_text +
+                            '</a>') % (id, i+1)
+                except TypeError:
                     log.debug("Footnote error. `footnote_title` or "
                               "`footnote_link_text` must include parameter. "
                               "Using defaults.")
