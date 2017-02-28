@@ -2041,7 +2041,7 @@ class Markdown(object):
             try:
                 footnote_title = self.footnote_title
             except AttributeError:
-                footnote_title = 'title="Jump back to footnote %d in the text."'
+                footnote_title = 'Jump back to footnote %d in the text.'
 
             try:
                 footnote_link_text = self.footnote_link_text
@@ -2056,7 +2056,7 @@ class Markdown(object):
                 try:
                     backlink = ('<a href="#fnref-%s" ' +
                             'class="footnoteBackLink" ' +
-                            footnote_title + '>' +
+                            'title=' + footnote_title + '>' +
                             footnote_link_text +
                             '</a>') % (id, i+1)
                 except TypeError:
