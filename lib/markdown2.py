@@ -2056,7 +2056,7 @@ class Markdown(object):
                 try:
                     backlink = ('<a href="#fnref-%s" ' +
                             'class="footnoteBackLink" ' +
-                            'title=' + footnote_title + '>' +
+                            'title="' + footnote_title + '">' +
                             footnote_link_text +
                             '</a>') % (id, i+1)
                 except TypeError:
