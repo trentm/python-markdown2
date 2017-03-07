@@ -78,7 +78,7 @@ class _MarkdownTestCase(unittest.TestCase):
                       _display(python_html), _display(perl_html)))
 
     def _assertMarkdownPath(self, text_path, encoding="utf-8", opts=None,
-            toc_html_path=None, metadata_path=None, customs=None):
+            toc_html_path=None, metadata_path=None):
         text = codecs.open(text_path, 'r', encoding=encoding).read()
         html_path = splitext(text_path)[0] + ".html"
         html = codecs.open(html_path, 'r', encoding=encoding).read()
@@ -90,26 +90,19 @@ class _MarkdownTestCase(unittest.TestCase):
             extra["metadata"] = json_loads(
                 codecs.open(metadata_path, 'r', encoding=encoding).read())
             extra["metadata_path"] = metadata_path
-        self._assertMarkdown(text, html, text_path, html_path, opts=opts,
-            customs=customs, **extra)
+        self._assertMarkdown(text, html, text_path, html_path, opts=opts, **extra)
 
     def _assertMarkdown(self, text, html, text_path=None, html_path=None,
             opts=None, toc_html=None, toc_html_path=None, metadata=None,
-            metadata_path=None, customs=None):
+            metadata_path=None):
         """Assert that markdown2.py produces the expected HTML."""
         if text_path is None: text_path = "<text content>"
         if html_path is None: html_path = "<html content>"
         if opts is None:
             opts = {}
-        if  customs is None:
-            customs = {}
 
         norm_html = norm_html_from_html(html)
-        markdowner = markdown2.Markdown(**opts)
-        if customs:
-            for k,v in customs.items():
-                setattr(markdowner, k, v)
-        python_html = markdowner.convert(text)
+        python_html = markdown2.markdown(text, **opts)
         python_norm_html = norm_html_from_html(python_html)
 
         close_though = ""
@@ -203,20 +196,10 @@ class _MarkdownTestCase(unittest.TestCase):
             if not exists(metadata_path):
                 metadata_path = None
 
-            customs = {}
-            customargs_path = splitext(text_path)[0] + ".customargs"
-            if exists(customargs_path):
-                try:
-                    customs = eval(open(customargs_path, 'r').read())
-                except Exception:
-                    _, ex, _ = sys.exc_info()
-                    print("WARNING: couldn't load `%s' opts file: %s" \
-                            % (opts_path, ex))
-
             test_func = lambda self, t=text_path, o=opts, c=toc_html_path, \
-                    cu=customs, m=metadata_path: \
+                    m=metadata_path: \
                     self._assertMarkdownPath(t, opts=o, toc_html_path=c,
-                          metadata_path=m, customs=cu)
+                          metadata_path=m)
 
             tags_path = splitext(text_path)[0] + ".tags"
             if exists(tags_path):
