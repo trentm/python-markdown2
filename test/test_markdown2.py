@@ -90,8 +90,7 @@ class _MarkdownTestCase(unittest.TestCase):
             extra["metadata"] = json_loads(
                 codecs.open(metadata_path, 'r', encoding=encoding).read())
             extra["metadata_path"] = metadata_path
-        self._assertMarkdown(text, html, text_path, html_path, opts=opts,
-            **extra)
+        self._assertMarkdown(text, html, text_path, html_path, opts=opts, **extra)
 
     def _assertMarkdown(self, text, html, text_path=None, html_path=None,
             opts=None, toc_html=None, toc_html_path=None, metadata=None,
@@ -197,9 +196,10 @@ class _MarkdownTestCase(unittest.TestCase):
             if not exists(metadata_path):
                 metadata_path = None
 
-            test_func = lambda self, t=text_path, o=opts, c=toc_html_path, m=metadata_path: \
-                self._assertMarkdownPath(t, opts=o, toc_html_path=c,
-                                         metadata_path=m)
+            test_func = lambda self, t=text_path, o=opts, c=toc_html_path, \
+                    m=metadata_path: \
+                    self._assertMarkdownPath(t, opts=o, toc_html_path=c,
+                          metadata_path=m)
 
             tags_path = splitext(text_path)[0] + ".tags"
             if exists(tags_path):

@@ -162,6 +162,7 @@ class MarkdownError(Exception):
 def markdown_path(path, encoding="utf-8",
                   html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
                   safe_mode=None, extras=None, link_patterns=None,
+                  footnote_title=None, footnote_return_symbol=None,
                   use_file_vars=False):
     fp = codecs.open(path, 'r', encoding)
     text = fp.read()
@@ -169,15 +170,20 @@ def markdown_path(path, encoding="utf-8",
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns,
+                    footnote_title=footnote_title,
+                    footnote_return_symbol=footnote_return_symbol,
                     use_file_vars=use_file_vars).convert(text)
 
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
              safe_mode=None, extras=None, link_patterns=None,
+             footnote_title=None, footnote_return_symbol=None,
              use_file_vars=False):
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns,
+                    footnote_title=footnote_title,
+                    footnote_return_symbol=footnote_return_symbol,
                     use_file_vars=use_file_vars).convert(text)
 
 
@@ -203,7 +209,9 @@ class Markdown(object):
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
     def __init__(self, html4tags=False, tab_width=4, safe_mode=None,
-                 extras=None, link_patterns=None, use_file_vars=False):
+                 extras=None, link_patterns=None,
+                 footnote_title=None, footnote_return_symbol=None,
+                 use_file_vars=False):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
@@ -233,6 +241,8 @@ class Markdown(object):
         self._instance_extras = self.extras.copy()
 
         self.link_patterns = link_patterns
+        self.footnote_title = footnote_title
+        self.footnote_return_symbol = footnote_return_symbol
         self.use_file_vars = use_file_vars
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
 
@@ -2037,15 +2047,31 @@ class Markdown(object):
                 '<hr' + self.empty_element_suffix,
                 '<ol>',
             ]
+
+            if not self.footnote_title:
+                self.footnote_title = "Jump back to footnote %d in the text."
+            if not self.footnote_return_symbol:
+                self.footnote_return_symbol = "&#8617;"
+
             for i, id in enumerate(self.footnote_ids):
                 if i != 0:
                     footer.append('')
                 footer.append('<li id="fn-%s">' % id)
                 footer.append(self._run_block_gamut(self.footnotes[id]))
-                backlink = ('<a href="#fnref-%s" '
-                    'class="footnoteBackLink" '
-                    'title="Jump back to footnote %d in the text.">'
-                    '&#8617;</a>' % (id, i+1))
+                try:
+                    backlink = ('<a href="#fnref-%s" ' +
+                            'class="footnoteBackLink" ' +
+                            'title="' + self.footnote_title + '">' +
+                            self.footnote_return_symbol +
+                            '</a>') % (id, i+1)
+                except TypeError:
+                    log.debug("Footnote error. `footnote_title` "
+                              "must include parameter. Using defaults.")
+                    backlink = ('<a href="#fnref-%s" '
+                        'class="footnoteBackLink" '
+                        'title="Jump back to footnote %d in the text.">'
+                        '&#8617;</a>' % (id, i+1))
+
                 if footer[-1].endswith("</p>"):
                     footer[-1] = footer[-1][:-len("</p>")] \
                         + '&#160;' + backlink + "</p>"
