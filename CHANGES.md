@@ -4,6 +4,7 @@
 
 - [pull #243] task list extra visual changes
 - [pull #245] Don't let "target-blank-lines" break footnotes
+- [pull #247] Translatable footnote titles
 
 
 ## python-markdown2 2.3.3
