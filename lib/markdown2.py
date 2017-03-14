@@ -163,7 +163,7 @@ def markdown_path(path, encoding="utf-8",
                   html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
                   safe_mode=None, extras=None, link_patterns=None,
                   footnote_title=None, footnote_return_symbol=None,
-                  use_file_vars=False):
+                  use_file_vars=False, nofollow_character=None):
     fp = codecs.open(path, 'r', encoding)
     text = fp.read()
     fp.close()
@@ -172,19 +172,21 @@ def markdown_path(path, encoding="utf-8",
                     link_patterns=link_patterns,
                     footnote_title=footnote_title,
                     footnote_return_symbol=footnote_return_symbol,
-                    use_file_vars=use_file_vars).convert(text)
+                    use_file_vars=use_file_vars,
+                    nofollow_character=nofollow_character).convert(text)
 
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
              safe_mode=None, extras=None, link_patterns=None,
              footnote_title=None, footnote_return_symbol=None,
-             use_file_vars=False):
+             use_file_vars=False, nofollow_character=None):
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns,
                     footnote_title=footnote_title,
                     footnote_return_symbol=footnote_return_symbol,
-                    use_file_vars=use_file_vars).convert(text)
+                    use_file_vars=use_file_vars,
+                    nofollow_character=nofollow_character).convert(text)
 
 
 class Markdown(object):
@@ -211,7 +213,7 @@ class Markdown(object):
     def __init__(self, html4tags=False, tab_width=4, safe_mode=None,
                  extras=None, link_patterns=None,
                  footnote_title=None, footnote_return_symbol=None,
-                 use_file_vars=False):
+                 use_file_vars=False, nofollow_character=None):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
@@ -241,6 +243,7 @@ class Markdown(object):
         self._instance_extras = self.extras.copy()
 
         self.link_patterns = link_patterns
+        self.nofollow_character = nofollow_character
         self.footnote_title = footnote_title
         self.footnote_return_symbol = footnote_return_symbol
         self.use_file_vars = use_file_vars
@@ -268,17 +271,41 @@ class Markdown(object):
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
-    _a_nofollow = re.compile(r"""
+    _a_nofollow_searchstring ="""
         <(a)
         (
             [^>]*
             href=   # href is required
             ['"]?   # HTML5 attribute values do not have to be quoted
+            {}      # A character prefix in urls can be added to mark the urls to recieve nofollow.
             [^#'"]  # We don't want to match href values that start with # (like footnotes)
         )
-        """,
+        """
+
+    _a_nofollow = re.compile(_a_nofollow_searchstring.format(""),
         re.IGNORECASE | re.VERBOSE
     )
+
+    def _do_rel_nofollow(self, text):
+        """Add rel="nofollow" attribute to links. If no nofollow_character
+           is given add the attribute to all links.
+           If a nofollow_character is given add the nofollow attribute to
+           all urls that start with it and remove the character from the url"""
+        if not self.nofollow_character:
+            ret = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
+        elif self.nofollow_character:
+            # Modify the regex for the nofollow to remove the nofollow_character
+            # by splitting the regex group \2 to \2 and \3 with the ungrouped
+            # nofollow_character in the middle to be able to remove it easily.
+            c_nofollow = re.compile(
+                self._a_nofollow_searchstring.format(
+                    ")" +
+                    self.nofollow_character +
+                    "("),
+                re.IGNORECASE | re.VERBOSE
+            )
+            ret = c_nofollow.sub(r'<\1 rel="nofollow"\2\3', text)
+        return ret
 
     # Opens the linked document in a new window or tab
     # should only used in <a> tags with an "href" attribute.
@@ -378,7 +405,7 @@ class Markdown(object):
             text = self._unhash_html_spans(text)
 
         if "nofollow" in self.extras:
-            text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
+            text = self._do_rel_nofollow(text)
 
         if "target-blank-links" in self.extras:
             text = self._a_blank.sub(r'<\1 target="_blank"\2', text)
@@ -1386,10 +1413,7 @@ class Markdown(object):
                         if self.safe_mode and not self._safe_protocols.match(url):
                             result_head = '<a href="#"%s>' % (title_str)
                         else:
-                            if url and url[0] == '!':
-                                result_head = '<a rel="nofollow" href="%s"%s>' % (_html_escape_url(url[1:], safe_mode=self.safe_mode), title_str)
-                            else:
-                                result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
+                            result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
                         result = '%s%s</a>' % (result_head, _xml_escape_attr(link_text))
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
@@ -2555,6 +2579,8 @@ def main(argv=None):
                            "<https://github.com/trentm/python-markdown2/wiki/Extras>")
     parser.add_option("--link-patterns-file",
                       help="path to a link pattern file")
+    parser.add_option("--nofollow-character",
+                      help="character that marks links to require the rel=\"nofollow\" attribute")
     parser.add_option("--self-test", action="store_true",
                       help="run internal self-tests (some doctests)")
     parser.add_option("--compare", action="store_true",
@@ -2632,7 +2658,8 @@ def main(argv=None):
             html4tags=opts.html4tags,
             safe_mode=opts.safe_mode,
             extras=extras, link_patterns=link_patterns,
-            use_file_vars=opts.use_file_vars)
+            use_file_vars=opts.use_file_vars,
+            nofollow_character=opts.nofollow_character)
         if py3:
             sys.stdout.write(html)
         else:
