@@ -150,3 +150,9 @@ the rule is it must have at least a single dash in there.
 > |green|**eggs**|ham|
 >
 > -- Dr. Seuss
+
+# escaping of pipes
+
+| A  | \| | C \| C |
+|--- |--- | ------ |
+|\|\|| BB | C |
