@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.3.5 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.3.4
 
 - [pull #243] task list extra visual changes

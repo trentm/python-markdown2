@@ -95,7 +95,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (2, 3, 4)
+__version_info__ = (2, 3, 5)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
