@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.5 (not yet released)
 
-(nothing yet)
+- [pull #238] Fenced code blocks lang with leading space
 
 
 ## python-markdown2 2.3.4
