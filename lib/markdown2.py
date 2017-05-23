@@ -196,6 +196,7 @@ class Markdown(object):
     # "extras" argument.
     extras = None
 
+    image_urls = []
     urls = None
     titles = None
     html_blocks = None
@@ -252,6 +253,7 @@ class Markdown(object):
             self._escape_table["'"] = _hash_text("'")
 
     def reset(self):
+        self.image_urls = []
         self.urls = {}
         self.titles = {}
         self.html_blocks = {}
@@ -1373,6 +1375,8 @@ class Markdown(object):
                     else:
                         title_str = ''
                     if is_img:
+                        # Store the image urls
+                        self.image_urls.append(url)
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
                             % (_html_escape_url(url, safe_mode=self.safe_mode),
