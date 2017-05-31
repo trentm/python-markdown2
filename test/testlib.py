@@ -60,18 +60,21 @@ import sys
 import getopt
 import glob
 import time
-import types
-import tempfile
 import unittest
-from pprint import pprint
 import imp
-import optparse
 import logging
 import textwrap
 import traceback
 
+''' commented out modules below seem not to be used.  
 
-
+after testing should remove.
+If this is the case they shopuld be removed.
+'''
+#from pprint import pprint
+#import optparse
+#import types
+#import tempfile
 #---- globals and exceptions
 
 log = logging.getLogger("test")

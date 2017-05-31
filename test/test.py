@@ -5,11 +5,15 @@
 """The markdown2 test suite entry point."""
 
 import os
-from os.path import exists, join, abspath, dirname, normpath
+from os.path import  join, abspath, dirname
 import sys
 import logging
 
 import testlib
+
+'''The following do not appear to be used
+'''
+# from os.path import exists, normpath
 
 log = logging.getLogger("test")
 testdir_from_ns = {
