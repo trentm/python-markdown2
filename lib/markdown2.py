@@ -368,6 +368,7 @@ class Markdown(object):
         text = self._run_block_gamut(text)
 
         if "footnotes" in self.extras:
+            text = self._sort_footnotes(text)
             text = self._add_footnotes(text)
 
         text = self.postprocess(text)
@@ -916,6 +917,8 @@ class Markdown(object):
 
         if "fenced-code-blocks" in self.extras:
             text = self._do_fenced_code_blocks(text)
+            # We must do html block hash before _do_code_blocks because _do_fenced_code_blocks may produce indented code.
+            text = self._hash_html_blocks(text)
 
         text = self._do_headers(text)
 
@@ -1888,9 +1891,7 @@ class Markdown(object):
         ]
         for before, after in replacements:
             text = text.replace(before, after)
-        hashed = _hash_text(text)
-        self._escape_table[text] = hashed
-        return hashed
+        return text
 
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
     def _do_strike(self, text):
@@ -2042,6 +2043,21 @@ class Markdown(object):
 
         return "\n\n".join(grafs)
 
+    def _sort_footnotes(self, text):
+        """Because _do_links is not applied to the text in text flow order, footnotes are not generated in proper order, we have to sort them before _add_footnotes.
+        """
+        _footnote_tag_re = re.compile(r'''<sup class="footnote-ref" id="fnref-(.+)"><a href="#fn-\1">(\d+)</a></sup>''')
+        self.footnote_ids = []
+        def _repl(match):
+            id = match.group(1)
+            num = match.group(2)
+            if id in self.footnotes:
+                self.footnote_ids.append(id)
+                return match.string[match.start(0):match.start(2)] + str(len(self.footnote_ids)) + match.string[match.end(2):match.end(0)]
+            else:
+                return match.string[match.start():match.end()]
+        return _footnote_tag_re.sub(_repl, text)        
+    
     def _add_footnotes(self, text):
         if self.footnotes:
             footer = [
