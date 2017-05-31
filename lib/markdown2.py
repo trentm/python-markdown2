@@ -1719,8 +1719,10 @@ class Markdown(object):
                 wraps in <code> tags.
                 """
                 yield 0, "<code>"
-                for tup in inner:
-                    yield tup
+                for i, t in inner:
+                    if i == 1:
+                        t = t.replace('\n', '<br \>')
+                    yield i, t
                 yield 0, "</code>"
 
             def wrap(self, source, outfile):
