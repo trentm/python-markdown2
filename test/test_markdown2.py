@@ -312,6 +312,43 @@ class DocTestsTestCase(unittest.TestCase):
             doctest.testmod(markdown2)
 
 
+class APITestsTestCase(unittest.TestCase):
+    """Tests for API hooks."""
+
+    def setUp(self):
+        from markdown2 import Markdown
+
+        class ResolveURLMarkdown(Markdown):
+            def resolve_url(self, url):
+                return url + ('&' if '?' in url else '?') + 'tack=on'
+
+        self.resolve_url_markdown = ResolveURLMarkdown()
+
+    def test_resolve_url(self):
+        self.assertEqual(
+            self.resolve_url_markdown.convert('[ref][]\n\n[ref]: some-url'),
+            '<p><a href="some-url?tack=on">ref</a></p>\n')
+        self.assertEqual(
+            self.resolve_url_markdown.convert('[inline](some-url)'),
+            '<p><a href="some-url?tack=on">inline</a></p>\n')
+        self.assertEqual(
+            self.resolve_url_markdown.convert(
+                '![ref][]\n\n[ref]: some-url'),
+            '<p><img src="some-url?tack=on" alt="ref" /></p>\n')
+        self.assertEqual(
+            self.resolve_url_markdown.convert('![inline](some-url)'),
+            '<p><img src="some-url?tack=on" alt="inline" /></p>\n')
+        self.assertEqual(
+            self.resolve_url_markdown.convert('<http://some-url>'),
+            '<p><a href="http://some-url?tack=on">'
+            'http://some-url?tack=on</a></p>\n')
+        # Just shows relative URLs in autolinks can't work anyway
+        # (can't tell from HTML tags, really):
+        self.assertEqual(
+            self.resolve_url_markdown.convert('<relative/link>'),
+            '<p><relative/link></p>\n')
+                
+
 
 #---- internal support stuff
 
@@ -563,3 +600,4 @@ def test_cases():
     yield PHPMarkdownExtraTestCase
     yield DirectTestCase
     yield DocTestsTestCase
+    yield APITestsTestCase
