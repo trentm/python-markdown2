@@ -3,15 +3,7 @@
 
 """Perf utility functions"""
 
-import os
-from os.path import basename
 import sys
-import md5
-import re
-import stat
-import textwrap
-import types
-from pprint import pprint, pformat
 
 
 # Global dict for holding specific hotshot profilers
@@ -45,7 +37,7 @@ def hotshotit(func):
     def wrapper(*args, **kw):
         import hotshot
         global hotshotProfilers
-        prof_name = func.func_name+".prof"
+        prof_name = "hotshot_%s.prof" % args[0]
         profiler = hotshotProfilers.get(prof_name)
         if profiler is None:
             profiler = hotshot.Profile(prof_name)
