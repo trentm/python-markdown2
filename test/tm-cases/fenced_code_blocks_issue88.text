@@ -1,0 +1,6 @@
+```python
+def foo():
+    print "hi"
+
+    print "bye"
+```
