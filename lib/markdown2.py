@@ -1252,6 +1252,11 @@ class Markdown(object):
             i += 1
         return i
 
+    def _delete_head_str(content, head_str):
+        while content.startswith(head_str):
+            content = content[len(head_str):]
+        return content
+
     def _extract_url_and_title(self, text, start):
         """Extracts the url and (optional) title from the tail of a link"""
         # text[start] equals the opening parenthesis
@@ -1269,6 +1274,14 @@ class Markdown(object):
         url, title = text[idx:match.start()], match.group("title")
         if has_anglebrackets:
             url = self._strip_anglebrackets.sub(r'\1', url)
+
+        #filter xss
+        url = url.replace('"', '').replace("'", "")
+        url = url.lower()
+        filter_strs = ['javascript:', 'data:']
+        for f_str in filter_strs:
+            url = _delete_head_str(url, f_str)
+
         return url, title, end_idx
 
     _safe_protocols = re.compile(r'(https?|ftp):', re.I)
