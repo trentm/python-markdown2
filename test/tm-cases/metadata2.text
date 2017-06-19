@@ -11,3 +11,5 @@ another: example
 # The real text
 
 This should be parsed as before
+
+This should not be included in the metadata: test

@@ -444,8 +444,8 @@ class Markdown(object):
                 return text
             tail = metadata_split[1]
 
-        kv = re.findall(self._key_val_pat, text)
-        kvm = re.findall(self._key_val_block_pat, text)
+        kv = re.findall(self._key_val_pat, metadata_content)
+        kvm = re.findall(self._key_val_block_pat, metadata_content)
         kvm = [item.replace(": >\n", ":", 1) for item in kvm]
 
         for item in kv + kvm:
