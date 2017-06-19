@@ -3,6 +3,7 @@
 ## python-markdown2 2.3.5 (not yet released)
 
 - [pull #238] Fenced code blocks lang with leading space
+- [pull #260] Search for items only within metadata header
 
 
 ## python-markdown2 2.3.4
