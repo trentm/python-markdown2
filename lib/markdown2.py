@@ -102,10 +102,7 @@ __author__ = "Trent Mick"
 import sys
 import re
 import logging
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import md5
+from hashlib import sha256
 import optparse
 from random import random, randint
 import codecs
@@ -145,7 +142,7 @@ DEFAULT_TAB_WIDTH = 4
 
 SECRET_SALT = bytes(randint(0, 1000000))
 def _hash_text(s):
-    return 'md5-' + md5(SECRET_SALT + s.encode("utf-8")).hexdigest()
+    return 'sha256-' + sha256(SECRET_SALT + s.encode("utf-8")).hexdigest()
 
 # Table of hash values for escaped characters:
 g_escape_table = dict([(ch, _hash_text(ch))
