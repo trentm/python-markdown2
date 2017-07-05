@@ -1,0 +1,28 @@
+```cpp
+here is some cpp code
+```
+
+```lang-cpp
+some lang-cpp code
+```
+
+```language-cpp
+and some language-cpp code
+```
+
+```nohighlight
+some code without highlighting
+```
+
+That's using the *fenced-code-blocks* and *highlightjs-lang* extra.
+
+Here is an empty one (just to check):
+
+```cpp
+```
+
+Here is one at the end of the file:
+
+```cpp
+    is indentation maintained?
+```
