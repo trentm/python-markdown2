@@ -141,8 +141,10 @@ DEFAULT_TAB_WIDTH = 4
 
 
 SECRET_SALT = bytes(randint(0, 1000000))
+# MD5 function was previously used for this; the "md5" prefix was kept for
+# backwards compatibility.
 def _hash_text(s):
-    return 'sha256-' + sha256(SECRET_SALT + s.encode("utf-8")).hexdigest()
+    return 'md5-' + sha256(SECRET_SALT + s.encode("utf-8")).hexdigest()[32:]
 
 # Table of hash values for escaped characters:
 g_escape_table = dict([(ch, _hash_text(ch))
