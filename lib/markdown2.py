@@ -52,6 +52,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
   the header text.
+* highlightjs-lang: Allows specifying the language which used for syntax
+  highlighting when using fenced-code-blocks and highlightjs.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
   string to use for a "class" tag attribute. Currently only supports "img",
   "table", "pre" and "code" tags. Add an issue if you require this for other
@@ -1752,8 +1754,9 @@ class Markdown(object):
                 lexer_name = lexer_name[3:].strip()
                 codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
                 formatter_opts = self.extras['code-color'] or {}
-
-        if lexer_name:
+        
+        # Use pygments only if not using the highlightjs-lang extra
+        if lexer_name and "highlightjs-lang" not in self.extras:
             def unhash_code(codeblock):
                 for key, sanitized in list(self.html_spans.items()):
                     codeblock = codeblock.replace(key, sanitized)
@@ -1774,7 +1777,12 @@ class Markdown(object):
 
         codeblock = self._encode_code(codeblock)
         pre_class_str = self._html_class_str_from_tag("pre")
-        code_class_str = self._html_class_str_from_tag("code")
+
+        if "highlightjs-lang" in self.extras and lexer_name:
+            code_class_str = ' class="%s"' % lexer_name
+        else:
+            code_class_str = self._html_class_str_from_tag("code")
+
         return "\n\n<pre%s><code%s>%s\n</code></pre>\n\n" % (
             pre_class_str, code_class_str, codeblock)
 
