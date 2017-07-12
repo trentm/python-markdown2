@@ -4,6 +4,7 @@
 
 - [pull #238] Fenced code blocks lang with leading space
 - [pull #260] Search for items only within metadata header
+- [pull #264] highlightjs language class support
 
 
 ## python-markdown2 2.3.4
