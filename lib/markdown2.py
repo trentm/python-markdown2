@@ -2482,7 +2482,6 @@ def _xml_escape_attr(attr, skip_single_quote=True):
     the tag attribute is surrounded by double quotes.
     """
     escaped = (attr
-        .replace('&', '&amp;')
         .replace('"', '&quot;')
         .replace('<', '&lt;')
         .replace('>', '&gt;'))
