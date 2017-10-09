@@ -152,6 +152,10 @@ def _hash_text(s):
 g_escape_table = dict([(ch, _hash_text(ch))
     for ch in '\\`*_{}[]()>#+-.!'])
 
+# Ampersand-encoding based entirely on Nat Irons's Amputator MT plugin:
+#   http://bumppo.net/projects/amputator/
+_AMPERSAND_RE = re.compile(r'&(?!#?[xX]?(?:[0-9a-fA-F]+|\w+);)')
+
 
 # ---- exceptions
 class MarkdownError(Exception):
@@ -2093,16 +2097,13 @@ class Markdown(object):
         else:
             return text
 
-    # Ampersand-encoding based entirely on Nat Irons's Amputator MT plugin:
-    #   http://bumppo.net/projects/amputator/
-    _ampersand_re = re.compile(r'&(?!#?[xX]?(?:[0-9a-fA-F]+|\w+);)')
     _naked_lt_re = re.compile(r'<(?![a-z/?\$!])', re.I)
     _naked_gt_re = re.compile(r'''(?<![a-z0-9?!/'"-])>''', re.I)
 
     def _encode_amps_and_angles(self, text):
         # Smart processing for ampersands and angle brackets that need
         # to be encoded.
-        text = self._ampersand_re.sub('&amp;', text)
+        text = _AMPERSAND_RE.sub('&amp;', text)
 
         # Encode naked <'s
         text = self._naked_lt_re.sub('&lt;', text)
@@ -2481,8 +2482,9 @@ def _xml_escape_attr(attr, skip_single_quote=True):
     By default this doesn't bother with escaping `'` to `&#39;`, presuming that
     the tag attribute is surrounded by double quotes.
     """
+    escaped = _AMPERSAND_RE.sub('&amp;', attr)
+
     escaped = (attr
-        .replace('&', '&amp;')
         .replace('"', '&quot;')
         .replace('<', '&lt;')
         .replace('>', '&gt;'))
