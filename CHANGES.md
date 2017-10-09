@@ -6,6 +6,7 @@
 - [pull #260] Search for items only within metadata header
 - [pull #264] highlightjs language class support
 - [pull #265] FIPS compliance
+- [pull #274] Fix for double amp replacement inside link title
 
 
 ## python-markdown2 2.3.4
