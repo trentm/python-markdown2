@@ -241,7 +241,7 @@ class Markdown(object):
                 extras = dict([(e, None) for e in extras])
             self.extras.update(extras)
         assert isinstance(self.extras, dict)
-        if "toc" in self.extras and "header-ids" not in self.extras:
+        if ("toc" in self.extras or "inline-toc" in self.extras) and "header-ids" not in self.extras:
             self.extras["header-ids"] = None   # "toc" implies "header-ids"
         self._instance_extras = self.extras.copy()
 
@@ -391,8 +391,20 @@ class Markdown(object):
         text += "\n"
 
         rv = UnicodeWithAttrs(text)
-        if "toc" in self.extras:
+        if ("toc" in self.extras or "inline-toc" in self.extras):
+            # Generate TOC HTML as a property to be able to hijack it in "inline-toc" for subsctitution
+            # TODO (Tomas Hubelbauer): See about using that as a static method without a need for a throwaway instance.
             rv._toc = self._toc
+        if "inline-toc" in self.extras:
+            if self._toc[0] is None:
+                rv = UnicodeWithAttrs(rv.toc_html + text)
+            else:
+                (level, id, name) = self._toc[0]
+                # Need to use a regex and rely on the HTML structure, tracking the regex's `end()` across all the HTML transformations would be extremely unreliable
+                # TODO (Tomas Hubelbauer): Consider looser regex which allows for more attributes in order to to find heading even when more extras add attributes to it (future-proof)
+                pattern = r"\<h{} id=[\"\']{}[\"\']\>{}<\/h{}\>".format(level, id, re.escape(name), level)
+                text = re.sub(pattern, "\g<0>" + rv.toc_html, text)
+                rv = UnicodeWithAttrs(text)
         if "metadata" in self.extras:
             rv.metadata = self.metadata
         return rv
@@ -1540,7 +1552,7 @@ class Markdown(object):
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
         html = self._run_span_gamut(header_group)
-        if "toc" in self.extras and header_id:
+        if ("toc" in self.extras or "inline-toc" in self.extras) and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
