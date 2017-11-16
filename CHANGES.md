@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.6 (not yet released)
 
-(nothing yet)
+- [pull #282] Add TOC depth option
 
 
 ## python-markdown2 2.3.5
