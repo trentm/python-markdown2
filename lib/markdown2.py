@@ -243,6 +243,10 @@ class Markdown(object):
         assert isinstance(self.extras, dict)
         if "toc" in self.extras and "header-ids" not in self.extras:
             self.extras["header-ids"] = None   # "toc" implies "header-ids"
+            if self.extras["toc"] is None:
+                self._toc_depth = 6
+            else:
+                self._toc_depth = self.extras["toc"].get("depth", 6)
         self._instance_extras = self.extras.copy()
 
         self.link_patterns = link_patterns
@@ -1500,6 +1504,8 @@ class Markdown(object):
 
     _toc = None
     def _toc_add_entry(self, level, id, name):
+        if level > self._toc_depth:
+            return
         if self._toc is None:
             self._toc = []
         self._toc.append((level, id, self._unescape_special_chars(name)))

@@ -1,0 +1,13 @@
+<ul>
+  <li><a href="#readme-for-blah">README for Blah</a>
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#the-meat">The Meat</a>
+    <ul>
+      <li><a href="#beef">Beef</a></li>
+      <li><a href="#chicken">Chicken</a></li>
+      <li><a href="#pork">Pork</a></li>
+    </ul></li>
+  </ul></li>
+  <li><a href="#at-the-top-level-again">At the <em>top</em> level again!?</a></li>
+</ul>
