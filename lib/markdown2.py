@@ -396,7 +396,7 @@ class Markdown(object):
             # Use a regex and rely on the HTML structure as opposed to tracking the heading regex's `end()` across all the HTML transformations (unreliable)
             # TODO (Tomas Hubelbauer): Consider looser regex which allows for more attributes in order to to find heading even when more extras add attributes to it (future-proof)
             pattern = r"\<h{} id=[\"\']{}[\"\']\>{}<\/h{}\>".format(level, id, re.escape(name), level)
-            text = re.sub(pattern, "\g<0>\n" + toc_html(self._toc), text)
+            text = re.sub(pattern, "\g<0>\n" + calculate_toc_html(self._toc), text)
         
         rv = UnicodeWithAttrs(text)
         if ("toc" in self.extras or "inline-toc" in self.extras):
@@ -2230,7 +2230,7 @@ class MarkdownWithExtras(Markdown):
 
 # ---- internal support functions
 
-def toc_html(toc):
+def calculate_toc_html(toc):
     """Return the HTML for the current TOC.
 
     This expects the `_toc` attribute to have been set on this instance.
@@ -2270,7 +2270,9 @@ class UnicodeWithAttrs(unicode):
     """
     metadata = None
     _toc = None
-    toc_html = property(toc_html(_toc))
+    def toc_html(self):
+        return calculate_toc_html(self._toc)
+    toc_html = property(toc_html)
 
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
 _slugify_strip_re = re.compile(r'[^\w\s-]')
