@@ -90,6 +90,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * wiki-tables: Google Code Wiki-style tables. See
   <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
 * xml: Passes one-liner processing instructions and namespaced XML tags.
+* strike: text inside of double tilde is ~~strikethrough~~
 """
 
 # Dev Notes:
