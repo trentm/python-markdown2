@@ -77,6 +77,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   and ellipses.
 * spoiler: A special kind of blockquote commonly hidden behind a
   click on SO. Syntax per <http://meta.stackexchange.com/a/72878>.
+* strike: text inside of double tilde is ~~strikethrough~~
 * tag-friendly: Requires atx style headers to have a space between the # and
   the header text. Useful for applications that require twitter style tags to
   pass through the parser.
@@ -90,7 +91,6 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * wiki-tables: Google Code Wiki-style tables. See
   <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
 * xml: Passes one-liner processing instructions and namespaced XML tags.
-* strike: text inside of double tilde is ~~strikethrough~~
 """
 
 # Dev Notes:
