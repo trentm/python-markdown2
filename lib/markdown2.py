@@ -242,7 +242,7 @@ class Markdown(object):
                 extras = dict([(e, None) for e in extras])
             self.extras.update(extras)
         assert isinstance(self.extras, dict)
-        if "toc" in self.extras and "header-ids" not in self.extras:
+        if ("toc" in self.extras or "inline-toc" in self.extras) and "header-ids" not in self.extras:
             self.extras["header-ids"] = None   # "toc" implies "header-ids"
             if self.extras["toc"] is None:
                 self._toc_depth = 6
@@ -395,8 +395,16 @@ class Markdown(object):
 
         text += "\n"
 
+        # Insert TOC HTML into the MD HTML after the first heading element if any headings are present.
+        if ("inline-toc" in self.extras and self._toc[0] is not None):
+            (level, id, name) = self._toc[0]
+            # Use a regex and rely on the HTML structure as opposed to tracking the heading regex's `end()` across all the HTML transformations (unreliable)
+            # TODO (Tomas Hubelbauer): Consider looser regex which allows for more attributes in order to to find heading even when more extras add attributes to it (future-proof)
+            pattern = r"\<h{} id=[\"\']{}[\"\']\>{}<\/h{}\>".format(level, id, re.escape(name), level)
+            text = re.sub(pattern, "\g<0>\n" + calculate_toc_html(self._toc), text)
+        
         rv = UnicodeWithAttrs(text)
-        if "toc" in self.extras:
+        if ("toc" in self.extras or "inline-toc" in self.extras):
             rv._toc = self._toc
         if "metadata" in self.extras:
             rv.metadata = self.metadata
@@ -1547,7 +1555,7 @@ class Markdown(object):
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
         html = self._run_span_gamut(header_group)
-        if "toc" in self.extras and header_id:
+        if ("toc" in self.extras or "inline-toc" in self.extras) and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
@@ -2229,6 +2237,39 @@ class MarkdownWithExtras(Markdown):
 
 # ---- internal support functions
 
+def calculate_toc_html(toc):
+    """Return the HTML for the current TOC.
+
+    This expects the `_toc` attribute to have been set on this instance.
+    """
+    if toc is None:
+        return None
+
+    def indent():
+        return '  ' * (len(h_stack) - 1)
+    lines = []
+    h_stack = [0]   # stack of header-level numbers
+    for level, id, name in toc:
+        if level > h_stack[-1]:
+            lines.append("%s<ul>" % indent())
+            h_stack.append(level)
+        elif level == h_stack[-1]:
+            lines[-1] += "</li>"
+        else:
+            while level < h_stack[-1]:
+                h_stack.pop()
+                if not lines[-1].endswith("</li>"):
+                    lines[-1] += "</li>"
+                lines.append("%s</ul></li>" % indent())
+        lines.append('%s<li><a href="#%s">%s</a>' % (
+            indent(), id, name))
+    while len(h_stack) > 1:
+        h_stack.pop()
+        if not lines[-1].endswith("</li>"):
+            lines[-1] += "</li>"
+        lines.append("%s</ul>" % indent())
+    return '\n'.join(lines) + '\n'
+
 class UnicodeWithAttrs(unicode):
     """A subclass of unicode used for the return value of conversion to
     possibly attach some attributes. E.g. the "toc_html" attribute when
@@ -2237,37 +2278,7 @@ class UnicodeWithAttrs(unicode):
     metadata = None
     _toc = None
     def toc_html(self):
-        """Return the HTML for the current TOC.
-
-        This expects the `_toc` attribute to have been set on this instance.
-        """
-        if self._toc is None:
-            return None
-
-        def indent():
-            return '  ' * (len(h_stack) - 1)
-        lines = []
-        h_stack = [0]   # stack of header-level numbers
-        for level, id, name in self._toc:
-            if level > h_stack[-1]:
-                lines.append("%s<ul>" % indent())
-                h_stack.append(level)
-            elif level == h_stack[-1]:
-                lines[-1] += "</li>"
-            else:
-                while level < h_stack[-1]:
-                    h_stack.pop()
-                    if not lines[-1].endswith("</li>"):
-                        lines[-1] += "</li>"
-                    lines.append("%s</ul></li>" % indent())
-            lines.append('%s<li><a href="#%s">%s</a>' % (
-                indent(), id, name))
-        while len(h_stack) > 1:
-            h_stack.pop()
-            if not lines[-1].endswith("</li>"):
-                lines[-1] += "</li>"
-            lines.append("%s</ul>" % indent())
-        return '\n'.join(lines) + '\n'
+        return calculate_toc_html(self._toc)
     toc_html = property(toc_html)
 
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
