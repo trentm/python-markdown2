@@ -3,6 +3,7 @@
 ## python-markdown2 2.3.6 (not yet released)
 
 - [pull #282] Add TOC depth option
+- [pull #283] Fix to add TOC html to output via CLI
 
 
 ## python-markdown2 2.3.5
