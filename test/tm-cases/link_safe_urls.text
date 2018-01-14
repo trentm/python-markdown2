@@ -1,0 +1,11 @@
+[Safe link 1](https://www.example.com)
+
+[Safe link 2](http://www.example.com)
+
+[Safe link 3](ftp://www.example.com)
+
+[Safe link 4](#anchor)
+
+[Unsafe link 1](unknown://www.example.com)
+
+[Unsafe link 2](example)
