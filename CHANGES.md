@@ -4,6 +4,7 @@
 
 - [pull #282] Add TOC depth option
 - [pull #283] Fix to add TOC html to output via CLI
+- [pull #284] Do not remove anchors in safe_mode
 
 
 ## python-markdown2 2.3.5
