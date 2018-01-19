@@ -1406,7 +1406,8 @@ class Markdown(object):
                         curr_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[url_end_idx:]
                     elif start_idx >= anchor_allowed_pos:
-                        if self.safe_mode and not self._safe_protocols.match(url):
+                        safe_link = self._safe_protocols.match(url) or url.startswith('#')
+                        if self.safe_mode and not safe_link:
                             result_head = '<a href="#"%s>' % (title_str)
                         else:
                             result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
