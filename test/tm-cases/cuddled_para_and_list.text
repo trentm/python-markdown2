@@ -22,3 +22,11 @@ I suggest using version
     8. Oops, now this line is treated
 as a sub-list.
 
+List with single item:
+* bullet1
+
+Another list with single item:
+  * bullet1
+
+Yet, another list with single item:
+   * bullet1
