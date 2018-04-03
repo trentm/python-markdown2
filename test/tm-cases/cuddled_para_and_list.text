@@ -15,10 +15,10 @@ And these in order:
 3. bullet3
 
 Here is an asterisk,
-* What do you think
+    * What do you think
 about it?
 
 I suggest using version
-8. Oops, now this line is treated
+    8. Oops, now this line is treated
 as a sub-list.
 
