@@ -1544,6 +1544,7 @@ class Markdown(object):
             # Setext header
             n = {"=": 1, "-": 2}[match.group(3)[0]]
             header_group = match.group(2)
+            return match.group(1)
         else:
             # atx header
             n = len(match.group(5))
