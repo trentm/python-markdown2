@@ -1540,7 +1540,9 @@ class Markdown(object):
     _h_re_tag_friendly = re.compile(_h_re_base % '+', re.X | re.M)
 
     def _h_sub(self, match):
-        if match.group(1) is not None:
+        if match.group(1) is not None and match.group(3) == "-":
+            return match.group(1)
+        elif match.group(1) is not None:
             # Setext header
             n = {"=": 1, "-": 2}[match.group(3)[0]]
             header_group = match.group(2)
