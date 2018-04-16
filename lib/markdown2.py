@@ -1109,8 +1109,6 @@ class Markdown(object):
         # These are all the transformations that occur *within* block-level
         # tags like paragraphs, headers, and list items.
 
-        text = self._do_code_spans(text)
-
         text = self._escape_special_chars(text)
 
         # Process anchor and image tags.
@@ -1120,6 +1118,8 @@ class Markdown(object):
         # Must come after _do_links(), because you can use < and >
         # delimiters in inline links like [this](<url>).
         text = self._do_auto_links(text)
+
+        text = self._do_code_spans(text)
 
         if "link-patterns" in self.extras:
             text = self._do_link_patterns(text)
