@@ -1,0 +1,5 @@
+{"extras": ["link-patterns"],
+ "link_patterns": [
+    (re.compile("recipe\s+(\d+)", re.I), r"http://code.activestate.com/recipes/\1/"),
+ ],
+}

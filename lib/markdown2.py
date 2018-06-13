@@ -1114,15 +1114,15 @@ class Markdown(object):
         text = self._escape_special_chars(text)
 
         # Process anchor and image tags.
+        if "link-patterns" in self.extras:
+            text = self._do_link_patterns(text)
+
         text = self._do_links(text)
 
         # Make links out of things like `<http://example.com/>`
         # Must come after _do_links(), because you can use < and >
         # delimiters in inline links like [this](<url>).
         text = self._do_auto_links(text)
-
-        if "link-patterns" in self.extras:
-            text = self._do_link_patterns(text)
 
         text = self._encode_amps_and_angles(text)
 
@@ -2190,13 +2190,6 @@ class Markdown(object):
         return addr
 
     def _do_link_patterns(self, text):
-        """Caveat emptor: there isn't much guarding against link
-        patterns being formed inside other standard Markdown links, e.g.
-        inside a [link def][like this].
-
-        Dev Notes: *Could* consider prefixing regexes with a negative
-        lookbehind assertion to attempt to guard against this.
-        """
         link_from_hash = {}
         for regex, repl in self.link_patterns:
             replacements = []
@@ -2207,6 +2200,15 @@ class Markdown(object):
                     href = match.expand(repl)
                 replacements.append((match.span(), href))
             for (start, end), href in reversed(replacements):
+
+                # Do not match against links inside brackets.
+                if text[start - 1:start] == '[' and text[end:end + 1] == ']':
+                    continue
+
+                # Do not match against links in the standard markdown syntax.
+                if text[start - 2:start] == '](' or text[end:end + 2] == '")':
+                    continue
+
                 escaped_href = (
                     href.replace('"', '&quot;')  # b/c of attr quote
                         # To avoid markdown <em> and <strong>:
