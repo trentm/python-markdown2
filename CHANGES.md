@@ -7,6 +7,7 @@
 - [pull #284] Do not remove anchors in safe_mode
 - [pull #288] fixing cuddled-lists with a single list item
 - [pull #292] Fix Wrong rendering of last list element
+- [pull #295] link-patterns fix
 
 
 ## python-markdown2 2.3.5
