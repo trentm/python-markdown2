@@ -48,26 +48,26 @@ easier for you, you can just copy that file to somewhere on your PythonPath
 # Quick Usage
 
 As a module:
+```python
+>>> import markdown2
+>>> markdown2.markdown("*boo!*")  # or use `html = markdown_path(PATH)`
+u'<p><em>boo!</em></p>\n'
 
-    >>> import markdown2
-    >>> markdown2.markdown("*boo!*")  # or use `html = markdown_path(PATH)`
-    u'<p><em>boo!</em></p>\n'
-
-    >>> from markdown2 import Markdown
-    >>> markdowner = Markdown()
-    >>> markdowner.convert("*boo!*")
-    u'<p><em>boo!</em></p>\n'
-    >>> markdowner.convert("**boom!**")
-    u'<p><strong>boom!</strong></p>\n'
-
+>>> from markdown2 import Markdown
+>>> markdowner = Markdown()
+>>> markdowner.convert("*boo!*")
+u'<p><em>boo!</em></p>\n'
+>>> markdowner.convert("**boom!**")
+u'<p><strong>boom!</strong></p>\n'
+```
 As a script (CLI):
-
-    $ python markdown2.py foo.md > foo.html
-
+```shell
+$ python markdown2.py foo.md > foo.html
+```
 I think pip-based installation will enable this as well:
-
-    $ markdown2 foo.md > foo.html
-
+```shell
+$ markdown2 foo.md > foo.html
+```
 See the [project wiki](https://github.com/trentm/python-markdown2/wiki),
 [lib/markdown2.py](https://github.com/trentm/python-markdown2/blob/master/lib/markdown2.py)
 docstrings and/or `python markdown2.py --help` for more details.
@@ -79,15 +79,15 @@ Many Markdown processors include support for additional optional syntax
 (often called "extensions") and markdown2 is no exception. With markdown2 these
 are called "extras".  Using the "footnotes" extra as an example, here is how
 you use an extra ... as a module:
-
-    $ python markdown2.py --extras footnotes foo.md > foo.html
-
+```shell
+$ python markdown2.py --extras footnotes foo.md > foo.html
+```
 as a script:
-
-    >>> import markdown2
-    >>> markdown2.markdown("*boo!*", extras=["footnotes"])
-    u'<p><em>boo!</em></p>\n'
-
+```shell
+>>> import markdown2
+>>> markdown2.markdown("*boo!*", extras=["footnotes"])
+u'<p><em>boo!</em></p>\n'
+```
 There are a number of currently implemented extras for tables, footnotes,
 syntax coloring of `<pre>`-blocks, auto-linking patterns, table of contents,
 Smarty Pants (for fancy quotes, dashes, etc.) and more. See the [Extras
@@ -121,9 +121,9 @@ We welcome pull requests from the community. Please take a look at the [TODO](ht
 # Test Suite
 
 This markdown implementation passes a fairly extensive test suite. To run it:
-
-    make test
-
+```shell
+make test
+```
 The crux of the test suite is a number of "cases" directories -- each with a
 set of matching .text (input) and .html (expected output) files. These are:
 
