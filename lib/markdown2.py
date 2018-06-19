@@ -5,7 +5,7 @@
 
 from __future__ import generators
 
-r"""A fast and complete Python implementation of Markdown.
+"""A fast and complete Python implementation of Markdown.
 
 [from http://daringfireball.net/projects/markdown/]
 > Markdown is a text-to-HTML filter; it translates an easy-to-read /
