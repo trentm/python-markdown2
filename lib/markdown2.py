@@ -1292,7 +1292,8 @@ class Markdown(object):
             url = self._strip_anglebrackets.sub(r'\1', url)
         return url, title, end_idx
 
-    _safe_protocols = re.compile(r'(https?|ftp):', re.I)
+    _safe_protocols = re.compile(r'(https?|ftp|mailto|tel):', re.I)
+
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
 
