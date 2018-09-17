@@ -440,7 +440,7 @@ class Markdown(object):
     #
     #   # header
     _meta_data_pattern = re.compile(r'^(?:---[\ \t]*\n)?(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)|([\S\w]+\s*:(?! >)[ \t]*.*\n?)(?:---[\ \t]*\n)?', re.MULTILINE)
-    _key_val_pat = re.compile("[\S\w]+\s*:(?! >)[ \t]*.*\n?", re.MULTILINE)
+    _key_val_pat = re.compile(r"[\S\w]+\s*:(?! >)[ \t]*.*\n?", re.MULTILINE)
     # this allows key: >
     #                   value
     #                   conutiues over multiple lines
@@ -998,9 +998,9 @@ class Markdown(object):
 
     def _table_sub(self, match):
         trim_space_re = '^[ \t\n]+|[ \t\n]+$'
-        trim_bar_re = '^\||\|$'
-        split_bar_re = '^\||(?<!\\\\)\|'
-        escape_bar_re = '\\\\\|'
+        trim_bar_re = r'^\||\|$'
+        split_bar_re = r'^\||(?<!\\)\|'
+        escape_bar_re = r'\\\|'
 
         head, underline, body = match.groups()
 
