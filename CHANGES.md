@@ -8,6 +8,9 @@
 - [pull #288] fixing cuddled-lists with a single list item
 - [pull #292] Fix Wrong rendering of last list element
 - [pull #295] link-patterns fix
+- [pull #300] Replace a deprecated method
+- [pull #301] DeprecationWarning: invalid escape sequence
+- [pull #302] Fix "make test" in Python 3
 
 
 ## python-markdown2 2.3.5
