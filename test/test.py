@@ -40,7 +40,7 @@ if __name__ == "__main__":
     try:
         import pygments
     except ImportError:
-        log.warn("skipping pygments tests ('pygments' module not found)")
+        log.warning("skipping pygments tests ('pygments' module not found)")
         default_tags.append("-pygments")
 
     retval = testlib.harness(testdir_from_ns=testdir_from_ns,
