@@ -250,12 +250,12 @@ def testmods_from_testdir(testdir):
                 sys.path.remove(testabsdir)
         except TestSkipped:
             _, ex, _ = sys.exc_info()
-            log.warn("'%s' module skipped: %s", testmod_name, ex)
+            log.warning("'%s' module skipped: %s", testmod_name, ex)
         except Exception:
             _, ex, _ = sys.exc_info()
-            log.warn("could not import test module '%s': %s (skipping, "
-                     "run with '-d' for full traceback)",
-                     testmod_path, ex)
+            log.warning("could not import test module '%s': %s (skipping, "
+                        "run with '-d' for full traceback)",
+                        testmod_path, ex)
             if log.isEnabledFor(logging.DEBUG):
                 traceback.print_exc()
         else:
@@ -296,9 +296,9 @@ def testcases_from_testmod(testmod):
             testmod_path = testmod.__file__
             if testmod_path.endswith(".pyc"):
                 testmod_path = testmod_path[:-1]
-            log.warn("error running test_cases() in '%s': %s (skipping, "
-                     "run with '-d' for full traceback)",
-                     testmod_path, ex)
+            log.warning("error running test_cases() in '%s': %s (skipping, "
+                        "run with '-d' for full traceback)",
+                        testmod_path, ex)
             if log.isEnabledFor(logging.DEBUG):
                 traceback.print_exc()
     else:
@@ -337,9 +337,9 @@ def tests_from_manifest(testdir_from_ns):
                     testmod_path = testmod.__file__
                     if testmod_path.endswith(".pyc"):
                         testmod_path = testmod_path[:-1]
-                    log.warn("'test_suite_class' of '%s' module is not a "
-                             "subclass of 'unittest.TestSuite': ignoring",
-                             testmod_path)
+                    log.warning("'test_suite_class' of '%s' module is not a "
+                                "subclass of 'unittest.TestSuite': ignoring",
+                                testmod_path)
             else:
                 testsuite_class = None
             for testcase in testcases_from_testmod(testmod):
