@@ -3,6 +3,8 @@
 # Run the test suite against all the Python versions we can find.
 #
 
+from __future__ import print_function
+
 import sys
 import os
 from os.path import dirname, abspath, join
@@ -46,7 +48,7 @@ def testall():
             # Don't support Python < 2.3.
             continue
         ver_str = "%s.%s" % ver
-        print "-- test with Python %s (%s)" % (ver_str, python)
+        print("-- test with Python %s (%s)" % (ver_str, python))
         assert ' ' not in python
         rv = os.system("MACOSX_DEPLOYMENT_TARGET= %s test.py -- -knownfailure" % python)
         if rv:
