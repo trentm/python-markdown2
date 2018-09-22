@@ -2,8 +2,8 @@
 
 import os
 import sys
-import distutils
-from distutils.core import setup
+
+from setuptools import setup
 
 _top_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_top_dir, "lib"))
