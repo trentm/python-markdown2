@@ -3,8 +3,6 @@
 # Copyright (c) 2007-2008 ActiveState Corp.
 # License: MIT (http://www.opensource.org/licenses/mit-license.php)
 
-from __future__ import generators
-
 r"""A fast and complete Python implementation of Markdown.
 
 [from http://daringfireball.net/projects/markdown/]
@@ -116,11 +114,6 @@ except ImportError:
 
 
 # ---- Python version compat
-
-if sys.version_info[:2] < (2, 4):
-    def reversed(sequence):
-        for i in sequence[::-1]:
-            yield i
 
 # Use `bytes` for byte strings and `unicode` for unicode strings (str in Py3).
 if sys.version_info[0] <= 2:

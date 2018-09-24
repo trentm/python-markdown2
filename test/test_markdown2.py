@@ -300,8 +300,6 @@ versions of markdown2.py this was pathologically slow:</p>
 
 class DocTestsTestCase(unittest.TestCase):
     def test_api(self):
-        if sys.version_info[:2] < (2,4):
-            raise TestSkipped("no DocFileTest in Python <=2.3")
         test = doctest.DocFileTest("api.doctests")
         test.runTest()
 

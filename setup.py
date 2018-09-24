@@ -37,14 +37,6 @@ Topic :: Text Processing :: Filters
 Topic :: Text Processing :: Markup :: HTML
 """
 
-if sys.version_info < (2, 3):
-    # Distutils before Python 2.3 doesn't accept classifiers.
-    _setup = setup
-    def setup(**kwargs):
-        if kwargs.has_key("classifiers"):
-            del kwargs["classifiers"]
-        _setup(**kwargs)
-
 script = (sys.platform == "win32" and "lib\\markdown2.py" or "bin/markdown2")
 
 setup(
