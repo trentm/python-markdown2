@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.3.6 (not yet released)
+## python-markdown2 2.3.6
 
 - [pull #282] Add TOC depth option
 - [pull #283] Fix to add TOC html to output via CLI
