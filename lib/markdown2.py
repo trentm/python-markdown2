@@ -1203,7 +1203,7 @@ class Markdown(object):
                 self.html_spans[key] = sanitized
                 tokens.append(key)
             else:
-                tokens.append(token)
+                tokens.append(self._encode_incomplete_tags(token))
             is_html_markup = not is_html_markup
         return ''.join(tokens)
 
@@ -2139,6 +2139,14 @@ class Markdown(object):
         # Markdown) don't do this.
         text = self._naked_gt_re.sub('&gt;', text)
         return text
+
+    _incomplete_tags_re = re.compile("<(/?\w+\s+)")
+
+    def _encode_incomplete_tags(self, text):
+        if self.safe_mode not in ("replace", "escape"):
+            return text
+            
+        return self._incomplete_tags_re.sub("&lt;\\1", text)
 
     def _encode_backslash_escapes(self, text):
         for ch, escape in list(self._escape_table.items()):
