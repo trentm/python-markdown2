@@ -11,6 +11,7 @@
 - [pull #300] Replace a deprecated method
 - [pull #301] DeprecationWarning: invalid escape sequence
 - [pull #302] Fix "make test" in Python 3
+- [pull #303] Fix CVE-2018-5773
 
 
 ## python-markdown2 2.3.5
