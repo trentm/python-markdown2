@@ -3,8 +3,6 @@
 # Copyright (c) 2007-2008 ActiveState Corp.
 # License: MIT (http://www.opensource.org/licenses/mit-license.php)
 
-from __future__ import generators
-
 r"""A fast and complete Python implementation of Markdown.
 
 [from http://daringfireball.net/projects/markdown/]
@@ -109,6 +107,7 @@ from hashlib import sha256
 import optparse
 from random import random, randint
 import codecs
+from collections import defaultdict
 try:
     from urllib import quote_plus
 except ImportError:
@@ -116,11 +115,6 @@ except ImportError:
 
 
 # ---- Python version compat
-
-if sys.version_info[:2] < (2, 4):
-    def reversed(sequence):
-        for i in sequence[::-1]:
-            yield i
 
 # Use `bytes` for byte strings and `unicode` for unicode strings (str in Py3).
 if sys.version_info[0] <= 2:
@@ -273,7 +267,7 @@ class Markdown(object):
             self.footnotes = {}
             self.footnote_ids = []
         if "header-ids" in self.extras:
-            self._count_from_header_id = {}  # no `defaultdict` in Python 2.4
+            self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
             self.metadata = {}
 
@@ -1505,13 +1499,10 @@ class Markdown(object):
         header_id = _slugify(text)
         if prefix and isinstance(prefix, base_string_type):
             header_id = prefix + '-' + header_id
-        if header_id in self._count_from_header_id:
-            self._count_from_header_id[header_id] += 1
+
+        self._count_from_header_id[header_id] += 1
+        if 0 == len(header_id) or self._count_from_header_id[header_id] > 1:
             header_id += '-%s' % self._count_from_header_id[header_id]
-        else:
-            self._count_from_header_id[header_id] = 1
-            if 0 == len(header_id):
-                header_id += '-%s' % self._count_from_header_id[header_id]
 
         return header_id
 

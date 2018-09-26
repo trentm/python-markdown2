@@ -18,14 +18,9 @@ Intended Audience :: Developers
 License :: OSI Approved :: MIT License
 Programming Language :: Python
 Programming Language :: Python :: 2
-Programming Language :: Python :: 2.4
-Programming Language :: Python :: 2.5
 Programming Language :: Python :: 2.6
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.0
-Programming Language :: Python :: 3.1
-Programming Language :: Python :: 3.2
 Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
@@ -36,14 +31,6 @@ Topic :: Software Development :: Documentation
 Topic :: Text Processing :: Filters
 Topic :: Text Processing :: Markup :: HTML
 """
-
-if sys.version_info < (2, 3):
-    # Distutils before Python 2.3 doesn't accept classifiers.
-    _setup = setup
-    def setup(**kwargs):
-        if kwargs.has_key("classifiers"):
-            del kwargs["classifiers"]
-        _setup(**kwargs)
 
 script = (sys.platform == "win32" and "lib\\markdown2.py" or "bin/markdown2")
 

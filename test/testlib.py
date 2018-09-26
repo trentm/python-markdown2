@@ -343,15 +343,9 @@ def tests_from_manifest(testdir_from_ns):
             else:
                 testsuite_class = None
             for testcase in testcases_from_testmod(testmod):
-                try:
-                    yield Test(ns, testmod, testcase,
-                               testcase._testMethodName,
-                               testsuite_class)
-                except AttributeError:
-                    # Python 2.4 and older:
-                    yield Test(ns, testmod, testcase,
-                               testcase._TestCase__testMethodName,
-                               testsuite_class)
+                yield Test(ns, testmod, testcase,
+                            testcase._testMethodName,
+                            testsuite_class)
 
 def tests_from_manifest_and_tags(testdir_from_ns, tags):
     include_tags = [tag.lower() for tag in tags if not tag.startswith('-')]

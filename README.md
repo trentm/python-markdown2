@@ -13,7 +13,7 @@ was written to closely match the behaviour of the original Perl-implemented
 Markdown.pl. Markdown2 also comes with a number of extensions (called
 "extras") for things like syntax coloring, tables, header-ids. See the
 "Extra Syntax" section below. "markdown2" supports all Python versions
-from 2.4 to 3.3 (and pypy and jython, though I don't frequently test those).
+2.6+ or 3.3+ (and pypy and jython, though I don't frequently test those).
 
 There is another [Python
 markdown.py](https://pythonhosted.org/Markdown/). However, at
