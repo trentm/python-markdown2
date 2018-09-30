@@ -3,6 +3,7 @@
 ## python-markdown2 2.3.7 (not yet released)
 
 - [pull #306] Drop support for legacy Python versions
+- [pull #307] Fix syntax highlighting test cases that depend on Pygments output
 
 
 ## python-markdown2 2.3.6
