@@ -8,6 +8,6 @@ python:
   - "3.5"
   - "3.6"
 # command to install dependencies
-install: pip install Pygments==1.6
+install: pip install Pygments>=2.1.1
 # command to run tests
 script: make testone
