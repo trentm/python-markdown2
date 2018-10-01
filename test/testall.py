@@ -26,7 +26,7 @@ def _python_ver_from_python(python):
 
 def _gen_python_names():
     yield "python"
-    for ver in [(2,6), (2,7), (3,3), (3,4), (3,5), (3,6)]:
+    for ver in [(2,6), (2,7), (3,3), (3,4), (3,5), (3,6), (3,7)]:
         yield "python%d.%d" % ver
         if sys.platform == "win32":
             yield "python%d%d" % ver
