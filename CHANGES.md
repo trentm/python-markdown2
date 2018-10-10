@@ -4,6 +4,8 @@
 
 - [pull #306] Drop support for legacy Python versions
 - [pull #307] Fix syntax highlighting test cases that depend on Pygments output
+- [pull #308] Add support for Python 3.7
+- [pull #304] Add Wheel package support
 
 
 ## python-markdown2 2.3.6
