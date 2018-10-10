@@ -5,6 +5,7 @@ include CONTRIBUTORS.txt
 include CHANGES.md
 include Makefile
 include setup.py
+include setup.cfg
 
 include bin/markdown2
 include test/api.doctests
