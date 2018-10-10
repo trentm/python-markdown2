@@ -11,3 +11,4 @@ perf/tmp-*-cases
 sandbox/*.html
 __pycache__
 .tox
+*.egg-info
