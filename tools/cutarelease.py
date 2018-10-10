@@ -18,9 +18,7 @@ __version__ = '.'.join(map(str, __version_info__))
 
 import sys
 import os
-from os.path import join, dirname, normpath, abspath, exists, basename, splitext
-from glob import glob
-from pprint import pprint
+from os.path import exists, basename, splitext
 import re
 import codecs
 import logging
@@ -178,8 +176,11 @@ def cutarelease(project_name, version_files, dry_run=False):
             if dry_run:
                 log.info("skipping pypi publish (dry-run)")
             else:
-                run("%spython setup.py sdist --formats zip upload"
+                run("rm -rf dist")
+                run("%spython setup.py build"
                     % _setup_command_prefix())
+                run("twine upload dist/*")
+                run("rm -rf dist")
 
     # Commits to prepare for future dev and push.
     # - update changelog file
@@ -422,13 +423,7 @@ def parse_changelog(changes_path):
         template = "## 1.0.0 (not yet released)\n\n(nothing yet)\n"
         raise Error("changelog '%s' must have at least one section, "
             "suggestion:\n\n%s" % (changes_path, _indent(template)))
-    first_section_verline = sections[0][0]
     nyr = ' (not yet released)'
-    #if not first_section_verline.endswith(nyr):
-    #    eg = "## %s%s" % (first_section_verline, nyr)
-    #    raise Error("changelog '%s' top section must end with %r, "
-    #        "naive e.g.: '%s'" % (changes_path, nyr, eg))
-
     items = []
     for i, section in enumerate(sections):
         item = {
