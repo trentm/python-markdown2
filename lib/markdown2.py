@@ -236,8 +236,11 @@ class Markdown(object):
                 extras = dict([(e, None) for e in extras])
             self.extras.update(extras)
         assert isinstance(self.extras, dict)
-        if "toc" in self.extras and "header-ids" not in self.extras:
-            self.extras["header-ids"] = None   # "toc" implies "header-ids"
+
+        if "toc" in self.extras:
+            if "header-ids" not in self.extras:
+                self.extras["header-ids"] = None   # "toc" implies "header-ids"
+
             if self.extras["toc"] is None:
                 self._toc_depth = 6
             else:
