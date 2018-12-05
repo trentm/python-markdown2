@@ -109,7 +109,7 @@ def cutarelease(project_name, version_files, dry_run=False):
             "Are you sure you want cut a %s release?\n"
             "This will involved commits and a push." % version,
             default="no")
-        print "* * *"
+        print("* * *")
         if answer != "yes":
             log.info("user abort")
             return
@@ -133,7 +133,7 @@ def cutarelease(project_name, version_files, dry_run=False):
             "The changelog '%s' top section doesn't have the expected\n"
             "'%s' marker. Has this been released already?"
             % (changes_path, nyr), default="yes")
-        print "* * *"
+        print("* * *")
         if answer != "no":
             log.info("abort")
             return
@@ -163,7 +163,7 @@ def cutarelease(project_name, version_files, dry_run=False):
     # Optionally release.
     if exists("package.json"):
         answer = query_yes_no("\n* * *\nPublish to npm?", default="yes")
-        print "* * *"
+        print("* * *")
         if answer == "yes":
             if dry_run:
                 log.info("skipping npm publish (dry-run)")
@@ -171,7 +171,7 @@ def cutarelease(project_name, version_files, dry_run=False):
                 run('npm publish')
     elif exists("setup.py"):
         answer = query_yes_no("\n* * *\nPublish to pypi?", default="yes")
-        print "* * *"
+        print("* * *")
         if answer == "yes":
             if dry_run:
                 log.info("skipping pypi publish (dry-run)")
@@ -454,7 +454,7 @@ def parse_changelog(changes_path):
 
 ## {{{ http://code.activestate.com/recipes/577058/ (r2)
 def query_yes_no(question, default="yes"):
-    """Ask a yes/no question via raw_input() and return their answer.
+    """Ask a yes/no question via input() and return their answer.
 
     "question" is a string that is presented to the user.
     "default" is the presumed answer if the user just hits <Enter>.
@@ -476,7 +476,7 @@ def query_yes_no(question, default="yes"):
 
     while 1:
         sys.stdout.write(question + prompt)
-        choice = raw_input().lower()
+        choice = input().lower()
         if default is not None and choice == '':
             return default
         elif choice in valid.keys():
