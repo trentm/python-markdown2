@@ -7,6 +7,7 @@
 - [pull #308] Add support for Python 3.7
 - [pull #304] Add Wheel package support
 - [pull #312] Fix toc_depth initialization regression
+- [pull #315] XSS fix
 
 
 ## python-markdown2 2.3.6
