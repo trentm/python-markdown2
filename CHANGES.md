@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.3.8 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.3.7
 
 - [pull #306] Drop support for legacy Python versions
