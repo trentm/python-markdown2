@@ -1982,7 +1982,7 @@ class Markdown(object):
         text = text.replace(" . . . ", "&#8230;")
         text = text.replace(". . .", "&#8230;")
 
-        # TODO: See issue #150
+        # TODO: Temporary hack to fix https://github.com/trentm/python-markdown2/issues/150
         if "footnotes" in self.extras and "footnote-ref" in text:
             # Quotes in the footnote back ref get converted to "smart" quotes
             # Change them back here to ensure they work.
