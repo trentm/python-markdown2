@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.8 (not yet released)
 
-(nothing yet)
+- [pull #317] Temporary fix to issue #150
 
 
 ## python-markdown2 2.3.7
