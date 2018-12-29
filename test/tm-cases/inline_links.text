@@ -2,6 +2,8 @@ an inline [link](/url/)
 
 a [link "with" title](/url/ "title")
 
+an inline [link with `code`](/url/)
+
 an inline ![image link](/url/)
 
 an ![image "with" title](/url/ "title")
