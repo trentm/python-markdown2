@@ -1772,7 +1772,7 @@ class Markdown(object):
                 lexer_name = lexer_name[3:].strip()
                 codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
                 formatter_opts = self.extras['code-color'] or {}
-        
+
         # Use pygments only if not using the highlightjs-lang extra
         if lexer_name and "highlightjs-lang" not in self.extras:
             def unhash_code(codeblock):
@@ -2146,7 +2146,7 @@ class Markdown(object):
     def _encode_incomplete_tags(self, text):
         if self.safe_mode not in ("replace", "escape"):
             return text
-            
+
         return self._incomplete_tags_re.sub("&lt;\\1", text)
 
     def _encode_backslash_escapes(self, text):
@@ -2216,6 +2216,11 @@ class Markdown(object):
 
                 # Do not match against links in the standard markdown syntax.
                 if text[start - 2:start] == '](' or text[end:end + 2] == '")':
+                    continue
+
+                # Do not match against links which are escaped.
+                if text[start - 3:start] == '"""' and text[end:end + 3] == '"""':
+                    text = text[:start - 3] + text[start:end] + text[end + 3:]
                     continue
 
                 escaped_href = (
