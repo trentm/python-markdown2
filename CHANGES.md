@@ -4,6 +4,7 @@
 
 - [pull #317] Temporary fix to issue #150
 - [pull #319] Stop XML escaping the body of a link
+- [pull #322] Don't auto link patterns surrounded by triple quotes
 
 
 ## python-markdown2 2.3.7
