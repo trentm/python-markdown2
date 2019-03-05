@@ -177,7 +177,7 @@ def cutarelease(project_name, version_files, dry_run=False):
                 log.info("skipping pypi publish (dry-run)")
             else:
                 run("rm -rf dist")
-                run("%spython setup.py build"
+                run("%spython setup.py sdist bdist_wheel"
                     % _setup_command_prefix())
                 run("twine upload dist/*")
                 run("rm -rf dist")
