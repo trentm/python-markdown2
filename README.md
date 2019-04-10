@@ -64,6 +64,11 @@ As a script (CLI):
 ```shell
 $ python markdown2.py foo.md > foo.html
 ```
+or 
+```shell
+$ python -m markdown2 foo.md > foo.html
+```
+
 I think pip-based installation will enable this as well:
 ```shell
 $ markdown2 foo.md > foo.html
