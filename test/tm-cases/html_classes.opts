@@ -6,7 +6,8 @@
       "pre": "syntaxcolor",
       "code": "codesyntaxcolor",
       "img": "custom-image-class",
-      "table": "table table-striped"
+      "table": "table table-striped",
+      "p": "col-xs-3 custom-paragraph-class",
     }
   }
 }
