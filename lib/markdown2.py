@@ -1655,7 +1655,7 @@ class Markdown(object):
         re.M | re.X | re.S)
 
     _task_list_item_re = re.compile(r'''
-        (\[[\ x]\])[ \t]+       # tasklist marker = \1
+        (\[[\ xX]\])[ \t]+       # tasklist marker = \1
         (.*)                   # list item text = \2
     ''', re.M | re.X | re.S)
 
@@ -1664,7 +1664,7 @@ class Markdown(object):
     def _task_list_item_sub(self, match):
         marker = match.group(1)
         item_text = match.group(2)
-        if marker == '[x]':
+        if marker in ['[x]','[X]']:
                 return self._task_list_warpper_str % ('checked ', item_text)
         elif marker == '[ ]':
                 return self._task_list_warpper_str % ('', item_text)
