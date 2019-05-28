@@ -6,6 +6,7 @@
 - [pull #319] Stop XML escaping the body of a link
 - [pull #322] Don't auto link patterns surrounded by triple quotes
 - [pull #324] Add class configurability to the enclosing tag
+- [pull #328] Accept [X] as marked task
 
 
 ## python-markdown2 2.3.7
