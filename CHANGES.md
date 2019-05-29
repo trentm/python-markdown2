@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.3.9 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.3.8
 
 - [pull #317] Temporary fix to issue #150
