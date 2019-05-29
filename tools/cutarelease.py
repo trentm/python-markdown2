@@ -154,7 +154,7 @@ def cutarelease(project_name, version_files, dry_run=False):
             % (changes_path, version))
 
     # Tag version and push.
-    curr_tags = set(t for t in _capture_stdout(["git", "tag", "-l"]).split('\n') if t)
+    curr_tags = set(t for t in _capture_stdout(["git", "tag", "-l"]).split(b'\n') if t)
     if not dry_run and version not in curr_tags:
         log.info("tag the release")
         run('git tag -a "%s" -m "version %s"' % (version, version))
