@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.3.8 (not yet released)
+## python-markdown2 2.3.8
 
 - [pull #317] Temporary fix to issue #150
 - [pull #319] Stop XML escaping the body of a link
