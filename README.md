@@ -16,7 +16,7 @@ Markdown.pl. Markdown2 also comes with a number of extensions (called
 2.6+ or 3.3+ (and pypy and jython, though I don't frequently test those).
 
 There is another [Python
-markdown.py](https://pythonhosted.org/Markdown/). However, at
+markdown.py](https://python-markdown.github.io/). However, at
 least at the time this project was started, markdown2.py was faster (see the
 [Performance
 Notes](https://github.com/trentm/python-markdown2/wiki/Performance-Notes)) and,
