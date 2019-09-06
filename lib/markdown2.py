@@ -1848,7 +1848,6 @@ class Markdown(object):
         return self._code_block_sub(match, is_fenced_code_block=True)
 
     def _do_fenced_code_blocks(self, content):
-        tabsize = self.tab_width
         output = []
         source = []
         state = 0
@@ -1872,7 +1871,7 @@ class Markdown(object):
                 source = []
             elif state == 1:
                 if not line.startswith(mark):
-                    source.append(line.expandtabs(tabsize))
+                    source.append(line.expandtabs(self.tab_width))
                     continue
                 src = '\n'.join(source).strip('\n')
                 head = '<pre><code>'
