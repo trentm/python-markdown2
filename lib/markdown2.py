@@ -1847,9 +1847,49 @@ class Markdown(object):
     def _fenced_code_block_sub(self, match):
         return self._code_block_sub(match, is_fenced_code_block=True)
 
-    def _do_fenced_code_blocks(self, text):
-        """Process ```-fenced unindented code blocks ('fenced-code-blocks' extra)."""
-        return self._fenced_code_block_re.sub(self._fenced_code_block_sub, text)
+    def _do_fenced_code_blocks(self, content):
+        tabsize = self.tab_width
+        output = []
+        source = []
+        state = 0
+        mark = ''
+        lang = None
+        p1 = re.compile(r'^\s{0,3}```*')
+        p2 = re.compile(r'^\s{0,3}~~~*')
+        for line in content.split('\n'):
+            line = line.rstrip('\r\n\t ')
+            if state == 0:
+                m1 = re.match(p1, line)
+                m2 = re.match(p2, line)
+                mm = m1 and m1 or m2
+                if not mm:
+                    output.append(line)
+                    continue
+                span = mm.span()
+                mark = line[:span[1]]
+                lang = line[span[1]:].strip()
+                state = 1
+                source = []
+            elif state == 1:
+                if not line.startswith(mark):
+                    source.append(line.expandtabs(tabsize))
+                    continue
+                src = '\n'.join(source).strip('\n')
+                head = '<pre><code>'
+                if lang:
+                    head = '<pre><code class="%s">'%lang
+                replacements = [
+                    ("&amp;", "&"),
+                    ("&lt;", "<"),
+                    ("&gt;", ">"),
+                    ("&#96;", "`"),
+                ]
+                for new, old in replacements:
+                    src = src.replace(old, new)
+                output.append(head + src)
+                output.append('</code></pre>')
+                state = 0
+        return '\n'.join(output)
 
     # Rules for a code span:
     # - backslash escapes are not interpreted in a code span
