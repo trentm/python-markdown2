@@ -3,6 +3,11 @@
 || 1910 || -15 || 30 ||
 || 1920 || -10 || 32 ||
 
+# With header row
+
+||~ Name ||~ Class ||~ Race ||~ Level ||
+|| Vlad || Barbarian || Dragonborn || 12 ||
+|| Jimbo || Rogue || Halfling || 13 ||
 
 # just one line
 
