@@ -217,6 +217,7 @@ class Markdown(object):
         else:
             self.empty_element_suffix = " />"
         self.tab_width = tab_width
+        self.tab = tab_width * " "
 
         # For compatibility with earlier markdown2.py and with
         # markdown.py's safe_mode being a boolean,
@@ -1070,23 +1071,36 @@ class Markdown(object):
 
     def _wiki_table_sub(self, match):
         ttext = match.group(0).strip()
-        # print 'wiki table: %r' % match.group(0)
+        # print('wiki table: %r' % match.group(0))
         rows = []
         for line in ttext.splitlines(0):
             line = line.strip()[2:-2].strip()
             row = [c.strip() for c in re.split(r'(?<!\\)\|\|', line)]
             rows.append(row)
+        # from pprint import pprint
         # pprint(rows)
-        hlines = ['<table%s>' % self._html_class_str_from_tag('table'), '<tbody>']
+        hlines = []
+        def add_hline(line, indents=0):
+            hlines.append((self.tab * indents) + line)
+        add_hline('<table%s>' % self._html_class_str_from_tag('table'))
+        create_thead = rows and rows[0] and re.match(r"\s*~", rows[0][0])
+        add_hline('<{}>'.format("thead" if create_thead else "tbody"), 1)
         for row in rows:
-            hrow = ['<tr>']
+            add_hline('<tr>', 2)
             for cell in row:
-                hrow.append('<td>')
-                hrow.append(self._run_span_gamut(cell))
-                hrow.append('</td>')
-            hrow.append('</tr>')
-            hlines.append(''.join(hrow))
-        hlines += ['</tbody>', '</table>']
+                cell_type = "td"
+                cell = cell.strip(" ")
+                if cell.strip(" ").startswith("~"):
+                    cell = cell[1:].strip(" ")
+                    cell_type = "th"
+                add_hline('<{0}>{1}</{0}>'.format(cell_type, self._run_span_gamut(cell)), 3)
+            add_hline('</tr>', 2)
+            if create_thead:
+                add_hline('</thead>', 1)
+                add_hline('<tbody>', 1)
+                create_thead = False
+        add_hline('</tbody>', 1)
+        add_hline('</table>')
         return '\n'.join(hlines) + '\n'
 
     def _do_wiki_tables(self, text):
