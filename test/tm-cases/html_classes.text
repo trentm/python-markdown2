@@ -3,7 +3,7 @@
 | `Cell 1` | [Cell 2](http://example.com) link |
 | Cell 3 | **Cell 4** |
 
-|| *Year* || *Temperature (low)* || *Temperature (high)* ||
+||~ Year ||~ Temperature (low) ||~ Temperature (high) ||
 || 1900 || -10 || 25 ||
 || 1910 || -15 || 30 ||
 || 1920 || -10 || 32 ||
