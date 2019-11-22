@@ -9,6 +9,10 @@
 || Vlad || Barbarian || Dragonborn || 12 ||
 || Jimbo || Rogue || Halfling || 13 ||
 
+# With only header row
+
+||~ Name ||~ Class ||~ Race ||~ Level ||
+
 # With header row, alternate spacing
 
 || ~Name || ~Class || ~Race || ~Level ||
