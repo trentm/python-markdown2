@@ -1080,26 +1080,33 @@ class Markdown(object):
         # from pprint import pprint
         # pprint(rows)
         hlines = []
+
         def add_hline(line, indents=0):
             hlines.append((self.tab * indents) + line)
+
+        def format_cell(text):
+            return self._run_span_gamut(re.sub(r"^\s*~", "", cell).strip(" "))
+
         add_hline('<table%s>' % self._html_class_str_from_tag('table'))
-        create_thead = rows and rows[0] and re.match(r"\s*~", rows[0][0])
-        add_hline('<{}>'.format("thead" if create_thead else "tbody"), 1)
-        for row in rows:
+        # Check if first cell of first row is a header cell. If so, assume the whole row is a header row.
+        if rows and rows[0] and re.match(r"^\s*~", rows[0][0]):
+            add_hline('<thead>', 1)
             add_hline('<tr>', 2)
-            for cell in row:
-                cell_type = "td"
-                cell = cell.strip(" ")
-                if cell.startswith("~"):
-                    cell = cell[1:].strip(" ")
-                    cell_type = "th"
-                add_hline('<{0}>{1}</{0}>'.format(cell_type, self._run_span_gamut(cell)), 3)
+            for cell in rows[0]:
+                add_hline("<th>{}</th>".format(format_cell(cell)), 3)
             add_hline('</tr>', 2)
-            if create_thead:
-                add_hline('</thead>', 1)
-                add_hline('<tbody>', 1)
-                create_thead = False
-        add_hline('</tbody>', 1)
+            add_hline('</thead>', 1)
+            # Only one header row allowed.
+            rows = rows[1:]
+        # If no more rows, don't create a tbody.
+        if rows:
+            add_hline('<tbody>', 1)
+            for row in rows:
+                add_hline('<tr>', 2)
+                for cell in row:
+                    add_hline('<td>{}</td>'.format(format_cell(cell)), 3)
+                add_hline('</tr>', 2)
+            add_hline('</tbody>', 1)
         add_hline('</table>')
         return '\n'.join(hlines) + '\n'
 
