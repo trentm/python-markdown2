@@ -1090,7 +1090,7 @@ class Markdown(object):
             for cell in row:
                 cell_type = "td"
                 cell = cell.strip(" ")
-                if cell.strip(" ").startswith("~"):
+                if cell.startswith("~"):
                     cell = cell[1:].strip(" ")
                     cell_type = "th"
                 add_hline('<{0}>{1}</{0}>'.format(cell_type, self._run_span_gamut(cell)), 3)
