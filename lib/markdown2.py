@@ -202,6 +202,8 @@ class Markdown(object):
     html_spans = None
     html_removed_text = "[HTML_REMOVED]"  # for compat with markdown.py
 
+    _toc = None
+
     # Used to track when we're inside an ordered or unordered list
     # (see _ProcessListItems() for details):
     list_level = 0
@@ -273,6 +275,7 @@ class Markdown(object):
             self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
             self.metadata = {}
+        self._toc = None
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
@@ -1509,7 +1512,6 @@ class Markdown(object):
 
         return header_id
 
-    _toc = None
     def _toc_add_entry(self, level, id, name):
         if level > self._toc_depth:
             return
