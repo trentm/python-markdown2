@@ -2300,16 +2300,12 @@ def calculate_toc_html(toc):
         return '  ' * (len(h_stack) - 1)
     lines = []
     h_stack = [0]   # stack of header-level numbers
-    # Check first item in list, and start building our table early if we don't start with an <h1>
-    first_header_level = toc[0][0]
-    for i in range(1, first_header_level):
-        lines.append("%s<ul>" % indent())
-        h_stack.append(i)
     # Build TOC
     for level, id, name in toc:
         if level > h_stack[-1]:
-            lines.append("%s<ul>" % indent())
-            h_stack.append(level)
+            while level > h_stack[-1]:
+                lines.append("%s<ul>" % indent())
+                h_stack.append(h_stack[-1] + 1)
         elif level == h_stack[-1]:
             lines[-1] += "</li>"
         else:
