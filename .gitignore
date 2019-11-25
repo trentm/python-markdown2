@@ -12,3 +12,4 @@ sandbox/*.html
 __pycache__
 .tox
 *.egg-info
+*.idea

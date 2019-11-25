@@ -73,10 +73,10 @@ Table alignement (alternate spacing):
 | A         | B         |
 | C         |           |
 
-Header 1  | Header 2
---------- | ---------
-A         | B
-          | D
+| Header 1  | Header 2
+| --------- | ---------
+| A         | B
+|           | D
 
 * * *
 
@@ -101,4 +101,3 @@ Header 1  | Header 2  |
 --------- | --------- |
 Cell      | Cell      |
 Cell      | Cell      
-
