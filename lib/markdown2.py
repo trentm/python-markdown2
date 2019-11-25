@@ -2293,13 +2293,19 @@ def calculate_toc_html(toc):
 
     This expects the `_toc` attribute to have been set on this instance.
     """
-    if toc is None:
+    if not toc:
         return None
 
     def indent():
         return '  ' * (len(h_stack) - 1)
     lines = []
     h_stack = [0]   # stack of header-level numbers
+    # Check first item in list, and start building our table early if we don't start with an <h1>
+    first_header_level = toc[0][0]
+    for i in range(1, first_header_level):
+        lines.append("%s<ul>" % indent())
+        h_stack.append(i)
+    # Build TOC
     for level, id, name in toc:
         if level > h_stack[-1]:
             lines.append("%s<ul>" % indent())
@@ -2314,6 +2320,7 @@ def calculate_toc_html(toc):
                 lines.append("%s</ul></li>" % indent())
         lines.append('%s<li><a href="#%s">%s</a>' % (
             indent(), id, name))
+    # Added closing tags
     while len(h_stack) > 1:
         h_stack.pop()
         if not lines[-1].endswith("</li>"):
