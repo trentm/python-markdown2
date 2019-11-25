@@ -335,6 +335,7 @@ versions of markdown2.py this was pathologically slow:</p>
 </ul>
 """
         self.assertEqual(expected_toc_html, md.convert(html).toc_html)
+    test_toc_with_persistent_object.tags = ["toc", "issue208"]
 
 
 class DocTestsTestCase(unittest.TestCase):
