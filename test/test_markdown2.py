@@ -291,6 +291,51 @@ versions of markdown2.py this was pathologically slow:</p>
             '<h2>%s</h2>\n' % ko)
     test_russian.tags = ["unicode", "issue3"]
 
+    def test_toc_with_persistent_object(self):
+        """
+        Tests that the toc is the same every time it's run on HTML, even if the Markdown object isn't disposed of.
+        """
+        md = markdown2.Markdown(extras=["toc"])
+        html = """
+# Header 1
+## Header 1.1
+## Header 1.2
+### Header 1.3
+# Header 2
+## Header 2.1
+        """
+        expected_toc_html = """<ul>
+  <li><a href="#header-1">Header 1</a>
+  <ul>
+    <li><a href="#header-11">Header 1.1</a></li>
+    <li><a href="#header-12">Header 1.2</a>
+    <ul>
+      <li><a href="#header-13">Header 1.3</a></li>
+    </ul></li>
+  </ul></li>
+  <li><a href="#header-2">Header 2</a>
+  <ul>
+    <li><a href="#header-21">Header 2.1</a></li>
+  </ul></li>
+</ul>
+"""
+        self.assertEqual(expected_toc_html, md.convert(html).toc_html)
+        # Do it again, to check if the toc_html is just appended rather than replaced
+        self.assertEqual(expected_toc_html, md.convert(html).toc_html)
+        # Create different html, and confirm toc_html is replaced
+        html = """
+# I'm new html
+## I don't have to be long, just different
+"""
+        expected_toc_html = """<ul>
+  <li><a href="#im-new-html">I'm new html</a>
+  <ul>
+    <li><a href="#i-dont-have-to-be-long-just-different">I don't have to be long, just different</a></li>
+  </ul></li>
+</ul>
+"""
+        self.assertEqual(expected_toc_html, md.convert(html).toc_html)
+
 
 class DocTestsTestCase(unittest.TestCase):
     def test_api(self):
