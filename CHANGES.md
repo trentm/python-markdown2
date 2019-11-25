@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.9 (not yet released)
 
-(nothing yet)
+- [pull #335] Added header support for wiki tables
 
 
 ## python-markdown2 2.3.8
