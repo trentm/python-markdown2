@@ -1,0 +1,25 @@
+Testing toc starting with a deeper header than h1
+
+### Fruit
+
+- apples
+
+## Veggies
+
+- carrots
+
+Testing a jump in toc over more than two "layers"
+
+##### Meat
+
+- beef
+
+# Dairy
+
+- milk
+
+Testing proper closing tags at end of toc
+
+### Sugar
+
+- candy

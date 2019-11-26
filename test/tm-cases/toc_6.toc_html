@@ -1,0 +1,21 @@
+<ul>
+  <ul>
+    <ul>
+      <li><a href="#fruit">Fruit</a></li>
+    </ul></li>
+    <li><a href="#veggies">Veggies</a>
+    <ul>
+      <ul>
+        <ul>
+          <li><a href="#meat">Meat</a></li>
+        </ul></li>
+      </ul></li>
+    </ul></li>
+  </ul></li>
+  <li><a href="#dairy">Dairy</a>
+  <ul>
+    <ul>
+      <li><a href="#sugar">Sugar</a></li>
+    </ul></li>
+  </ul></li>
+</ul>
