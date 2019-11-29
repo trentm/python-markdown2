@@ -190,10 +190,8 @@ class _MarkdownTestCase(unittest.TestCase):
             if not exists(metadata_path):
                 metadata_path = None
 
-            test_func = lambda self, t=text_path, o=opts, c=toc_html_path, \
-                    m=metadata_path: \
-                    self._assertMarkdownPath(t, opts=o, toc_html_path=c,
-                          metadata_path=m)
+            def test_func(self, t=text_path, o=opts, c=toc_html_path, m=metadata_path):
+                self._assertMarkdownPath(t, opts=o, toc_html_path=c, metadata_path=m)
 
             tags_path = splitext(text_path)[0] + ".tags"
             if exists(tags_path):
@@ -202,6 +200,11 @@ class _MarkdownTestCase(unittest.TestCase):
                     if '#' in line: # allow comments in .tags files
                         line = line[:line.index('#')]
                     tags += line.split()
+                # If this is running in Python 3.4 and this test has a pygments tag, skip it
+                version_info = sys.version_info
+                if "pygments" in tags and version_info.major >= 3 and version_info.minor <= 4:
+                    print("Skipping pygments test in Python 3.4 or earlier")
+                    continue
                 test_func.tags = tags
 
             name = splitext(basename(text_path))[0]
