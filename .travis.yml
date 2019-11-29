@@ -7,6 +7,6 @@ python:
   - "3.6"
   - "3.7-dev"
 # command to install dependencies
-install: pip install Pygments>=2.1.1
+install: pip install Pygments==2.4.2
 # command to run tests
 script: make testone
