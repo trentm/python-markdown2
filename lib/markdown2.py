@@ -2345,7 +2345,8 @@ def _slugify(value, non_latin_mode=False):
     """
     import unicodedata
     if non_latin_mode:
-        from transliterate import translit, LanguageDetectionError
+        from transliterate import translit 
+        from transliterate.exceptions import LanguageDetectionError
         try:
             value = translit(value, revesed=True)
         except LanguageDetectionError:
