@@ -2348,7 +2348,7 @@ def _slugify(value, non_latin_mode=False):
         from transliterate import translit 
         from transliterate.exceptions import LanguageDetectionError
         try:
-            value = translit(value, revesed=True)
+            value = translit(value, reversed=True)
         except LanguageDetectionError:
             pass
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode()
