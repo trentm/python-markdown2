@@ -163,7 +163,7 @@ def markdown_path(path, encoding="utf-8",
                   html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
                   safe_mode=None, extras=None, link_patterns=None,
                   footnote_title=None, footnote_return_symbol=None,
-                  use_file_vars=False):
+                  use_file_vars=False, non_latin_mode=False):
     fp = codecs.open(path, 'r', encoding)
     text = fp.read()
     fp.close()
@@ -172,19 +172,21 @@ def markdown_path(path, encoding="utf-8",
                     link_patterns=link_patterns,
                     footnote_title=footnote_title,
                     footnote_return_symbol=footnote_return_symbol,
-                    use_file_vars=use_file_vars).convert(text)
+                    use_file_vars=use_file_vars, 
+                    non_latin_mode=False).convert(text)
 
 
 def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
              safe_mode=None, extras=None, link_patterns=None,
              footnote_title=None, footnote_return_symbol=None,
-             use_file_vars=False, cli=False):
+             use_file_vars=False, cli=False, non_latin_mode=False):
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns,
                     footnote_title=footnote_title,
                     footnote_return_symbol=footnote_return_symbol,
-                    use_file_vars=use_file_vars, cli=cli).convert(text)
+                    use_file_vars=use_file_vars, cli=cli, 
+                    non_latin_mode=non_latin_mode).convert(text)
 
 
 class Markdown(object):
@@ -213,7 +215,7 @@ class Markdown(object):
     def __init__(self, html4tags=False, tab_width=4, safe_mode=None,
                  extras=None, link_patterns=None,
                  footnote_title=None, footnote_return_symbol=None,
-                 use_file_vars=False, cli=False):
+                 use_file_vars=False, cli=False, non_latin_mode=False):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
@@ -256,6 +258,7 @@ class Markdown(object):
         self.use_file_vars = use_file_vars
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
         self.cli = cli
+        self.non_latin_mode = non_latin_mode
 
         self._escape_table = g_escape_table.copy()
         if "smarty-pants" in self.extras:
@@ -1523,7 +1526,7 @@ class Markdown(object):
             None to not have an id attribute and to exclude this header from
             the TOC (if the "toc" extra is specified).
         """
-        header_id = _slugify(text)
+        header_id = _slugify(text, self.non_latin_mode)
         if prefix and isinstance(prefix, base_string_type):
             header_id = prefix + '-' + header_id
 
@@ -2333,7 +2336,7 @@ class UnicodeWithAttrs(unicode):
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
 _slugify_strip_re = re.compile(r'[^\w\s-]')
 _slugify_hyphenate_re = re.compile(r'[-\s]+')
-def _slugify(value):
+def _slugify(value, non_latin_mode=False):
     """
     Normalizes string, converts to lowercase, removes non-alpha characters,
     and converts spaces to hyphens.
@@ -2341,6 +2344,12 @@ def _slugify(value):
     From Django's "django/template/defaultfilters.py".
     """
     import unicodedata
+    if non_latin_mode:
+        from transliterate import translit, LanguageDetectionError
+        try:
+            value = translit(value, revesed=True)
+        except LanguageDetectionError:
+            pass
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode()
     value = _slugify_strip_re.sub('', value).strip().lower()
     return _slugify_hyphenate_re.sub('-', value)
