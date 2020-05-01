@@ -1,0 +1,5 @@
+Example 1:
+<ftp:[<script>alert(1);//]()><ftp:[</script>]()>
+
+Example 2:
+<http://g<!s://q?<!-<[<script>alert(1);/\*](http://g)->a><http://g<!s://g.c?<!-<[a\\*/</script>alert(1);/*](http://g)->a>
