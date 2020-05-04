@@ -2164,11 +2164,14 @@ class Markdown(object):
         text = self._naked_gt_re.sub('&gt;', text)
         return text
 
-    _incomplete_tags_re = re.compile("<(/?\w+[\s/]+?)")
+    _incomplete_tags_re = re.compile("<(/?\w+?(?!\w).+?[\s/]+?)")
 
     def _encode_incomplete_tags(self, text):
         if self.safe_mode not in ("replace", "escape"):
             return text
+            
+        if text.endswith(">"):
+            return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
         return self._incomplete_tags_re.sub("&lt;\\1", text)
 
