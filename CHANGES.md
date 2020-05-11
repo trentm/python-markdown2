@@ -5,6 +5,7 @@
 - [pull #335] Added header support for wiki tables
 - [pull #336] Reset _toc when convert is run
 - [pull #353] XSS fix
+- [pull #350] XSS fix
 
 
 ## python-markdown2 2.3.8
