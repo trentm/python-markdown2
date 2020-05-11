@@ -200,7 +200,8 @@ class Markdown(object):
     titles = None
     html_blocks = None
     html_spans = None
-    html_removed_text = "[HTML_REMOVED]"  # for compat with markdown.py
+    html_removed_text = "{(#HTML#)}"  # placeholder removed text that does not trigger bold
+    html_removed_text_compat = "[HTML_REMOVED]"  # for compat with markdown.py
 
     _toc = None
 
@@ -388,6 +389,8 @@ class Markdown(object):
 
         if self.safe_mode:
             text = self._unhash_html_spans(text)
+            # return the removed text warning to its markdown.py compatible form
+            text = text.replace(self.html_removed_text, self.html_removed_text_compat)
 
         if "nofollow" in self.extras:
             text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
@@ -1374,6 +1377,11 @@ class Markdown(object):
                 curr_pos = start_idx + 1
                 continue
             link_text = text[start_idx+1:p]
+
+            # Fix for issue 341 - Injecting XSS into link text
+            if self.safe_mode:
+                link_text = self._hash_html_spans(link_text)
+                link_text = self._unhash_html_spans(link_text)
 
             # Possibly a footnote ref?
             if "footnotes" in self.extras and link_text.startswith("^"):
