@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.3.9 (not yet released)
+## python-markdown2 2.3.9
 
 - [pull #335] Added header support for wiki tables
 - [pull #336] Reset _toc when convert is run
