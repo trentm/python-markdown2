@@ -230,7 +230,6 @@ class PHPMarkdownExtraTestCase(_MarkdownTestCase):
     syntax no implemented in markdown2.py.  See
     <http://www.michelf.com/projects/php-markdown/extra/> for details.
     """
-    __tags__ = ["knownfailure"]
     cases_dir = "php-markdown-extra-cases"
 
 
