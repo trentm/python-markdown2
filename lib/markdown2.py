@@ -1013,11 +1013,11 @@ class Markdown(object):
         align_from_col_idx = {}
         for col_idx, col in enumerate(cols):
             if col[0] == ':' and col[-1] == ':':
-                align_from_col_idx[col_idx] = ' align="center"'
+                align_from_col_idx[col_idx] = ' style="text-align:center;"'
             elif col[0] == ':':
-                align_from_col_idx[col_idx] = ' align="left"'
+                align_from_col_idx[col_idx] = ' style="text-align:left;"'
             elif col[-1] == ':':
-                align_from_col_idx[col_idx] = ' align="right"'
+                align_from_col_idx[col_idx] = ' style="text-align:right;"'
 
         # thead
         hlines = ['<table%s>' % self._html_class_str_from_tag('table'), '<thead>', '<tr>']
