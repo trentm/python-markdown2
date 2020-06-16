@@ -3,6 +3,7 @@
 ## python-markdown2 2.3.10 (not yet released)
 
 - [pull #356] Don't merge sequential quotes into a single blockquote
+- [pull #357] use style=text-align for table alignment
 
 
 ## python-markdown2 2.3.9
