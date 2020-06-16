@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.3.10 (not yet released)
 
-(nothing yet)
+- [pull #356] Don't merge sequential quotes into a single blockquote
 
 
 ## python-markdown2 2.3.9
