@@ -1153,7 +1153,7 @@ class Markdown(object):
         if "strike" in self.extras:
             text = self._do_strike(text)
 
-        if "ins" in self.extras:
+        if "underline" in self.extras:
             text = self._do_underline(text)
 
         text = self._do_italics_and_bold(text)
@@ -1959,7 +1959,7 @@ class Markdown(object):
 
     _ins_re = re.compile(r"--(?=\S)(.+?)(?<=\S)--", re.S)
     def _do_underline(self, text):
-        text = self._ins_re.sub(r"<ins>\1</ins>", text)
+        text = self._ins_re.sub(r"<u>\1</u>", text)
         return text
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
