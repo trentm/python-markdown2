@@ -108,10 +108,6 @@ import optparse
 from random import random, randint
 import codecs
 from collections import defaultdict
-try:
-    from urllib import quote_plus
-except ImportError:
-    from urllib.parse import quote_plus
 
 
 # ---- Python version compat
@@ -2384,7 +2380,7 @@ def _regex_from_encoded_pattern(s):
     if s.startswith('/') and s.rfind('/') != 0:
         # Parse it: /PATTERN/FLAGS
         idx = s.rfind('/')
-        pattern, flags_str = s[1:idx], s[idx+1:]
+        _, flags_str = s[1:idx], s[idx+1:]
         flag_from_char = {
             "i": re.IGNORECASE,
             "l": re.LOCALE,
