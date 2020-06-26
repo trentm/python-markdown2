@@ -1957,9 +1957,9 @@ class Markdown(object):
         text = self._strike_re.sub(r"<strike>\1</strike>", text)
         return text
 
-    _ins_re = re.compile(r"--(?=\S)(.+?)(?<=\S)--", re.S)
+    _underline_re = re.compile(r"--(?=\S)(.+?)(?<=\S)--", re.S)
     def _do_underline(self, text):
-        text = self._ins_re.sub(r"<u>\1</u>", text)
+        text = self._underline_re.sub(r"<u>\1</u>", text)
         return text
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
