@@ -440,13 +440,21 @@ class Markdown(object):
     #   another-var: blah blah
     #
     #   # header
-    _meta_data_pattern = re.compile(r'^(?:---[\ \t]*\n)?(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)|([\S\w]+\s*:(?! >)[ \t]*.*\n?)(?:---[\ \t]*\n)?', re.MULTILINE)
+    _meta_data_pattern = re.compile(r'^(?:---[\ \t]*\n)?((?:[\S\w]+\s*:(?:\n+[ \t]+.*)+)|(?:.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)|(?:\s*[\S\w]+\s*:(?! >)[ \t]*.*\n?))(?:---[\ \t]*\n)?', re.MULTILINE)
     _key_val_pat = re.compile(r"[\S\w]+\s*:(?! >)[ \t]*.*\n?", re.MULTILINE)
     # this allows key: >
     #                   value
     #                   conutiues over multiple lines
     _key_val_block_pat = re.compile(
-        "(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE)
+        r"(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE
+    )
+    _key_val_list_pat = re.compile(
+        r"^-(?:[ \t]*([^:\s]*)(?:[ \t]*[:-][ \t]*(\S+))?)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
+        re.MULTILINE,
+    )
+    _key_val_dict_pat = re.compile(
+        r"^([^:\n]+)[ \t]*:[ \t]*([^\n]*)(?:((?:\n[ \t]+[^\n]+)+))?", re.MULTILINE
+    )  # grp0: key, grp1: value, grp2: multiline value
     _meta_data_fence_pattern = re.compile(r'^---[\ \t]*\n', re.MULTILINE)
     _meta_data_newline = re.compile("^\n", re.MULTILINE)
 
@@ -466,13 +474,59 @@ class Markdown(object):
                 return text
             tail = metadata_split[1]
 
-        kv = re.findall(self._key_val_pat, metadata_content)
-        kvm = re.findall(self._key_val_block_pat, metadata_content)
-        kvm = [item.replace(": >\n", ":", 1) for item in kvm]
+        def parse_structured_value(value):
+            print(repr(value))
+            vs = value.lstrip()
+            vs = value.replace(v[: len(value) - len(vs)], "\n")[1:]
 
-        for item in kv + kvm:
+            # List
+            if vs.startswith("-"):
+                r = []
+                for match in re.findall(self._key_val_list_pat, vs):
+                    if match[0] and not match[1] and not match[2]:
+                        r.append(match[0].strip())
+                    elif match[0] == ">" and not match[1] and match[2]:
+                        r.append(match[2].strip())
+                    elif match[0] and match[1]:
+                        r.append({match[0].strip(): match[1].strip()})
+                    elif not match[0] and not match[1] and match[2]:
+                        r.append(parse_structured_value(match[2]))
+                    else:
+                        # Broken case
+                        pass
+
+                return r
+
+            # Dict
+            else:
+                return {
+                    match[0].strip(): (
+                        match[1].strip()
+                        if match[1]
+                        else parse_structured_value(match[2])
+                    )
+                    for match in re.findall(self._key_val_dict_pat, vs)
+                }
+
+        for item in match:
+
             k, v = item.split(":", 1)
-            self.metadata[k.strip()] = v.strip()
+
+            # Multiline value
+            if v[:3] == " >\n":
+                self.metadata[k.strip()] = v[3:].strip()
+
+            # Empty value
+            elif v == "\n":
+                self.metadata[k.strip()] = ""
+
+            # Structured value
+            elif v[0] == "\n":
+                self.metadata[k.strip()] = parse_structured_value(v)
+
+            # Simple value
+            else:
+                self.metadata[k.strip()] = v.strip()
 
         return tail
 

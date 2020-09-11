@@ -8,6 +8,21 @@ and some: >
  long value
  that goes multiline
 another: example
+alist:
+  - a
+  - b
+  - c
+adict:
+  key: foo
+  a nested list:
+    - one
+    - two
+    - >
+      Even multiline strings are allowed
+      in nested structured data
+      if linebreaks and indent are respected !
+    -
+      subkey: and another dict in a list
 ---
 # The real text
 
