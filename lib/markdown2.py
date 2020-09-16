@@ -475,7 +475,6 @@ class Markdown(object):
             tail = metadata_split[1]
 
         def parse_structured_value(value):
-            print(repr(value))
             vs = value.lstrip()
             vs = value.replace(v[: len(value) - len(vs)], "\n")[1:]
 
