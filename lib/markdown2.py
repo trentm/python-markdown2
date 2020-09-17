@@ -389,11 +389,16 @@ class Markdown(object):
             # return the removed text warning to its markdown.py compatible form
             text = text.replace(self.html_removed_text, self.html_removed_text_compat)
 
-        if "nofollow" in self.extras:
-            text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
-
         if "target-blank-links" in self.extras:
             text = self._a_blank.sub(r'<\1 target="_blank"\2', text)
+
+        if "nofollow" in self.extras:
+            if "target-blank-links" in self.extras:
+                text = self._a_nofollow.sub(r'<\1 rel="nofollow noopener"\2', text)
+            else:
+                text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
+        elif "target-blank-links" in self.extras:
+            text = self._a_nofollow.sub(r'<\1 rel="noopener"\2', text)
 
         if "toc" in self.extras and self._toc:
             self._toc_html = calculate_toc_html(self._toc)
@@ -2234,7 +2239,7 @@ class Markdown(object):
     def _encode_incomplete_tags(self, text):
         if self.safe_mode not in ("replace", "escape"):
             return text
-            
+
         if text.endswith(">"):
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
