@@ -5,6 +5,7 @@
 - [pull #356] Don't merge sequential quotes into a single blockquote
 - [pull #357] use style=text-align for table alignment
 - [pull #360] introduce underline extra
+- [pull #368] Support for structured and nested values in metadata
 
 
 ## python-markdown2 2.3.9
