@@ -278,7 +278,11 @@ class Markdown(object):
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
-    _a_nofollow = re.compile(r"""
+
+    # Opens the linked document in a new window or tab
+    # should only used in <a> tags with an "href" attribute.
+    # same with _a_nofollow
+    _a_nofollow_or_blank_links = re.compile(r"""
         <(a)
         (
             [^>]*
@@ -289,11 +293,6 @@ class Markdown(object):
         """,
         re.IGNORECASE | re.VERBOSE
     )
-
-    # Opens the linked document in a new window or tab
-    # should only used in <a> tags with an "href" attribute.
-    # same with _a_nofollow
-    _a_blank = _a_nofollow
 
     def convert(self, text):
         """Convert the given text."""
@@ -389,11 +388,15 @@ class Markdown(object):
             # return the removed text warning to its markdown.py compatible form
             text = text.replace(self.html_removed_text, self.html_removed_text_compat)
 
-        if "nofollow" in self.extras:
-            text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
+        do_target_blank_links = "target-blank-links" in self.extras
+        do_nofollow_links = "nofollow" in self.extras
 
-        if "target-blank-links" in self.extras:
-            text = self._a_blank.sub(r'<\1 target="_blank"\2', text)
+        if do_target_blank_links and do_nofollow_links:
+            text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow noopener" target="_blank"\2', text)
+        elif do_target_blank_links:
+            text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="noopener" target="_blank"\2', text)
+        elif do_nofollow_links:
+            text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow"\2', text)
 
         if "toc" in self.extras and self._toc:
             self._toc_html = calculate_toc_html(self._toc)
@@ -2234,7 +2237,7 @@ class Markdown(object):
     def _encode_incomplete_tags(self, text):
         if self.safe_mode not in ("replace", "escape"):
             return text
-            
+
         if text.endswith(">"):
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
