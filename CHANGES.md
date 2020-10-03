@@ -6,6 +6,7 @@
 - [pull #357] use style=text-align for table alignment
 - [pull #360] introduce underline extra
 - [pull #368] Support for structured and nested values in metadata
+- [pull #371] add noopener to external links
 
 
 ## python-markdown2 2.3.9
