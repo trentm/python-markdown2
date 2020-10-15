@@ -52,7 +52,7 @@ setup(
     scripts=[script],
     description="A fast and complete Python implementation of Markdown",
     python_requires=">=2.6, !=3.0.*, !=3.1.*, !=3.2.*",
-    classifiers=filter(None, classifiers.split("\n")),
+    classifiers=classifiers.strip().split("\n"),
     long_description="""markdown2: A fast and complete Python implementation of Markdown.
 
 Markdown is a text-to-HTML filter; it translates an easy-to-read /
