@@ -51,6 +51,7 @@ setup(
     package_dir={"": "lib"},
     scripts=[script],
     description="A fast and complete Python implementation of Markdown",
+    python_requires=">=2.6, !=3.0.*, !=3.1.*, !=3.2.*",
     classifiers=filter(None, classifiers.split("\n")),
     long_description="""markdown2: A fast and complete Python implementation of Markdown.
 
