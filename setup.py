@@ -26,6 +26,8 @@ Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3.8
+Programming Language :: Python :: 3.9
 Operating System :: OS Independent
 Topic :: Software Development :: Libraries :: Python Modules
 Topic :: Software Development :: Documentation
@@ -49,7 +51,8 @@ setup(
     package_dir={"": "lib"},
     scripts=[script],
     description="A fast and complete Python implementation of Markdown",
-    classifiers=filter(None, classifiers.split("\n")),
+    python_requires=">=2.6, !=3.0.*, !=3.1.*, !=3.2.*",
+    classifiers=classifiers.strip().split("\n"),
     long_description="""markdown2: A fast and complete Python implementation of Markdown.
 
 Markdown is a text-to-HTML filter; it translates an easy-to-read /

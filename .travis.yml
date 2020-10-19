@@ -1,10 +1,12 @@
 language: python
+cache: pip
 python:
   - "pypy3"
   - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9-dev"
 # command to install dependencies
 install: pip install Pygments>=2.5.2
 # command to run tests
