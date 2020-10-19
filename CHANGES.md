@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.3.11 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.3.10
 
 - [pull #356] Don't merge sequential quotes into a single blockquote
