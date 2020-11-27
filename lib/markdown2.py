@@ -452,7 +452,7 @@ class Markdown(object):
         r"(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE
     )
     _key_val_list_pat = re.compile(
-        r"^-(?:[ \t]*([^:\s]*)(?:[ \t]*[:-][ \t]*(\S+))?)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
+        r"^-(?:[ \t]*([^\n]*)(?:[ \t]*[:-][ \t]*(\S+))?)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
         re.MULTILINE,
     )
     _key_val_dict_pat = re.compile(

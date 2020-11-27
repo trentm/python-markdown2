@@ -7,5 +7,5 @@
   "and some": "long value\n that goes multiline",
   "another": "example",
   "alist": ["a", "b", "c"],
-  "adict": {"key": "foo", "a nested list": ["one", "two", "Even multiline strings are allowed\n  in nested structured data\n  if linebreaks and indent are respected !", {"subkey": "and another dict in a list"}]}
+  "adict": {"key": "foo", "a nested list": ["one", "two", "Even multiline strings are allowed\n  in nested structured data\n  if linebreaks and indent are respected !", {"subkey": "and another dict in a list"}, "but one-liners remains: simple strings"]}
 }
