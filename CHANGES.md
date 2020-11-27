@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.4.0 (not yet released)
 
-(nothing yet)
+- [pull #377] Fixed bug breaking strings elements in metadata lists
 
 
 ## python-markdown2 2.3.10
