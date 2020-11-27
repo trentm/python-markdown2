@@ -23,6 +23,7 @@ adict:
       if linebreaks and indent are respected !
     -
       subkey: and another dict in a list
+    - but one-liners remains: simple strings
 ---
 # The real text
 
