@@ -1884,7 +1884,7 @@ class Markdown(object):
         pre_class_str = self._html_class_str_from_tag("pre")
 
         if "highlightjs-lang" in self.extras and lexer_name:
-            code_class_str = ' class="%s"' % lexer_name
+            code_class_str = ' class="%s language-%s"' % (lexer_name, lexer_name)
         else:
             code_class_str = self._html_class_str_from_tag("code")
 

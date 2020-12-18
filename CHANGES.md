@@ -3,6 +3,7 @@
 ## python-markdown2 2.4.0 (not yet released)
 
 - [pull #377] Fixed bug breaking strings elements in metadata lists
+- [pull #380] When rendering fenced code blocks, also add the `language-LANG` class
 
 
 ## python-markdown2 2.3.10
