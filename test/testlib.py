@@ -113,7 +113,7 @@ def tag(*tags):
 #---- timedtest decorator
 # Use this to assert that a test completes in a given amount of time.
 # This is from http://www.artima.com/forums/flat.jsp?forum=122&thread=129497
-# Including here, becase it might be useful.
+# Including here, because it might be useful.
 # NOTE: Untested and I suspect some breakage.
 
 TOLERANCE = 0.05
