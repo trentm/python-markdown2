@@ -1926,9 +1926,9 @@ class Markdown(object):
 
     _fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?)
-        ^```\s{0,2}([\w+-]+)?\s*?\n  # opening fence, $1 = optional lang
-        (.*?)                        # $2 = code block content
-        ^```[ \t]*\n                 # closing fence
+        ^```\s{0,99}([\w+-]+)?\s{0,99}\n  # opening fence, $1 = optional lang
+        (.*?)                             # $2 = code block content
+        ^```[ \t]*\n                      # closing fence
         ''', re.M | re.X | re.S)
 
     def _fenced_code_block_sub(self, match):
