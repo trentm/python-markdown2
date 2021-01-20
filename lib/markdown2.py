@@ -532,7 +532,7 @@ class Markdown(object):
 
         return tail
 
-    _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*([^\r\n]*?)\s*-\*-", re.UNICODE)
+    _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*(?:(\S[^\r\n]*?)([\r\n]\s*)?)?-\*-", re.UNICODE)
     # This regular expression is intended to match blocks like this:
     #    PREFIX Local Variables: SUFFIX
     #    PREFIX mode: Tcl SUFFIX
@@ -892,8 +892,8 @@ class Markdown(object):
         '''
         # First pass to define all the references
         self.regex_defns = re.compile(r'''
-            \[\#(\w+)\s* # the counter.  Open square plus hash plus a word \1
-            ([^@]*)\s*   # Some optional characters, that aren't an @. \2
+            \[\#(\w+) # the counter.  Open square plus hash plus a word \1
+            ([^@]*)   # Some optional characters, that aren't an @. \2
             @(\w+)       # the id.  Should this be normed? \3
             ([^\]]*)\]   # The rest of the text up to the terminating ] \4
             ''', re.VERBOSE)
@@ -908,7 +908,7 @@ class Markdown(object):
             if len(match.groups()) != 4:
                 continue
             counter = match.group(1)
-            text_before = match.group(2)
+            text_before = match.group(2).strip()
             ref_id = match.group(3)
             text_after = match.group(4)
             number = counters.get(counter, 1)
@@ -1926,7 +1926,7 @@ class Markdown(object):
 
     _fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?)
-        ^```\s*?([\w+-]+)?\s*?\n    # opening fence, $1 = optional lang
+        ^```\s{0,2}([\w+-]+)?\s*?\n     # opening fence, $1 = optional lang
         (.*?)                       # $2 = code block content
         ^```[ \t]*\n                # closing fence
         ''', re.M | re.X | re.S)
