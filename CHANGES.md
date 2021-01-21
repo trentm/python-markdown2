@@ -4,6 +4,7 @@
 
 - [pull #377] Fixed bug breaking strings elements in metadata lists
 - [pull #380] When rendering fenced code blocks, also add the `language-LANG` class
+- [pull #387] Regex DoS fixes
 
 
 ## python-markdown2 2.3.10
