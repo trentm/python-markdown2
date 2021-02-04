@@ -1113,10 +1113,10 @@ class Markdown(object):
                 ^[ ]{0,%d}                      # allowed whitespace
                 (                               # $2: underline row
                     # underline row with leading bar
-                    (?:  \|\ *:?-+:?\ *  )+  \|?  \n
+                    (?:  \|\ *:?-+:?\ *  )+  \|? \s? \n
                     |
                     # or, underline row without leading bar
-                    (?:  \ *:?-+:?\ *\|  )+  (?:  \ *:?-+:?\ *  )?  \n
+                    (?:  \ *:?-+:?\ *\|  )+  (?:  \ *:?-+:?\ *  )? \s? \n
                 )
 
                 (                               # $3: data rows
