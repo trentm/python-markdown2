@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.4.1 (not yet released)
 
-(nothing yet)
+- [pull #389] Tables extra: allow whitespace at the end of the underline row
 
 
 ## python-markdown2 2.4.0
