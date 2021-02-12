@@ -1029,6 +1029,9 @@ class Markdown(object):
         return text
 
     def _pyshell_block_sub(self, match):
+        if "fenced-code-blocks" in self.extras:
+            dedented = _dedent(match.group(0))
+            return self._do_fenced_code_blocks("```pycon\n" + dedented + "```\n")
         lines = match.group(0).splitlines(0)
         _dedentlines(lines)
         indent = ' ' * self.tab_width
