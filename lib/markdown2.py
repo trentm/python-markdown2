@@ -2119,10 +2119,10 @@ class Markdown(object):
         # These leading spaces screw with <pre> content, so we need to fix that:
         bq = self._html_pre_block_re.sub(self._dedent_two_spaces_sub, bq)
 
+        bq_class = self._html_class_str_from_tag('blockquote')
         if is_spoiler:
-            return '<blockquote class="spoiler">\n%s\n</blockquote>\n\n' % bq
-        else:
-            return '<blockquote>\n%s\n</blockquote>\n\n' % bq
+            bq_class = bq_class[:-1] + ' spoiler"' if bq_class else ' class="spoiler"'
+        return '<blockquote%s>' % bq_class + '\n%s\n</blockquote>\n\n' % bq
 
     def _do_block_quotes(self, text):
         if '>' not in text:
