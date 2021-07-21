@@ -1608,12 +1608,12 @@ class Markdown(object):
         self._toc.append((level, id, self._unescape_special_chars(name)))
 
     _h_re_base = r'''
-        (^(.+)[ \t]*\n(=+|-+)[ \t]*\n+)
+        (^(.+)[ \t]{0,99}\n(=+|-+)[ \t]*\n+)
         |
         (^(\#{1,6})  # \1 = string of #'s
         [ \t]%s
         (.+?)       # \2 = Header text
-        [ \t]*
+        [ \t]{0,99}
         (?<!\\)     # ensure not an escaped trailing '#'
         \#*         # optional closing #'s (not counted)
         \n+
