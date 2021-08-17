@@ -1485,7 +1485,9 @@ class Markdown(object):
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
                             % (_html_escape_url(url, safe_mode=self.safe_mode),
-                               _xml_escape_attr(link_text),
+                               _xml_escape_attr(link_text)
+                                .replace('*', self._escape_table['*'])
+                                .replace('_', self._escape_table['_']),
                                title_str,
                                img_class_str,
                                self.empty_element_suffix)
@@ -1541,7 +1543,9 @@ class Markdown(object):
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
                                 % (_html_escape_url(url, safe_mode=self.safe_mode),
-                                   _xml_escape_attr(link_text),
+                                   _xml_escape_attr(link_text)
+                                    .replace('*', self._escape_table['*'])
+                                    .replace('_', self._escape_table['_']),
                                    title_str,
                                    img_class_str,
                                    self.empty_element_suffix)
