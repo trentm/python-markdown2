@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.4.1 (not yet released)
+## python-markdown2 2.4.1
 
 - [pull #389] Tables extra: allow whitespace at the end of the underline row
 - [pull #392] Pyshell extra: enable syntax highlighting if `fenced-code-blocks` is loaded.
