@@ -28,9 +28,6 @@ your consideration.
 Follow <a href="https://twitter.com/intent/user?screen_name=trentmick" target="_blank">@trentmick</a>
 for updates to python-markdown2.
 
-Travis-ci.org test status: [![Build Status](https://secure.travis-ci.org/trentm/python-markdown2.png)](http://travis-ci.org/trentm/python-markdown2)
-
-
 # Install
 
 To install it in your Python installation run *one* of the following:
