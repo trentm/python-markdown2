@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.4.2 (not yet released)
 
-(nothing yet)
+- [pull #408] Fix for fenced code blocks issue #396
 
 
 ## python-markdown2 2.4.1
