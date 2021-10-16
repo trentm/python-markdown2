@@ -1682,15 +1682,14 @@ class Markdown(object):
         (.*)                   # list item text = \2
     ''', re.M | re.X | re.S)
 
-    _task_list_warpper_str = r'<input type="checkbox" class="task-list-item-checkbox" %sdisabled> %s'
+    _task_list_warpper_str = r'<input type="checkbox" class="task-list-item-checkbox" %s%s> %s'
 
     def _task_list_item_sub(self, match):
         marker = match.group(1)
         item_text = match.group(2)
-        if marker in ['[x]','[X]']:
-                return self._task_list_warpper_str % ('checked ', item_text)
-        elif marker == '[ ]':
-                return self._task_list_warpper_str % ('', item_text)
+        checked_str = "" if marker == '[ ]' else "checked "
+        disabled_str = "" if "task_list_checkable" in self.extras else "disabled"
+        return self._task_list_warpper_str % (checked_str, disabled_str, item_text)
 
     _last_li_endswith_two_eols = False
     def _list_item_sub(self, match):
