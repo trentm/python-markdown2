@@ -1235,7 +1235,7 @@ class Markdown(object):
             \s*/?>
             |
             # auto-link (e.g., <http://www.activestate.com/>)
-            <\w+[^>]*>
+            <[\w~:/?#\[\]@!$&'\(\)*+,;%=\.\\-]+>
             |
             <!--.*?-->      # comment
             |
