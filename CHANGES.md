@@ -3,6 +3,7 @@
 ## python-markdown2 2.4.2 (not yet released)
 
 - [pull #408] Fix for fenced code blocks issue #396
+- [pull #410] Be more strict on auto linking urls, RE DOS fix
 
 
 ## python-markdown2 2.4.1
