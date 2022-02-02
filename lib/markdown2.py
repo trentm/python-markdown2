@@ -516,7 +516,7 @@ class Markdown(object):
 
             # Multiline value
             if v[:3] == " >\n":
-                self.metadata[k.strip()] = v[3:].strip()
+                self.metadata[k.strip()] = _dedent(v[3:]).strip()
 
             # Empty value
             elif v == "\n":
