@@ -5,6 +5,7 @@ this-is : a hyphen test
 empty   :
 another long: >
   long value
+   with complex indentation
   that goes multiline
 another: example
 

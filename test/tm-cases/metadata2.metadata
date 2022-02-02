@@ -4,6 +4,6 @@
   "And": "some, cvs, data, which, you, must, parse, yourself",
   "this-is": "a hyphen test",
   "empty": "",
-  "another long": "long value\n  that goes multiline",
+  "another long": "long value\n with complex indentation\nthat goes multiline",
   "another": "example"
 }
