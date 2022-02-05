@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.4.3 (not yet released)
 
-(nothing yet)
+- [pull #413] Fix meta indentation
 
 
 ## python-markdown2 2.4.2
