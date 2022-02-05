@@ -6,6 +6,7 @@ this-is : a hyphen test
 empty   :
 and some: >
  long value
+   with complex indentation
  that goes multiline
 another: example
 alist:
