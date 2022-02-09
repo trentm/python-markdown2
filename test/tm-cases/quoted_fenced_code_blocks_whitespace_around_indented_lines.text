@@ -1,0 +1,12 @@
+### Example:
+
+> ```python
+> if True:
+>     print()
+> 
+>     print()
+> 
+>     print()
+> 
+>     print()
+> ```
