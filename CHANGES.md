@@ -3,6 +3,7 @@
 ## python-markdown2 2.4.3 (not yet released)
 
 - [pull #413] Fix meta indentation
+- [pull #414] Fix code surrounded by blank lines inside blockquote fenced code blocks
 
 
 ## python-markdown2 2.4.2
