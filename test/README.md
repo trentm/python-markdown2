@@ -11,7 +11,7 @@ This directory holds test suite. There are a number of test sets, each in its ow
 - **php-markdown-extra-cases**: Test cases included in the MDTest package
   (same as above) testing extra Markdown syntax that only PHP Markdown implements.
 
-# markdown2.py test results
+## markdown2.py test results
 
 To run all the tests:
 
