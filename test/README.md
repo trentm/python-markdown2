@@ -32,6 +32,29 @@ To run the test suite **without** the known failures:
     ....
     5 failed, 146 passed, 15 deselected in 0.33s
 
+
+## Examples
+
+List all tests (and tags):
+    pytest test --list
+
+Run all tests:
+    pytest -vss test
+
+Run one single (named test):
+    pytest -s test/test_rendering.py::test_render[tm-cases-codespans.text]
+
+Run all tests with a particular flag:
+    pytest -vvs  test -m pygments
+
+RUn all test with flags matching an expression:
+    pytest -vvs  test -m "pygments and not fenced_code_blocks"
+
+
+NOTE: All the commands are executed from the top most check out directory, PYTHONPATH is set to lib.
+NOTE: pass the -vvs flag to display verbose logging (and preventing pytest to capture the stdout/stderr, for debug)
+
+
 TODO: Add details about which tests in the various test sets that markdown2.py
 fails... and why I'm not concerned about them. 
  
