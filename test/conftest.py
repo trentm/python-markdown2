@@ -5,16 +5,10 @@ from pathlib import Path
 
 import pytest
 
+ALL_SUBDIRS = []
+
 
 def _gather_md_tests(srcdir):
-    pass
-
-
-
-def parametrize(args, subdir):
-    datadir = Path(os.getenv("DATADIR", Path(__file__).parent)).absolute()
-    srcdir = datadir / subdir
-
     def sanitize(txt):
         return txt.replace(" ", "").replace("-", "_").replace(".", "_")
 
@@ -39,46 +33,50 @@ def parametrize(args, subdir):
                 # files as link_patterns_double_hit.opts trigger "invalid escape sequence \s"
                 warnings.simplefilter("ignore")
                 return eval(src.read_text())
-    
 
-    sources = {}
-    expected = {}
-    markers = {}
-    options = {}
-    
     items = {}
     for path in srcdir.glob("*.text"):
         name = f"{srcdir.name}-{path.name}" 
-        assert name not in sources
+        assert name not in items
+        items[name] = Item(path)
+    return items
 
-        items[name] = item = Item(path)
 
-        sources[name] = path
-        expected[name] = path.with_suffix(".html")
-        assert expected[name].exists()   
-        
-        # extracts all the tags for path
-        src = path.with_suffix(".tags")
-        if src.exists():
-            markers[name] = [ m.replace("-", "_").replace(".", "_") for m in src.read_text().partition("#")[0].split()]
-            
+def parametrize(args, subdir):
+    global ALL_SUBDIRS
+    datadir = Path(os.getenv("DATADIR", Path(__file__).parent)).absolute()
+    srcdir = datadir / subdir
 
-        # extracts all the options
-        src = path.with_suffix(".opts")
-        if src.exists():
-            with warnings.catch_warnings():
-                # files as link_patterns_double_hit.opts trigger "invalid escape sequence \s"
-                warnings.simplefilter("ignore")
-                options[name] = eval(src.read_text())
+    ALL_SUBDIRS.append(srcdir)
+    items = _gather_md_tests(srcdir)
 
     # we build the parametrized
     def _fn(fn):
         parameters = []
-        for name in sorted(sources):
-            kwargs = {"id": name}
-            if name in markers:
-                kwargs["marks"] = [getattr(pytest.mark, m) for m in markers[name]]
-            param = pytest.param(sources[name], expected[name], options.get(name, None), **kwargs)  
+        for name, item in sorted(items.items()):
+            kwargs = {
+                "id": name,
+                "marks": [getattr(pytest.mark, m) for m in item.markers or []]
+            }
+            param = pytest.param(item.src, item.expected, item.options, **kwargs)  
             parameters.append(param)
         return pytest.mark.parametrize(args, parameters)(fn)
     return _fn
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup("helloworld")
+    group.addoption(
+        "--list",
+        action="store_true",
+        dest="list-tests",
+        help='list all tests',
+    )
+
+
+def pytest_collection_finish(session):
+    if getattr(session.config.option, "list-tests"):
+        for subdir in ALL_SUBDIRS:
+            for name, item in sorted(_gather_md_tests(subdir).items()):
+                print(f"{name} {item.markers}")
+        pytest.exit('Done!')
