@@ -32,7 +32,6 @@ To run the test suite **without** the known failures:
     ....
     5 failed, 146 passed, 15 deselected in 0.33s
 
-
 TODO: Add details about which tests in the various test sets that markdown2.py
 fails... and why I'm not concerned about them. 
  
