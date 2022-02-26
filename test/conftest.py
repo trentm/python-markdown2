@@ -42,7 +42,7 @@ def _gather_md_tests(srcdir):
 
     items = {}
     for path in srcdir.glob("*.text"):
-        name = f"{srcdir.name}-{path.with_suffix('').name}"
+        name = "{parent}-{name}".format(parent=srcdir.name, name=path.with_suffix('').name)
         assert name not in items
         items[name] = Item(path)
     return items
