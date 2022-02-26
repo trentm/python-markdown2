@@ -22,7 +22,13 @@ def _gather_md_tests(srcdir):
         def markers(self):
             src = self.src.with_suffix(".tags")
             if src.exists():
-                return [ sanitize(m) for m in src.read_text().partition("#")[0].split()]
+                marks = []
+                with src.open() as fp:
+                    for line in fp:
+                        if not line.strip() or line.strip().startswith("#"):
+                            continue
+                        marks.extend(line.partition("#")[0].split())
+                return marks
 
         @property
         def options(self):
@@ -36,13 +42,13 @@ def _gather_md_tests(srcdir):
 
     items = {}
     for path in srcdir.glob("*.text"):
-        name = f"{srcdir.name}-{path.name}" 
+        name = f"{srcdir.name}-{path.with_suffix('').name}"
         assert name not in items
         items[name] = Item(path)
     return items
 
 
-def parametrize(args, subdir):
+def parametrize(arguments, subdir):
     global ALL_SUBDIRS
     datadir = Path(os.getenv("DATADIR", Path(__file__).parent)).absolute()
     srcdir = datadir / subdir
@@ -54,13 +60,15 @@ def parametrize(args, subdir):
     def _fn(fn):
         parameters = []
         for name, item in sorted(items.items()):
-            kwargs = {
-                "id": name,
-                "marks": [getattr(pytest.mark, m) for m in item.markers or []]
-            }
-            param = pytest.param(item.src, item.expected, item.options, **kwargs)  
+            marks = [getattr(pytest.mark, m) for m in item.markers or []]
+            args = (item.src, item.expected, item.options)
+            if "marks" in arguments:
+                args = [*args, set(m.name for m in marks)]
+            kwargs = {"id": name, "marks": marks}
+            param = pytest.param(*args, **kwargs)
             parameters.append(param)
-        return pytest.mark.parametrize(args, parameters)(fn)
+        return pytest.mark.parametrize(arguments, parameters)(fn)
+
     return _fn
 
 
@@ -70,7 +78,7 @@ def pytest_addoption(parser):
         "--list",
         action="store_true",
         dest="list-tests",
-        help='list all tests',
+        help="list all tests",
     )
 
 
@@ -79,4 +87,4 @@ def pytest_collection_finish(session):
         for subdir in ALL_SUBDIRS:
             for name, item in sorted(_gather_md_tests(subdir).items()):
                 print(f"{name} {item.markers}")
-        pytest.exit('Done!')
+        pytest.exit("Done!")
