@@ -86,5 +86,5 @@ def pytest_collection_finish(session):
     if getattr(session.config.option, "list-tests"):
         for subdir in ALL_SUBDIRS:
             for name, item in sorted(_gather_md_tests(subdir).items()):
-                print(f"{name} {item.markers}")
+                print("{} {}".format(name, item.markers))
         pytest.exit("Done!")
