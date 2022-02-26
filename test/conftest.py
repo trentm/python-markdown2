@@ -1,5 +1,5 @@
+import re  # pylint: disable=unused-import
 import os
-import re
 import warnings
 from pathlib import Path
 
@@ -28,7 +28,7 @@ def _gather_md_tests(srcdir):
                         if not line.strip() or line.strip().startswith("#"):
                             continue
                         marks.extend(line.partition("#")[0].split())
-                return marks
+                return [sanitize(m) for m in marks]
 
         @property
         def options(self):
