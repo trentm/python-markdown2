@@ -27,10 +27,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install Pygments>=2.5.2 pytest
+          pip install Pygments>=2.5.2 pytest pytest-cov pytest-html
       - name: Test
         env:
           PYTHONPATH: lib
         run: |
-          py.test -k "not knownfailure" test
+          py.test \
+            --cov=markdown2 \
+            --cov-report=html:$OUTDIR/coverage \
+            --junitxml=$OUTDIR/junit/junit.xml --html=$OUTDIR/junit/junit.html --self-contained-html \
+            -k "not knownfailure" test
       
