@@ -1,9 +1,9 @@
 name: PythonCI
 on:
   push:
-    branches: [ master ]
+    branches: [ master, coverage-support ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, coverage-support ]
 jobs:
   build:
     strategy:
