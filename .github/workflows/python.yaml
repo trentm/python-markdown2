@@ -31,6 +31,7 @@ jobs:
       - name: Test
         env:
           PYTHONPATH: lib
+          OUTDIR: build/qa-${{ matrix.python-version }}-${{ matrix.os }}
         run: |
           py.test \
             --cov=markdown2 \
