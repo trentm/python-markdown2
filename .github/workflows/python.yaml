@@ -25,6 +25,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           pip install Pygments>=2.5.2 pytest pytest-cov pytest-html
@@ -32,6 +33,7 @@ jobs:
         env:
           PYTHONPATH: lib
           OUTDIR: build/qa-${{ matrix.python-version }}-${{ matrix.os }}
+        shell: bash
         run: |
           py.test \
             --cov=markdown2 \
