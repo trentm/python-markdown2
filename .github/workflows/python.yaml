@@ -1,9 +1,9 @@
 name: PythonCI
 on:
   push:
-    branches: [ master, coverage-support ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, coverage-support ]
+    branches: [ master ]
 jobs:
   build:
     strategy:
@@ -25,19 +25,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        shell: bash
         run: |
           python -m pip install --upgrade pip
-          pip install Pygments>=2.5.2 pytest pytest-cov pytest-html
+          pip install Pygments>=2.5.2 pytest
       - name: Test
         env:
           PYTHONPATH: lib
-          OUTDIR: build/qa-${{ matrix.python-version }}-${{ matrix.os }}
-        shell: bash
         run: |
-          py.test \
-            --cov=markdown2 \
-            --cov-report=html:$OUTDIR/coverage \
-            --junitxml=$OUTDIR/junit/junit.xml --html=$OUTDIR/junit/junit.html --self-contained-html \
-            -k "not knownfailure" test
+          py.test -k "not knownfailure" test
       
