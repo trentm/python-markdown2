@@ -1,0 +1,23 @@
+Inner code blocks should not render as code blocks
+
+````
+```cpp
+int x = 10;
+```
+````
+
+Without language specifier
+````
+```
+int x = 10;
+```
+````
+
+Double nesting
+`````
+````
+```cpp
+int x = 10;
+```
+````
+`````

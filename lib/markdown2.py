@@ -1844,10 +1844,10 @@ class Markdown(object):
     def _code_block_sub(self, match, is_fenced_code_block=False):
         lexer_name = None
         if is_fenced_code_block:
-            lexer_name = match.group(1)
+            lexer_name = match.group(2)
             if lexer_name:
                 formatter_opts = self.extras['fenced-code-blocks'] or {}
-            codeblock = match.group(2)
+            codeblock = match.group(3)
             codeblock = codeblock[:-1]  # drop one trailing newline
         else:
             codeblock = match.group(1)
@@ -1929,9 +1929,9 @@ class Markdown(object):
 
     _fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?)
-        ^```\s{0,99}?([\w+-]+)?\s{0,99}?\n  # opening fence, $1 = optional lang
-        (.*?)                             # $2 = code block content
-        ^```[ \t]*\n                      # closing fence
+        (^`{3,})\s{0,99}?([\w+-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
+        (.*?)                             # $3 = code block content
+        \1[ \t]*\n                      # closing fence
         ''', re.M | re.X | re.S)
 
     def _fenced_code_block_sub(self, match):
