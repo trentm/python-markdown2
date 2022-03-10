@@ -1059,7 +1059,7 @@ class Markdown(object):
     def _table_sub(self, match):
         trim_space_re = '^[ \t\n]+|[ \t\n]+$'
         trim_bar_re = r'^\||\|$'
-        split_bar_re = r'^\||(?<!\\)\|'
+        split_bar_re = r'^\||(?<![\`\\])\|'
         escape_bar_re = r'\\\|'
 
         head, underline, body = match.groups()
