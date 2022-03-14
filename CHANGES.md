@@ -4,6 +4,9 @@
 
 - [pull #413] Fix meta indentation
 - [pull #414] Fix code surrounded by blank lines inside blockquote fenced code blocks
+- [pull #417] Fix inline code pipe symbol within tables (issue #399)
+- [pull #418] Fix code block parsing error (issue #327)
+- [pull #419] Fix hr block created when not supposed to (issue #400)
 
 
 ## python-markdown2 2.4.2
