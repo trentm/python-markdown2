@@ -256,6 +256,7 @@ class Markdown(object):
         self.cli = cli
 
         self._escape_table = g_escape_table.copy()
+        self._code_table = {}
         if "smarty-pants" in self.extras:
             self._escape_table['"'] = _hash_text('"')
             self._escape_table["'"] = _hash_text("'")
@@ -2005,7 +2006,7 @@ class Markdown(object):
         for before, after in replacements:
             text = text.replace(before, after)
         hashed = _hash_text(text)
-        self._escape_table[text] = hashed
+        self._code_table[text] = hashed
         return hashed
 
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
@@ -2335,7 +2336,7 @@ class Markdown(object):
 
     def _unescape_special_chars(self, text):
         # Swap back in all the special characters we've hidden.
-        for ch, hash in list(self._escape_table.items()):
+        for ch, hash in list(self._escape_table.items()) + list(self._code_table.items()):
             text = text.replace(hash, ch)
         return text
 
