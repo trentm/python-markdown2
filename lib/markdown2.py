@@ -1220,7 +1220,7 @@ class Markdown(object):
 
         # Do hard breaks:
         if "break-on-newline" in self.extras:
-            text = re.sub(r" *\n", "<br%s\n" % self.empty_element_suffix, text)
+            text = re.sub(r" *\n(?!\<(?:\/?(ul|ol|li))\>)", "<br%s\n" % self.empty_element_suffix, text)
         else:
             text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
 
