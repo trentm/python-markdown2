@@ -9,6 +9,7 @@
 - [pull #419] Fix hr block created when not supposed to (issue #400)
 - [pull #421] Fix backslashes removed by adjacent code blocks (issues #369 and #412)
 - [pull #420] Fix md5-* in resulting HTML when several code blocks follow one by one (issue #355)
+- [pull #422] Fix excessive <br> tags in lists using break-on-newline extra (issue #394)
 
 
 ## python-markdown2 2.4.2
