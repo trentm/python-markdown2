@@ -452,7 +452,7 @@ class Markdown(object):
                 (?:[\S \t]+\s*:\s+>(?:\n\s+.*)+?)  # multiline long descriptions
                 (?=\n[\S \t]+\s*:\s*.*\n|\s*\Z)  # match up until the start of the next key:value definition or the end of the input text
             )|(?:
-                \s*[\S \t]+\s*:(?! >)[ \t]*.*\n?  # simple key:value pair, leading spaces allowed
+                \s*[\S \t]+\s*:(?! >).*\n?  # simple key:value pair, leading spaces allowed
             )
         )(?:---[\ \t]*\n)?  # optional closing fence
         ''', re.MULTILINE | re.VERBOSE
