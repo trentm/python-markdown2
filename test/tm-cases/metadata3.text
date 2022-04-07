@@ -1,4 +1,5 @@
 ---
+ : empty key should be ignored
 basic: value
 basic2: test consecutive basic keys
 empty:
