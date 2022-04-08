@@ -444,14 +444,20 @@ class Markdown(object):
     #   another-var: blah blah
     #
     #   # header
-    _meta_data_pattern = re.compile(r'^(?:---[\ \t]*\n)?((?:[\S\w]+\s*:(?:\n+[ \t]+.*)+)|(?:.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)|(?:\s*[\S\w]+\s*:(?! >)[ \t]*.*\n?))(?:---[\ \t]*\n)?', re.MULTILINE)
-    _key_val_pat = re.compile(r"[\S\w]+\s*:(?! >)[ \t]*.*\n?", re.MULTILINE)
-    # this allows key: >
-    #                   value
-    #                   conutiues over multiple lines
-    _key_val_block_pat = re.compile(
-        r"(.*:\s+>\n\s+[\S\s]+?)(?=\n\w+\s*:\s*\w+\n|\Z)", re.MULTILINE
+    _meta_data_pattern = re.compile(r'''
+        ^(?:---[\ \t]*\n)?(  # optional opening fence
+            (?:
+                [\S \t]*\w[\S \t]*\s*:(?:\n+[ \t]+.*)+  # indented lists
+            )|(?:
+                (?:[\S \t]*\w[\S \t]*\s*:\s+>(?:\n\s+.*)+?)  # multiline long descriptions
+                (?=\n[\S \t]*\w[\S \t]*\s*:\s*.*\n|\s*\Z)  # match up until the start of the next key:value definition or the end of the input text
+            )|(?:
+                [\S \t]*\w[\S \t]*\s*:(?! >).*\n?  # simple key:value pair, leading spaces allowed
+            )
+        )(?:---[\ \t]*\n)?  # optional closing fence
+        ''', re.MULTILINE | re.VERBOSE
     )
+
     _key_val_list_pat = re.compile(
         r"^-(?:[ \t]*([^\n]*)(?:[ \t]*[:-][ \t]*(\S+))?)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
         re.MULTILINE,

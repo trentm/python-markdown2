@@ -1,0 +1,33 @@
+---
+ : empty key should be ignored
+basic: value
+basic2: test consecutive basic keys
+empty:
+empty2  :     
+long-desc: >
+  long multiline
+    description
+  with varying levels of
+      indentation
+long-desc2: >
+  test consecutive long descriptions
+nested:
+  - list item
+  - following a long description
+nested2:
+  - consecutive nested
+nested3:
+  -
+    subkey: with subkeys
+long-desc3: >
+  long description following a nested
+empty-following-long-desc:
+key with spaces: will also be recognized
+-key_start_with_hyphen: allowed
+  tab indented key: allowed
+finish-with : >
+  a nice long description
+  over a couple lines
+---
+
+This tests various metadata key:value configurations to make sure they will work well consecutively
