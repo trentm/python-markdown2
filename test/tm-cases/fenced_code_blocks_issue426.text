@@ -1,0 +1,26 @@
+# Django Templates
+
+## NOTES
+
+- The name should map to the URL.
+- No distro or app name prefix, they are namespaced by their dirs already
+- Since templates are made in python, the are `named_with_underscores.html` (not web style dashes).
+
+## URL PARAMETERS IN THE TEMPLATE
+
+- All views (except `generic.View`) from `django.forms.generic` inherit from `ContextMixin`
+- `ContextMixin` defines the method `get_context_data`:
+    ```python
+    def get_context_data(self, **kwargs):
+        kwargs.setdefault('view', self)
+        if self.extra_context is not None:
+            kwargs.update(self.extra_context)
+        return kwargs
+    ```
+    So when overriding one must be careful to extends `super`'s `kwargs`:
+    ```py
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+        kwargs['page_title'] = "Documentation"
+        return kwargs
+    ```
