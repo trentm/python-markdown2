@@ -26,7 +26,8 @@ def _python_ver_from_python(python):
 
 def _gen_python_names():
     yield "python"
-    for ver in [(2,6), (2,7), (3,3), (3,4), (3,5), (3,6), (3,7)]:
+    # generate version numbers from python 3.5 to 3.20
+    for ver in [(3, i) for i in range(5, 20)]:
         yield "python%d.%d" % ver
         if sys.platform == "win32":
             yield "python%d%d" % ver
@@ -43,8 +44,8 @@ def _gen_pythons():
 
 def testall():
     for ver, python in _gen_pythons():
-        if ver < (2,6) or ver in ((3,0), (3,1), (3,2)):
-            # Don't support Python < 2.6, 3.0/3.1/3.2.
+        if ver < (3, 5):
+            # Don't support Python < 3.5
             continue
         ver_str = "%s.%s" % ver
         print("-- test with Python %s (%s)" % (ver_str, python))
