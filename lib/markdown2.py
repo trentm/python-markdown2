@@ -1879,10 +1879,17 @@ class Markdown(object):
                 return codeblock
             lexer = self._get_pygments_lexer(lexer_name)
             if lexer:
+                # calculate code block's leading indent to not break lists
+                leading_indent = re.match(r'[ \t]*(?=`{3,})', match.group(1))
+                if leading_indent is not None:
+                    leading_indent = leading_indent.group(0)
+                else:
+                    leading_indent = ''
+
                 codeblock = unhash_code( codeblock )
                 colored = self._color_with_pygments(codeblock, lexer,
                                                     **formatter_opts)
-                return "\n\n%s\n\n" % colored
+                return "\n\n%s%s\n\n" % (leading_indent, colored)
 
         codeblock = self._encode_code(codeblock)
         pre_class_str = self._html_class_str_from_tag("pre")
@@ -1930,7 +1937,7 @@ class Markdown(object):
 
     _fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?|(?<=\n))
-        (^`{3,})\s{0,99}?([\w+-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
+        (^[ \t]*`{3,})\s{0,99}?([\w+-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
         (.*?)                             # $3 = code block content
         \1[ \t]*\n                      # closing fence
         ''', re.M | re.X | re.S)
