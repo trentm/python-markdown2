@@ -2310,6 +2310,7 @@ class Markdown(object):
         return addr
 
     def _do_link_patterns(self, text):
+        assert self.link_patterns is not None, "If the 'link-patterns' extra is used, an argument for 'link_patterns' is required"
         link_from_hash = {}
         for regex, repl in self.link_patterns:
             replacements = []
