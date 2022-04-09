@@ -1056,8 +1056,8 @@ class Markdown(object):
 
         less_than_tab = self.tab_width - 1
         _pyshell_block_re = re.compile(r"""
-            ^([ ]{0,%d})>>>[ ].*\n   # first line
-            ^(\1.*\S+.*\n)*         # any number of subsequent lines
+            ^([ ]{0,%d})>>>[ ].*\n  # first line
+            ^(\1[^\S\n]*\S.*\n)*    # any number of subsequent lines with at least one character
             ^\n                     # ends with a blank line
             """ % less_than_tab, re.M | re.X)
 
