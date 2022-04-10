@@ -12,6 +12,7 @@
 - [pull #422] Fix excessive <br> tags in lists using break-on-newline extra (issue #394)
 - [pull #424] Standardize key and value definitions for metadata extra (issue #423)
 - [pull #427] Fix fenced code blocks breaking lists (issue #426)
+- [pull #428] Fix catastrophic backtracking (Regex DoS) in pyshell blocks.
 
 
 ## python-markdown2 2.4.2
