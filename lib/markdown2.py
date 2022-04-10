@@ -1885,17 +1885,27 @@ class Markdown(object):
                 return codeblock
             lexer = self._get_pygments_lexer(lexer_name)
             if lexer:
-                # calculate code block's leading indent to not break lists
-                leading_indent = re.match(r'[ \t]*(?=`{3,})', match.group(1))
-                if leading_indent is not None:
-                    leading_indent = leading_indent.group(0)
-                else:
-                    leading_indent = ''
+                def uniform_dedent(text):
+                    # find leading indentation of each line
+                    ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
+                    # get smallest common leading indent
+                    ws = sorted(ws)[0]
+                    # dedent every line by smallest common indent
+                    return ws, ''.join(
+                        (line.replace(ws, '', 1) if line.startswith(ws) else line)
+                        for line in text.splitlines(True)
+                    )
+
+                # remove leading indent from code block
+                leading_indent, codeblock = uniform_dedent(codeblock)
 
                 codeblock = unhash_code( codeblock )
                 colored = self._color_with_pygments(codeblock, lexer,
                                                     **formatter_opts)
-                return "\n\n%s%s\n\n" % (leading_indent, colored)
+
+                # add back the indent to all lines
+                colored = ''.join(leading_indent + line for line in colored.splitlines(True))
+                return "\n\n%s\n\n" % colored
 
         codeblock = self._encode_code(codeblock)
         pre_class_str = self._html_class_str_from_tag("pre")
