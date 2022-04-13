@@ -248,6 +248,9 @@ class Markdown(object):
                 self._toc_depth = self.extras["toc"].get("depth", 6)
         self._instance_extras = self.extras.copy()
 
+        if 'link-patterns' in self.extras:
+            if link_patterns is None and self.extras['link-patterns'] is None:
+                raise MarkdownError("If the 'link-patterns' extra is used, an argument for 'link_patterns' is required")
         self.link_patterns = link_patterns
         self.footnote_title = footnote_title
         self.footnote_return_symbol = footnote_return_symbol
@@ -2310,7 +2313,6 @@ class Markdown(object):
         return addr
 
     def _do_link_patterns(self, text):
-        assert self.link_patterns is not None, "If the 'link-patterns' extra is used, an argument for 'link_patterns' is required"
         link_from_hash = {}
         for regex, repl in self.link_patterns:
             replacements = []
