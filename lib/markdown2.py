@@ -40,6 +40,7 @@ text-to-HTML conversion tool for web writers.
 Supported extra syntax options (see -x|--extras option below and
 see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 
+* admonitions: Enable parsing of RST admonitions.
 * break-on-newline: Replace single new line characters with <br> when True
 * code-friendly: Disable _ and __ for em and strong.
 * cuddled-lists: Allow lists to be cuddled to the preceding paragraph.
@@ -350,6 +351,9 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
+        if 'admonitions' in self.extras and not self.safe_mode:
+            text = self._do_admonitions(text)
+
         if "fenced-code-blocks" in self.extras and not self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
@@ -358,6 +362,9 @@ class Markdown(object):
 
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
+
+        if 'admonitions' in self.extras and self.safe_mode:
+            text = self._do_admonitions(text)
 
         if "fenced-code-blocks" in self.extras and self.safe_mode:
             text = self._do_fenced_code_blocks(text)
@@ -998,6 +1005,9 @@ class Markdown(object):
     def _run_block_gamut(self, text):
         # These are all the transformations that form block-level
         # tags like paragraphs, headers, and list items.
+
+        if 'admonitions' in self.extras:
+            text = self._do_admonitions(text)
 
         if "fenced-code-blocks" in self.extras:
             text = self._do_fenced_code_blocks(text)
@@ -1885,27 +1895,15 @@ class Markdown(object):
                 return codeblock
             lexer = self._get_pygments_lexer(lexer_name)
             if lexer:
-                def uniform_dedent(text):
-                    # find leading indentation of each line
-                    ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
-                    # get smallest common leading indent
-                    ws = sorted(ws)[0]
-                    # dedent every line by smallest common indent
-                    return ws, ''.join(
-                        (line.replace(ws, '', 1) if line.startswith(ws) else line)
-                        for line in text.splitlines(True)
-                    )
-
                 # remove leading indent from code block
-                leading_indent, codeblock = uniform_dedent(codeblock)
+                leading_indent, codeblock = self._uniform_outdent(codeblock)
 
                 codeblock = unhash_code( codeblock )
                 colored = self._color_with_pygments(codeblock, lexer,
                                                     **formatter_opts)
 
                 # add back the indent to all lines
-                colored = ''.join(leading_indent + line for line in colored.splitlines(True))
-                return "\n\n%s\n\n" % colored
+                return "\n\n%s\n\n" % self._uniform_indent(colored, leading_indent, True)
 
         codeblock = self._encode_code(codeblock)
         pre_class_str = self._html_class_str_from_tag("pre")
@@ -2031,6 +2029,44 @@ class Markdown(object):
         hashed = _hash_text(text)
         self._code_table[text] = hashed
         return hashed
+
+    _admonitions = r'admonition|attention|caution|danger|error|hint|important|note|tip|warning'
+    _admonitions_re = re.compile(r'''
+        ^(\ *)\.\.\ (%s)::\ *         # $1 leading indent, $2 the admonition
+        (.*)?                                # $3 admonition title
+        ((?:\s*\n\1\ {3,}.*)+?)      # $4 admonition body (required)
+        (?=\s*(?:\Z|\n{3,}|\n\1?\ {0,2}\S))  # until EOF, 2 blank lines or something less indented
+        ''' % _admonitions,
+        re.IGNORECASE | re.MULTILINE | re.VERBOSE
+    )
+
+    def _do_admonitions_sub(self, match):
+        lead_indent, admonition_name, title, body = match.groups()
+
+        admonition_type = '<strong>%s</strong>' % admonition_name
+
+        # figure out the class names to assign the block
+        if admonition_name.lower() == 'admonition':
+            admonition_class = 'admonition'
+        else:
+            admonition_class = 'admonition %s' % admonition_name.lower()
+
+        # titles are generally optional
+        if title:
+            title = '<em>%s</em>' % title
+
+        # process the admonition body like regular markdown
+        body = self._run_block_gamut("\n%s\n" % self._uniform_outdent(body)[1])
+
+        # indent the body before placing inside the aside block
+        admonition = self._uniform_indent('%s\n%s\n\n%s\n' % (admonition_type, title, body), self.tab, False)
+        # wrap it in an aside
+        admonition = '<aside class="%s">\n%s</aside>' % (admonition_class, admonition)
+        # now indent the whole admonition back to where it started
+        return self._uniform_indent(admonition, lead_indent, False)
+
+    def _do_admonitions(self, text):
+        return self._admonitions_re.sub(self._do_admonitions_sub, text)
 
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
     def _do_strike(self, text):
@@ -2366,6 +2402,26 @@ class Markdown(object):
     def _outdent(self, text):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
+
+    def _uniform_outdent(self, text):
+        # Removes the smallest common leading indentation from each line
+        # of `text` and returns said indent along with the outdented text.
+
+        # Find leading indentation of each line
+        ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
+        # Get smallest common leading indent
+        ws = sorted(ws)[0]
+        # Dedent every line by smallest common indent
+        return ws, ''.join(
+            (line.replace(ws, '', 1) if line.startswith(ws) else line)
+            for line in text.splitlines(True)
+        )
+
+    def _uniform_indent(self, text, indent, include_empty_lines=False):
+        return ''.join(
+            (indent + line if line.strip() or include_empty_lines else '')
+            for line in text.splitlines(True)
+        )
 
 
 class MarkdownWithExtras(Markdown):
