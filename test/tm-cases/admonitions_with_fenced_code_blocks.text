@@ -9,9 +9,15 @@
    print('Consecutive blocks should also be fine')
    ```
    ```python
-   print('Even though fenced code blocks wrap themselves in \n\n')
+   print('Even though fenced code blocks wrap themselves in newlines')
    ```
    .. hint:: It should also work nested
       ```python
       print('ok')
       ```
+
+```python
+# admonitions WITHIN fenced code blocks should NOT be rendered
+.. attention:: title
+   body
+```

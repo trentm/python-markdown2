@@ -18,11 +18,13 @@
   Otherwise the text is no longer part of the admonition.
 
 .. IMPORTANT::
-   You can also use 2 or more empty lines after an admonition  
+   You can also use 3 or more empty lines after an admonition  
    to end it
 
 
-Like so.
+
+    print('In case you wanted something like')
+    print('an indented code block right after')
 
 .. admonition:: Generic admonitions
 

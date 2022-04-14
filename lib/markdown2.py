@@ -351,11 +351,11 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
-        if 'admonitions' in self.extras and not self.safe_mode:
-            text = self._do_admonitions(text)
-
         if "fenced-code-blocks" in self.extras and not self.safe_mode:
             text = self._do_fenced_code_blocks(text)
+
+        if 'admonitions' in self.extras and not self.safe_mode:
+            text = self._do_admonitions(text)
 
         if self.safe_mode:
             text = self._hash_html_spans(text)
@@ -363,11 +363,11 @@ class Markdown(object):
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
 
-        if 'admonitions' in self.extras and self.safe_mode:
-            text = self._do_admonitions(text)
-
         if "fenced-code-blocks" in self.extras and self.safe_mode:
             text = self._do_fenced_code_blocks(text)
+
+        if 'admonitions' in self.extras and self.safe_mode:
+            text = self._do_admonitions(text)
 
         # Because numbering references aren't links (yet?) then we can do everything associated with counters
         # before we get started
@@ -1903,7 +1903,7 @@ class Markdown(object):
                                                     **formatter_opts)
 
                 # add back the indent to all lines
-                return "\n\n%s\n\n" % self._uniform_indent(colored, leading_indent, True)
+                return "\n%s\n" % self._uniform_indent(colored, leading_indent, True)
 
         codeblock = self._encode_code(codeblock)
         pre_class_str = self._html_class_str_from_tag("pre")
@@ -1913,7 +1913,7 @@ class Markdown(object):
         else:
             code_class_str = self._html_class_str_from_tag("code")
 
-        return "\n\n<pre%s><code%s>%s\n</code></pre>\n\n" % (
+        return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
             pre_class_str, code_class_str, codeblock)
 
     def _html_class_str_from_tag(self, tag):
@@ -2032,10 +2032,10 @@ class Markdown(object):
 
     _admonitions = r'admonition|attention|caution|danger|error|hint|important|note|tip|warning'
     _admonitions_re = re.compile(r'''
-        ^(\ *)\.\.\ (%s)::\ *         # $1 leading indent, $2 the admonition
+        ^(\ *)\.\.\ (%s)::\ *                # $1 leading indent, $2 the admonition
         (.*)?                                # $3 admonition title
-        ((?:\s*\n\1\ {3,}.*)+?)      # $4 admonition body (required)
-        (?=\s*(?:\Z|\n{3,}|\n\1?\ {0,2}\S))  # until EOF, 2 blank lines or something less indented
+        ((?:\s*\n\1\ {3,}.*)+?)              # $4 admonition body (required)
+        (?=\s*(?:\Z|\n{4,}|\n\1?\ {0,2}\S))  # until EOF, 3 blank lines or something less indented
         ''' % _admonitions,
         re.IGNORECASE | re.MULTILINE | re.VERBOSE
     )
