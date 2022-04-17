@@ -354,9 +354,6 @@ class Markdown(object):
         if "fenced-code-blocks" in self.extras and not self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
-        if 'admonitions' in self.extras and not self.safe_mode:
-            text = self._do_admonitions(text)
-
         if self.safe_mode:
             text = self._hash_html_spans(text)
 
@@ -366,7 +363,7 @@ class Markdown(object):
         if "fenced-code-blocks" in self.extras and self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
-        if 'admonitions' in self.extras and self.safe_mode:
+        if 'admonitions' in self.extras:
             text = self._do_admonitions(text)
 
         # Because numbering references aren't links (yet?) then we can do everything associated with counters
