@@ -249,7 +249,10 @@ class Markdown(object):
         self._instance_extras = self.extras.copy()
 
         if 'link-patterns' in self.extras:
-            if link_patterns is None and self.extras['link-patterns'] is None:
+            if link_patterns is None:
+                # if you have specified that the link-patterns extra SHOULD
+                # be used (via self.extras) but you haven't provided anything
+                # via the link_patterns argument then an error is raised
                 raise MarkdownError("If the 'link-patterns' extra is used, an argument for 'link_patterns' is required")
         self.link_patterns = link_patterns
         self.footnote_title = footnote_title
