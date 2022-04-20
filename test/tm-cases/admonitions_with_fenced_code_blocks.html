@@ -1,0 +1,25 @@
+<aside class="admonition note">
+    <strong>note</strong>
+    <p>Admonitions are able to contain fenced code blocks</p>
+    <div class="codehilite"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;like so&#39;</span><span class="p">)</span>
+    </code></pre></div>
+</aside>
+
+<aside class="admonition warning">
+    <strong>warning</strong>
+    <div class="codehilite"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Consecutive blocks should also be fine&#39;</span><span class="p">)</span>
+    </code></pre></div>
+    <div class="codehilite"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Even though fenced code blocks wrap themselves in newlines&#39;</span><span class="p">)</span>
+    </code></pre></div>
+    <aside class="admonition hint">
+        <strong>hint</strong>
+        <em>It should also work nested</em>
+        <div class="codehilite"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ok&#39;</span><span class="p">)</span>
+        </code></pre></div>
+    </aside>
+</aside>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># admonitions WITHIN fenced code blocks should NOT be rendered</span>
+<span class="o">..</span> <span class="n">attention</span><span class="p">::</span> <span class="n">title</span>
+   <span class="n">body</span>
+</code></pre></div>

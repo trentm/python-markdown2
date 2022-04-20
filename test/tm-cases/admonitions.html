@@ -1,0 +1,53 @@
+<aside class="admonition note">
+    <strong>NOTE</strong>
+    <em>Admonitions</em>
+    <p>They contain 3 main parts, the admonition type, title and body.  </p>
+    <p>The admonition type is case insensitive, title is optional and the body
+    should be able to contain pretty much anything. For example:</p>
+    <ul>
+    <li>Lists</li>
+    <li>With multiple levels
+    <ul>
+    <li>Of indentation</li>
+    </ul></li>
+    </ul>
+    <p>And code blocks:</p>
+    <pre><code>print('indented code blocks')
+    </code></pre>
+</aside>
+
+<aside class="admonition warning">
+    <strong>warning</strong>
+    <p>The admonition's body must be indented by a tab or 3 or more spaces
+    from where the admonition was declared</p>
+</aside>
+
+<p>Otherwise the text is no longer part of the admonition.</p>
+
+<aside class="admonition important">
+    <strong>IMPORTANT</strong>
+    <p>You can also use 3 or more empty lines after an admonition <br />
+    to end it</p>
+</aside>
+
+<pre><code>print('In case you wanted something like')
+print('an indented code block right after')
+</code></pre>
+
+<aside class="admonition">
+    <strong>admonition</strong>
+    <em>Generic admonitions</em>
+    <p>These should be given a title but this is not enforced</p>
+    <aside class="admonition note">
+        <strong>note</strong>
+        <em>Nested admonitions</em>
+        <p>Nested admonitions should also work</p>
+        <ul>
+        <li>Even inside
+        <aside class="admonition tip">
+          <strong>tip</strong>
+          <p>of a list</p>
+        </aside></li>
+        </ul>
+    </aside>
+</aside>

@@ -1,0 +1,23 @@
+.. note::
+   Admonitions are able to contain fenced code blocks
+   ```python
+   print('like so')
+   ```
+
+.. warning::
+   ```python
+   print('Consecutive blocks should also be fine')
+   ```
+   ```python
+   print('Even though fenced code blocks wrap themselves in newlines')
+   ```
+   .. hint:: It should also work nested
+      ```python
+      print('ok')
+      ```
+
+```python
+# admonitions WITHIN fenced code blocks should NOT be rendered
+.. attention:: title
+   body
+```

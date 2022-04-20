@@ -1,0 +1,38 @@
+.. NOTE:: Admonitions
+   They contain 3 main parts, the admonition type, title and body.  
+
+   The admonition type is case insensitive, title is optional and the body
+   should be able to contain pretty much anything. For example:
+
+   - Lists
+   - With multiple levels
+     - Of indentation
+
+   And code blocks:
+
+       print('indented code blocks')
+
+.. warning::
+   The admonition's body must be indented by a tab or 3 or more spaces
+   from where the admonition was declared
+  Otherwise the text is no longer part of the admonition.
+
+.. IMPORTANT::
+   You can also use 3 or more empty lines after an admonition  
+   to end it
+
+
+
+    print('In case you wanted something like')
+    print('an indented code block right after')
+
+.. admonition:: Generic admonitions
+
+   These should be given a title but this is not enforced
+
+   .. note:: Nested admonitions
+      Nested admonitions should also work
+
+      - Even inside
+        .. tip::
+           of a list
