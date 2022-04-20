@@ -14,6 +14,7 @@
 - [pull #427] Fix fenced code blocks breaking lists (issue #426)
 - [pull #429] Fix catastrophic backtracking (Regex DoS) in pyshell blocks.
 - [pull #431] Fix incorrect indentation of fenced code blocks within lists
+- [pull #436] RST admonitions
 
 
 ## python-markdown2 2.4.2
