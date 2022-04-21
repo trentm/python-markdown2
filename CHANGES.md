@@ -15,6 +15,7 @@
 - [pull #429] Fix catastrophic backtracking (Regex DoS) in pyshell blocks.
 - [pull #431] Fix incorrect indentation of fenced code blocks within lists
 - [pull #436] RST admonitions
+- [pull #430] Improve error message if link_patterns forgotten
 
 
 ## python-markdown2 2.4.2
