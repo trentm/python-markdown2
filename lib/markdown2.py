@@ -1853,9 +1853,14 @@ class Markdown(object):
                     yield tup
                 yield 0, "</code>"
 
-            def wrap(self, source, outfile):
+            def wrap(self, source, outfile=None):
                 """Return the source with a code, pre, and div."""
-                return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
+                if outfile is None:
+                    # pygments >= 2.12
+                    return self._wrap_pre(self._wrap_code(source))
+                else:
+                    # pygments < 2.12
+                    return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
 
         formatter_opts.setdefault("cssclass", "codehilite")
         formatter = HtmlCodeFormatter(**formatter_opts)
