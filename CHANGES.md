@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.4 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.3
 
 - [pull #413] Fix meta indentation
