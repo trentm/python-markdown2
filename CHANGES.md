@@ -16,6 +16,7 @@
 - [pull #431] Fix incorrect indentation of fenced code blocks within lists
 - [pull #436] RST admonitions
 - [pull #430] Improve error message if link_patterns forgotten
+- [pull #437] fix compatibility with pygments 2.12
 
 
 ## python-markdown2 2.4.2
