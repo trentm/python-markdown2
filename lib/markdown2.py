@@ -1935,8 +1935,9 @@ class Markdown(object):
         except TypeError:
             return ""
         else:
-            if tag in html_classes_from_tag:
-                return ' class="%s"' % html_classes_from_tag[tag]
+            if isinstance(html_classes_from_tag, dict):
+                if tag in html_classes_from_tag:
+                    return ' class="%s"' % html_classes_from_tag[tag]
         return ""
 
     def _do_code_blocks(self, text):
