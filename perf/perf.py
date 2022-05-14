@@ -45,7 +45,7 @@ def time_markdown_py(cases_dir, repeat):
                 pass
         end = clock()
         times.append(end - start)
-    print "  markdown.py: best of %d: %.3fs" % (repeat, min(times))
+    print("  markdown.py: best of %d: %.3fs" % (repeat, min(times)))
 
 @hotshotit
 def hotshot_markdown2_py(cases_dir, repeat):
@@ -66,7 +66,7 @@ def time_markdown2_py(cases_dir, repeat):
             markdowner.convert(content)
         end = clock()
         times.append(end - start)
-    print "  markdown2.py: best of %d: %.3fs" % (repeat, min(times))
+    print("  markdown2.py: best of %d: %.3fs" % (repeat, min(times)))
 
 def time_markdown_pl(cases_dir, repeat):
     times = []
@@ -75,7 +75,7 @@ def time_markdown_pl(cases_dir, repeat):
         os.system('perl time_markdown_pl.pl "%s"' % cases_dir)
         end = clock()
         times.append(end - start)
-    print "  Markdown.pl: best of %d: %.3fs" % (repeat, min(times))
+    print("  Markdown.pl: best of %d: %.3fs" % (repeat, min(times)))
 
 def time_all(cases_dir, repeat):
     time_markdown_pl(cases_dir, repeat=repeat)
@@ -131,10 +131,10 @@ def main(args=sys.argv):
         if timer_name not in d:
             raise ValueError("no '%s' timer function" % timer_name)
         timer = d[timer_name]
-        print "Profile conversion of %s (plat=%s):" \
-              % (os.path.join(cases_dir, "*.text"), sys.platform)
+        print("Profile conversion of %s (plat=%s):" \
+              % (os.path.join(cases_dir, "*.text"), sys.platform))
         timer(cases_dir, repeat=opts.repeat)
-        print
+        print()
         os.system("python show_stats.py %s.prof" % timer_name)
 
     else:
@@ -145,8 +145,8 @@ def main(args=sys.argv):
         if timer_name not in d:
             raise ValueError("no '%s' timer function" % timer_name)
         timer = d[timer_name]
-        print "Time conversion of %s (plat=%s):" \
-              % (os.path.join(cases_dir, "*.text"), sys.platform)
+        print("Time conversion of %s (plat=%s):" \
+              % (os.path.join(cases_dir, "*.text"), sys.platform))
         timer(cases_dir, repeat=opts.repeat)
     
 if __name__ == "__main__":

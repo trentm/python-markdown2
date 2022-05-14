@@ -29,7 +29,7 @@ Limitations:
   mode... and the only supported mode for now.
 """
 
-from __future__ import print_function
+
 
 __version__ = "1.0.0"
 

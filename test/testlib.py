@@ -329,7 +329,7 @@ def tests_from_manifest(testdir_from_ns):
     be used to group all test cases from that module into an instance of that
     TestSuite subclass. This allows for overriding of test running behaviour.
     """
-    for ns, testdir in testdir_from_ns.items():
+    for ns, testdir in list(testdir_from_ns.items()):
         for testmod in testmods_from_testdir(testdir):
             if hasattr(testmod, "test_suite_class"):
                 testsuite_class = testmod.test_suite_class
@@ -443,13 +443,13 @@ def list_tests(testdir_from_ns, tags):
             testfile = t.testmod.__file__
             if testfile.endswith(".pyc"):
                 testfile = testfile[:-1]
-            print("%s:" % t.shortname())
-            print("  from: %s#%s.%s" % (testfile,
-                t.testcase.__class__.__name__, t.testfn_name))
+            print(("%s:" % t.shortname()))
+            print(("  from: %s#%s.%s" % (testfile,
+                t.testcase.__class__.__name__, t.testfn_name)))
             wrapped = textwrap.fill(' '.join(t.tags()), WIDTH-10)
-            print("  tags: %s" % _indent(wrapped, 8, True))
+            print(("  tags: %s" % _indent(wrapped, 8, True)))
             if t.doc():
-                print(_indent(t.doc(), width=2))
+                print((_indent(t.doc(), width=2)))
     else:
         for t in tests:
             line = t.shortname() + ' '

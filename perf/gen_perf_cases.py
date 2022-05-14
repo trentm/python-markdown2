@@ -16,7 +16,7 @@ TMP = "tmp-"
 def gen_aspn_cases(limit=0):
     base_dir = TMP+'aspn-cases'
     if exists(base_dir):
-        print "'%s' exists, skipping" % base_dir
+        print("'%s' exists, skipping" % base_dir)
         return 
     os.makedirs(base_dir)
     sys.stdout.write("generate %s" % base_dir); sys.stdout.flush()
@@ -49,10 +49,10 @@ def gen_aspn_cases(limit=0):
 def gen_test_cases():
     base_dir = TMP+"test-cases"
     if exists(base_dir):
-        print "'%s' exists, skipping" % base_dir
+        print("'%s' exists, skipping" % base_dir)
         return 
     os.makedirs(base_dir)
-    print "generate %s" % base_dir
+    print("generate %s" % base_dir)
     for test_cases_dir in glob(join("..", "test", "*-cases")):
         for text_file in glob(join(test_cases_dir, "*.text")):
             shutil.copy(text_file, join(base_dir, basename(text_file)))
@@ -137,7 +137,7 @@ def _markdown_from_aspn_html(html):
         try:
             idx = markdown.index(marker)
         except ValueError:
-            print "marker: %r" % marker
+            print("marker: %r" % marker)
             raise
         if not markdown[:idx].strip():
             #TODO: Correct this false diagnosis. Problem is not limited
@@ -194,8 +194,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
     """
     DEBUG = False
     if DEBUG: 
-        print "dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
-              % (tabsize, skip_first_line)
+        print("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
+              % (tabsize, skip_first_line))
     indents = []
     margin = None
     for i, line in enumerate(lines):
@@ -212,12 +212,12 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 break
         else:
             continue # skip all-whitespace lines
-        if DEBUG: print "dedent: indent=%d: %r" % (indent, line)
+        if DEBUG: print("dedent: indent=%d: %r" % (indent, line))
         if margin is None:
             margin = indent
         else:
             margin = min(margin, indent)
-    if DEBUG: print "dedent: margin=%r" % margin
+    if DEBUG: print("dedent: margin=%r" % margin)
 
     if margin is not None and margin > 0:
         for i, line in enumerate(lines):
@@ -229,7 +229,7 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 elif ch == '\t':
                     removed += tabsize - (removed % tabsize)
                 elif ch in '\r\n':
-                    if DEBUG: print "dedent: %r: EOL -> strip up to EOL" % line
+                    if DEBUG: print("dedent: %r: EOL -> strip up to EOL" % line)
                     lines[i] = lines[i][j:]
                     break
                 else:
@@ -237,8 +237,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                                      "line %r while removing %d-space margin"
                                      % (ch, line, margin))
                 if DEBUG:
-                    print "dedent: %r: %r -> removed %d/%d"\
-                          % (line, ch, removed, margin)
+                    print("dedent: %r: %r -> removed %d/%d"\
+                          % (line, ch, removed, margin))
                 if removed == margin:
                     lines[i] = lines[i][j+1:]
                     break

@@ -33,7 +33,7 @@ of where the match was found. For example:
     from HKLM\SOFTWARE\...\perl.exe
 """
 
-from __future__ import print_function
+
 
 _cmdlnUsage = """
     Show the full path of commands.
@@ -93,13 +93,13 @@ def _getRegisteredExecutable(exeName):
     if sys.platform.startswith('win'):
         if os.path.splitext(exeName)[1].lower() != '.exe':
             exeName += '.exe'
-        import _winreg
+        import winreg
         try:
             key = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\" +\
                   exeName
-            value = _winreg.QueryValue(_winreg.HKEY_LOCAL_MACHINE, key)
+            value = winreg.QueryValue(winreg.HKEY_LOCAL_MACHINE, key)
             registered = (value, "from HKLM\\"+key)
-        except _winreg.error:
+        except winreg.error:
             pass
         if registered and not os.path.exists(registered[0]):
             registered = None
@@ -252,7 +252,7 @@ def which(command, path=None, verbose=0, exts=None):
     If no match is found for the command, a WhichError is raised.
     """
     try:
-        match = whichgen(command, path, verbose, exts).next()
+        match = next(whichgen(command, path, verbose, exts))
     except StopIteration:
         raise WhichError("Could not find '%s' on the path." % command)
     return match

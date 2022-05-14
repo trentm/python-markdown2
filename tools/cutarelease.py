@@ -337,7 +337,7 @@ def _parse_version_file(version_file):
         elif content.startswith("#!"):
             shebang = content.splitlines(False)[0]
             shebang_bits = re.split(r'[/ \t]', shebang)
-            for name, typ in {"python": "python", "node": "javascript"}.items():
+            for name, typ in list({"python": "python", "node": "javascript"}.items()):
                 if name in shebang_bits:
                     version_file_type = typ
                     break
@@ -479,7 +479,7 @@ def query_yes_no(question, default="yes"):
         choice = input().lower()
         if default is not None and choice == '':
             return default
-        elif choice in valid.keys():
+        elif choice in list(valid.keys()):
             return valid[choice]
         else:
             sys.stdout.write("Please respond with 'yes' or 'no' "\

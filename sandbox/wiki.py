@@ -18,4 +18,4 @@ link_patterns = [
 ]
 processor = markdown2.Markdown(extras=["link-patterns"],
                                link_patterns=link_patterns)
-print processor.convert(wiki_page)
+print(processor.convert(wiki_page))
