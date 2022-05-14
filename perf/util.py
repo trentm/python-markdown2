@@ -3,15 +3,7 @@
 
 """Perf utility functions"""
 
-import os
-from os.path import basename
 import sys
-import md5
-import re
-import stat
-import textwrap
-import types
-from pprint import pprint, pformat
 
 
 # Global dict for holding specific hotshot profilers

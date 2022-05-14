@@ -9,14 +9,11 @@ import sys
 from os.path import join, dirname, abspath, exists, splitext, basename
 import re
 from glob import glob
-from pprint import pprint
 import unittest
 import codecs
 import difflib
 import doctest
 from json import loads as json_loads
-
-from testlib import TestError, TestSkipped, tag
 
 sys.path.insert(0, join(dirname(dirname(abspath(__file__)))))
 try:

@@ -60,12 +60,8 @@ import sys
 import getopt
 import glob
 import time
-import types
-import tempfile
 import unittest
-from pprint import pprint
 import imp
-import optparse
 import logging
 import textwrap
 import traceback

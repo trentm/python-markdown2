@@ -29,7 +29,7 @@ License: GPL 2 (http://www.gnu.org/copyleft/gpl.html) or BSD
 """
 
 
-import re, sys, os, random, codecs
+import re, sys, codecs
 
 # Set debug level: 3 none, 2 critical, 1 informative, 0 all
 (VERBOSE, INFO, CRITICAL, NONE) = list(range(4))

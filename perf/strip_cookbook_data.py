@@ -1,7 +1,6 @@
 
 from os.path import *
-from pprint import pprint, pformat
-import datetime
+from pprint import pformat
 
 def doit():
     recipes_path = expanduser("recipes.pprint")
@@ -14,11 +13,10 @@ def doit():
             for key in list(c.keys()):
                 if key not in ('comment', 'title'):
                     del c[key]
-    
+
     f = open("stripped.pprint", 'w')
     f.write(pformat(recipe_dicts))
     f.close()
 
 
 doit()
-

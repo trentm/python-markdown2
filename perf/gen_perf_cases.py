@@ -4,7 +4,6 @@ import os
 from os.path import *
 import sys
 import re
-import datetime
 from glob import glob
 import operator
 import shutil
@@ -70,8 +69,6 @@ title_attr_pat = re.compile(r'''title=(["'])(.*?)\1''', re.I)
 i_pat = re.compile(r"<(i)>(.*?)</\1>", re.I)
 
 def _markdown_from_aspn_html(html):
-    from cgi import escape
-
     markdown = html
 
     markdown = br_eol_pat.sub('\n', markdown)  # <br>EOL

@@ -13,8 +13,6 @@ Limitations:
 __version__ = "1.0.0"
 
 import codecs
-import os
-from pprint import pprint, pformat
 import re
 import sys
 from collections import defaultdict

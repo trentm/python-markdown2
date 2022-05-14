@@ -10,7 +10,6 @@ Example:
 
 import os
 import sys
-import timeit
 import time
 from os.path import *
 from glob import glob
