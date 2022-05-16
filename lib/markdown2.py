@@ -2528,7 +2528,7 @@ def _regex_from_encoded_pattern(s):
             except KeyError:
                 raise ValueError("unsupported regex flag: '%s' in '%s' "
                                  "(must be one of '%s')"
-                                 % (char, s, ''.join(flag_from_char.keys())))
+                                 % (char, s, ''.join(list(flag_from_char.keys()))))
         return re.compile(s[1:idx], flags)
     else:  # not an encoded regex
         return re.compile(re.escape(s))
