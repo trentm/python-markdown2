@@ -153,8 +153,8 @@ class _MarkdownTestCase(unittest.TestCase):
                     opts = eval(open(opts_path, 'r').read())
                 except Exception:
                     _, ex, _ = sys.exc_info()
-                    print(("WARNING: couldn't load `%s' opts file: %s" \
-                          % (opts_path, ex)))
+                    print("WARNING: couldn't load `%s' opts file: %s" \
+                          % (opts_path, ex))
 
             toc_html_path = splitext(text_path)[0] + ".toc_html"
             if not exists(toc_html_path):
@@ -389,8 +389,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
     """
     DEBUG = False
     if DEBUG:
-        print(("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
-              % (tabsize, skip_first_line)))
+        print("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
+              % (tabsize, skip_first_line))
     indents = []
     margin = None
     for i, line in enumerate(lines):
@@ -407,12 +407,12 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 break
         else:
             continue # skip all-whitespace lines
-        if DEBUG: print(("dedent: indent=%d: %r" % (indent, line)))
+        if DEBUG: print("dedent: indent=%d: %r" % (indent, line))
         if margin is None:
             margin = indent
         else:
             margin = min(margin, indent)
-    if DEBUG: print(("dedent: margin=%r" % margin))
+    if DEBUG: print("dedent: margin=%r" % margin)
 
     if margin is not None and margin > 0:
         for i, line in enumerate(lines):
@@ -424,7 +424,7 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 elif ch == '\t':
                     removed += tabsize - (removed % tabsize)
                 elif ch in '\r\n':
-                    if DEBUG: print(("dedent: %r: EOL -> strip up to EOL" % line))
+                    if DEBUG: print("dedent: %r: EOL -> strip up to EOL" % line)
                     lines[i] = lines[i][j:]
                     break
                 else:
@@ -432,8 +432,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                                      "line %r while removing %d-space margin"
                                      % (ch, line, margin))
                 if DEBUG:
-                    print(("dedent: %r: %r -> removed %d/%d"\
-                          % (line, ch, removed, margin)))
+                    print("dedent: %r: %r -> removed %d/%d"\
+                          % (line, ch, removed, margin))
                 if removed == margin:
                     lines[i] = lines[i][j+1:]
                     break

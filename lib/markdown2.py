@@ -2549,8 +2549,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
     """
     DEBUG = False
     if DEBUG:
-        print(("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
-              % (tabsize, skip_first_line)))
+        print("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
+              % (tabsize, skip_first_line))
     margin = None
     for i, line in enumerate(lines):
         if i == 0 and skip_first_line: continue
@@ -2566,12 +2566,12 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 break
         else:
             continue  # skip all-whitespace lines
-        if DEBUG: print(("dedent: indent=%d: %r" % (indent, line)))
+        if DEBUG: print("dedent: indent=%d: %r" % (indent, line))
         if margin is None:
             margin = indent
         else:
             margin = min(margin, indent)
-    if DEBUG: print(("dedent: margin=%r" % margin))
+    if DEBUG: print("dedent: margin=%r" % margin)
 
     if margin is not None and margin > 0:
         for i, line in enumerate(lines):
@@ -2583,7 +2583,7 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 elif ch == '\t':
                     removed += tabsize - (removed % tabsize)
                 elif ch in '\r\n':
-                    if DEBUG: print(("dedent: %r: EOL -> strip up to EOL" % line))
+                    if DEBUG: print("dedent: %r: EOL -> strip up to EOL" % line)
                     lines[i] = lines[i][j:]
                     break
                 else:
@@ -2591,8 +2591,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                                      "line %r while removing %d-space margin"
                                      % (ch, line, margin))
                 if DEBUG:
-                    print(("dedent: %r: %r -> removed %d/%d"\
-                          % (line, ch, removed, margin)))
+                    print("dedent: %r: %r -> removed %d/%d"\
+                          % (line, ch, removed, margin))
                 if removed == margin:
                     lines[i] = lines[i][j+1:]
                     break
@@ -2866,7 +2866,7 @@ def main(argv=None):
             else:
                 norm_html = html
                 norm_perl_html = perl_html
-            print(("==== match? %r ====" % (norm_perl_html == norm_html)))
+            print("==== match? %r ====" % (norm_perl_html == norm_html))
 
 
 if __name__ == "__main__":
