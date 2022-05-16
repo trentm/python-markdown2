@@ -325,7 +325,7 @@ def tests_from_manifest(testdir_from_ns):
     be used to group all test cases from that module into an instance of that
     TestSuite subclass. This allows for overriding of test running behaviour.
     """
-    for ns, testdir in list(testdir_from_ns.items()):
+    for ns, testdir in testdir_from_ns.items():
         for testmod in testmods_from_testdir(testdir):
             if hasattr(testmod, "test_suite_class"):
                 testsuite_class = testmod.test_suite_class

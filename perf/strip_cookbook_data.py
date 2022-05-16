@@ -6,11 +6,11 @@ def doit():
     recipes_path = expanduser("recipes.pprint")
     recipe_dicts = eval(open(recipes_path).read())
     for r in recipe_dicts:
-        for key in list(r.keys()):
+        for key in r.keys():
             if key not in ('desc', 'comments'):
                 del r[key]
         for c in r['comments']:
-            for key in list(c.keys()):
+            for key in c.keys():
                 if key not in ('comment', 'title'):
                     del c[key]
 

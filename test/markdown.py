@@ -1031,7 +1031,7 @@ class CorePatterns :
     def __init__ (self) :
 
         self.regExp = {}
-        for key in list(self.patterns.keys()) :
+        for key in self.patterns.keys() :
             self.regExp[key] = re.compile("^%s$" % self.patterns[key],
                                           re.DOTALL)
 
@@ -1729,7 +1729,7 @@ class Extension :
             return ""
 
     def getConfigInfo(self) :
-        return [(key, self.config[key][1]) for key in list(self.config.keys())]
+        return [(key, self.config[key][1]) for key in self.config.keys()]
 
     def setConfig(self, key, value) :
         self.config[key][0] = value
