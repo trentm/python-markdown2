@@ -8,13 +8,11 @@ Limitations:
 - Can't handle tables where cells have a pipe.
 """
 
-from __future__ import print_function
+
 
 __version__ = "1.0.0"
 
 import codecs
-import os
-from pprint import pprint, pformat
 import re
 import sys
 from collections import defaultdict
@@ -89,17 +87,17 @@ def tables_align_columns(path):
             width = width_from_col_idx[col_idx]
             align = align_from_col_idx[col_idx]
             if align == 'center':
-                underline.append(':' + u'-'*(width-2) + ':')
+                underline.append(':' + '-'*(width-2) + ':')
             elif align == 'right':
-                underline.append(u'-'*(width-1) + ':')
+                underline.append('-'*(width-1) + ':')
             elif align == 'left':
-                underline.append(':' + u'-'*(width-1))
+                underline.append(':' + '-'*(width-1))
             else:
-                underline.append(u'-'*width)
+                underline.append('-'*width)
         table[1:1] = [underline]
         #e(pformat(table, width=200))
 
-        table_str = u'\n'.join(('| ' + u' | '.join(r) + ' |') for r in table)
+        table_str = '\n'.join(('| ' + ' | '.join(r) + ' |') for r in table)
         return table_str + '\n'
 
     text = codecs.open(path, 'rb', 'utf8').read()

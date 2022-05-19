@@ -1,4 +1,3 @@
-- py3: py2.4 test (broken?)
 - add "smarty-pants" extra to wiki
 - add "html-classes" extra to wiki
 - more on the "code-color" extra wiki page

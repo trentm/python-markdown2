@@ -111,22 +111,6 @@ from random import random, randint
 import codecs
 from collections import defaultdict
 
-
-# ---- Python version compat
-
-# Use `bytes` for byte strings and `unicode` for unicode strings (str in Py3).
-if sys.version_info[0] <= 2:
-    py3 = False
-    try:
-        bytes
-    except NameError:
-        bytes = str
-    base_string_type = basestring
-elif sys.version_info[0] >= 3:
-    py3 = True
-    unicode = str
-    base_string_type = str
-
 # ---- globals
 
 DEBUG = False
@@ -315,9 +299,9 @@ class Markdown(object):
         # articles):
         self.reset()
 
-        if not isinstance(text, unicode):
+        if not isinstance(text, str):
             # TODO: perhaps shouldn't presume UTF-8 for string input?
-            text = unicode(text, 'utf-8')
+            text = str(text, 'utf-8')
 
         if self.use_file_vars:
             # Look for emacs-style file variable hints.
@@ -1611,7 +1595,7 @@ class Markdown(object):
             the TOC (if the "toc" extra is specified).
         """
         header_id = _slugify(text)
-        if prefix and isinstance(prefix, base_string_type):
+        if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
 
         self._count_from_header_id[header_id] += 1
@@ -2485,7 +2469,7 @@ def calculate_toc_html(toc):
     return '\n'.join(lines) + '\n'
 
 
-class UnicodeWithAttrs(unicode):
+class UnicodeWithAttrs(str):
     """A subclass of unicode used for the return value of conversion to
     possibly attach some attributes. E.g. the "toc_html" attribute when
     the "toc" extra is used.
@@ -2860,11 +2844,7 @@ def main(argv=None):
             p.stdin.write(text.encode('utf-8'))
             p.stdin.close()
             perl_html = p.stdout.read().decode('utf-8')
-            if py3:
-                sys.stdout.write(perl_html)
-            else:
-                sys.stdout.write(perl_html.encode(
-                    sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
+            sys.stdout.write(perl_html)
             print("==== markdown2.py ====")
         html = markdown(text,
             html4tags=opts.html4tags,
@@ -2872,11 +2852,7 @@ def main(argv=None):
             extras=extras, link_patterns=link_patterns,
             use_file_vars=opts.use_file_vars,
             cli=True)
-        if py3:
-            sys.stdout.write(html)
-        else:
-            sys.stdout.write(html.encode(
-                sys.stdout.encoding or "utf-8", 'xmlcharrefreplace'))
+        sys.stdout.write(html)
         if extras and "toc" in extras:
             log.debug("toc_html: " +
                 str(html.toc_html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace')))

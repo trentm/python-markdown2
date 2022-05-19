@@ -5,7 +5,7 @@
 """The markdown2 test suite entry point."""
 
 import os
-from os.path import exists, join, abspath, dirname, normpath
+from os.path import join, abspath, dirname
 import sys
 import logging
 
@@ -24,7 +24,7 @@ def setup():
     # Attempt to get 'pygments' on the import path.
     try:
         # If already have it, use that one.
-        import pygments
+        import pygments  # noqa
     except ImportError:
         pygments_dir = join(top_dir, "deps", "pygments")
         if sys.version_info[0] <= 2:
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     setup()
     default_tags = []
     try:
-        import pygments
+        import pygments  # noqa
     except ImportError:
         log.warning("skipping pygments tests ('pygments' module not found)")
         default_tags.append("-pygments")
