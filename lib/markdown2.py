@@ -2373,6 +2373,10 @@ class Markdown(object):
                     text = text[:start - 3] + text[start:end] + text[end + 3:]
                     continue
 
+                # Do not match against <http://example.com> style auto links
+                if self._auto_link_re.match(text):
+                    continue
+
                 escaped_href = (
                     href.replace('"', '&quot;')  # b/c of attr quote
                         # To avoid markdown <em> and <strong>:
