@@ -5,6 +5,7 @@
 - [pull #439] Fix TypeError if html-classes extra is None
 - [pull #441] Remove Python2 support
 - [pull #445] Replace `<strike>` with `<s>` in strike extra
+- [pull #446] Fix link patterns extra applying within links
 
 
 ## python-markdown2 2.4.3
