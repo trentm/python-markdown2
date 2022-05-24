@@ -2348,6 +2348,7 @@ class Markdown(object):
                % (''.join(chars), ''.join(chars[7:]))
         return addr
 
+    _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
     def _do_link_patterns(self, text):
         link_from_hash = {}
         for regex, repl in self.link_patterns:
@@ -2375,6 +2376,18 @@ class Markdown(object):
 
                 # Do not match against <http://example.com> style auto links
                 if self._auto_link_re.match(text):
+                    continue
+
+                # search the text for anything that looks like a link
+                is_inside_link = False
+                for match in self._basic_link_re.finditer(text):
+                    if any((r[0] <= start and end <= r[1]) for r in match.regs):
+                        # if the link pattern start and end pos is within the bounds of
+                        # something that looks like a link, then don't process it
+                        is_inside_link = True
+                        break
+
+                if is_inside_link:
                     continue
 
                 escaped_href = (
