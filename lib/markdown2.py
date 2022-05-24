@@ -2063,7 +2063,7 @@ class Markdown(object):
 
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
     def _do_strike(self, text):
-        text = self._strike_re.sub(r"<strike>\1</strike>", text)
+        text = self._strike_re.sub(r"<s>\1</s>", text)
         return text
 
     _underline_re = re.compile(r"--(?=\S)(.+?)(?<=\S)--", re.S)
