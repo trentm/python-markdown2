@@ -4,7 +4,7 @@
 
 - [pull #439] Fix TypeError if html-classes extra is None
 - [pull #441] Remove Python2 support
-- [pull #445] Replace <strike> with <s> in strike extra
+- [pull #445] Replace `<strike>` with `<s>` in strike extra
 
 
 ## python-markdown2 2.4.3
@@ -16,7 +16,7 @@
 - [pull #419] Fix hr block created when not supposed to (issue #400)
 - [pull #421] Fix backslashes removed by adjacent code blocks (issues #369 and #412)
 - [pull #420] Fix md5-* in resulting HTML when several code blocks follow one by one (issue #355)
-- [pull #422] Fix excessive <br> tags in lists using break-on-newline extra (issue #394)
+- [pull #422] Fix excessive `<br>` tags in lists using break-on-newline extra (issue #394)
 - [pull #424] Standardize key and value definitions for metadata extra (issue #423)
 - [pull #427] Fix fenced code blocks breaking lists (issue #426)
 - [pull #429] Fix catastrophic backtracking (Regex DoS) in pyshell blocks.
