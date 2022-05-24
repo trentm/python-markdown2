@@ -2374,18 +2374,18 @@ class Markdown(object):
                     text = text[:start - 3] + text[start:end] + text[end + 3:]
                     continue
 
-                # Do not match against <http://example.com> style auto links
-                if self._auto_link_re.match(text):
-                    continue
-
                 # search the text for anything that looks like a link
                 is_inside_link = False
-                for match in self._basic_link_re.finditer(text):
-                    if any((r[0] <= start and end <= r[1]) for r in match.regs):
-                        # if the link pattern start and end pos is within the bounds of
-                        # something that looks like a link, then don't process it
-                        is_inside_link = True
-                        break
+                for link_re in (self._auto_link_re, self._basic_link_re):
+                    for match in link_re.finditer(text):
+                        if any((r[0] <= start and end <= r[1]) for r in match.regs):
+                            # if the link pattern start and end pos is within the bounds of
+                            # something that looks like a link, then don't process it
+                            is_inside_link = True
+                            break
+                    else:
+                        continue
+                    break
 
                 if is_inside_link:
                     continue

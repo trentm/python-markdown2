@@ -1,5 +1,5 @@
 Blah 123 becomes a line with two underscores.
 
-<http://localhost/#42>
+<http://localhost/#42> with another reference to Issue #42 in the same line
 
 [Issue #42](http://localhost)
