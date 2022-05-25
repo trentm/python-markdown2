@@ -43,8 +43,8 @@ setup(
     py_modules=["markdown2"],
     package_dir={"": "lib"},
     entry_points={
-        'console_scripts': [
-            'markdown2 = markdown2:main'
+        "console_scripts": [
+            "markdown2 = markdown2:main"
         ]
     },
     description="A fast and complete Python implementation of Markdown",
