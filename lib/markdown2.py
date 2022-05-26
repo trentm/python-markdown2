@@ -1976,8 +1976,17 @@ class Markdown(object):
 
     def _code_span_sub(self, match):
         c = match.group(2).strip(" \t")
-        c = self._encode_code(c)
-        return "<code>%s</code>" % c
+
+        if not self.safe_mode:
+            c = self._encode_code(c)
+
+        c = "<code>%s</code>" % c
+
+        if self.safe_mode:
+            key = _hash_text(c)
+            self.html_spans[key] = c
+            return key
+        return c
 
     def _do_code_spans(self, text):
         #   *   Backtick quotes are used for <code></code> spans.
