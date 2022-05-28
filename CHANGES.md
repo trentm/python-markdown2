@@ -6,6 +6,7 @@
 - [pull #441] Remove Python2 support
 - [pull #445] Replace `<strike>` with `<s>` in strike extra
 - [pull #446] Fix link patterns extra applying within links
+- [pull #443] create proper entry point
 
 
 ## python-markdown2 2.4.3
