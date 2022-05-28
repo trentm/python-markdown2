@@ -30,8 +30,6 @@ Topic :: Text Processing :: Filters
 Topic :: Text Processing :: Markup :: HTML
 """
 
-script = (sys.platform == "win32" and "lib\\markdown2.py" or "bin/markdown2")
-
 setup(
     name="markdown2",
     version=markdown2.__version__,
@@ -44,7 +42,11 @@ setup(
     platforms=["any"],
     py_modules=["markdown2"],
     package_dir={"": "lib"},
-    scripts=[script],
+    entry_points={
+        "console_scripts": [
+            "markdown2 = markdown2:main"
+        ]
+    },
     description="A fast and complete Python implementation of Markdown",
     python_requires=">=3.5, <4",
     classifiers=classifiers.strip().split("\n"),
