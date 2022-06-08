@@ -1281,10 +1281,24 @@ class Markdown(object):
                 return True
             return False
 
+        def _is_code_span(index, token):
+            try:
+                if token == '<code>':
+                    peek_tokens = split_tokens[index: index + 3]
+                elif token == '</code>':
+                    peek_tokens = split_tokens[index - 2: index + 1]
+                else:
+                    return False
+            except IndexError:
+                return False
+
+            return re.match(r'<code>md5-[A-Fa-f0-9]{32}</code>', ''.join(peek_tokens))
+
         tokens = []
+        split_tokens = self._sorta_html_tokenize_re.split(text)
         is_html_markup = False
-        for token in self._sorta_html_tokenize_re.split(text):
-            if is_html_markup and not _is_auto_link(token):
+        for index, token in enumerate(split_tokens):
+            if is_html_markup and not _is_auto_link(token) and not _is_code_span(index, token):
                 sanitized = self._sanitize_html(token)
                 key = _hash_text(sanitized)
                 self.html_spans[key] = sanitized
