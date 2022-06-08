@@ -7,6 +7,7 @@
 - [pull #445] Replace `<strike>` with `<s>` in strike extra
 - [pull #446] Fix link patterns extra applying within links
 - [pull #443] create proper entry point
+- [pull #449] Codespans inside link text issue344
 
 
 ## python-markdown2 2.4.3
