@@ -2080,7 +2080,7 @@ class Markdown(object):
         text = self._strike_re.sub(r"<s>\1</s>", text)
         return text
 
-    _underline_re = re.compile(r"--(?=\S)(.+?)(?<=\S)--", re.S)
+    _underline_re = re.compile(r"(?<!<!)--(?!>)(?=\S)(.+?)(?<=\S)(?<!<!)--(?!>)", re.S)
     def _do_underline(self, text):
         text = self._underline_re.sub(r"<u>\1</u>", text)
         return text
