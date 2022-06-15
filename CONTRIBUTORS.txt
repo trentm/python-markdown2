@@ -53,3 +53,4 @@ BarkeH (github.com/BarkeH)
 cav71 (github.com/cav71)
 Crozzers (github.com/Crozzers)
 Bastian Venthur (https://github.com/venthur), removed Python2 support
+gitbra (github.com/gitbra)

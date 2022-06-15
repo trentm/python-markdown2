@@ -8,6 +8,7 @@
 - [pull #446] Fix link patterns extra applying within links
 - [pull #443] create proper entry point
 - [pull #449] Codespans inside link text issue344
+- [pull #451] Underline and HTML comments
 
 
 ## python-markdown2 2.4.3
