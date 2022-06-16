@@ -101,6 +101,7 @@ def regex_from_encoded_pattern(s):
     else:  # not an encoded regex
         return re.compile(re.escape(s))
 
+
 # Recipe: dedent (0.1.2)
 def dedentlines(lines, tabsize=8, skip_first_line=False):
     """dedentlines(lines, tabsize=8, skip_first_line=False) -> dedented lines
@@ -116,55 +117,64 @@ def dedentlines(lines, tabsize=8, skip_first_line=False):
     """
     DEBUG = False
     if DEBUG:
-        print("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
-              % (tabsize, skip_first_line))
+        print(
+            "dedent: dedent(..., tabsize=%d, skip_first_line=%r)"
+            % (tabsize, skip_first_line)
+        )
     margin = None
     for i, line in enumerate(lines):
-        if i == 0 and skip_first_line: continue
+        if i == 0 and skip_first_line:
+            continue
         indent = 0
         for ch in line:
-            if ch == ' ':
+            if ch == " ":
                 indent += 1
-            elif ch == '\t':
+            elif ch == "\t":
                 indent += tabsize - (indent % tabsize)
-            elif ch in '\r\n':
+            elif ch in "\r\n":
                 continue  # skip all-whitespace lines
             else:
                 break
         else:
             continue  # skip all-whitespace lines
-        if DEBUG: print("dedent: indent=%d: %r" % (indent, line))
+        if DEBUG:
+            print("dedent: indent=%d: %r" % (indent, line))
         if margin is None:
             margin = indent
         else:
             margin = min(margin, indent)
-    if DEBUG: print("dedent: margin=%r" % margin)
+    if DEBUG:
+        print("dedent: margin=%r" % margin)
 
     if margin is not None and margin > 0:
         for i, line in enumerate(lines):
-            if i == 0 and skip_first_line: continue
+            if i == 0 and skip_first_line:
+                continue
             removed = 0
             for j, ch in enumerate(line):
-                if ch == ' ':
+                if ch == " ":
                     removed += 1
-                elif ch == '\t':
+                elif ch == "\t":
                     removed += tabsize - (removed % tabsize)
-                elif ch in '\r\n':
-                    if DEBUG: print("dedent: %r: EOL -> strip up to EOL" % line)
+                elif ch in "\r\n":
+                    if DEBUG:
+                        print("dedent: %r: EOL -> strip up to EOL" % line)
                     lines[i] = lines[i][j:]
                     break
                 else:
-                    raise ValueError("unexpected non-whitespace char %r in "
-                                     "line %r while removing %d-space margin"
-                                     % (ch, line, margin))
+                    raise ValueError(
+                        "unexpected non-whitespace char %r in "
+                        "line %r while removing %d-space margin" % (ch, line, margin)
+                    )
                 if DEBUG:
-                    print("dedent: %r: %r -> removed %d/%d"\
-                          % (line, ch, removed, margin))
+                    print(
+                        "dedent: %r: %r -> removed %d/%d" % (line, ch, removed, margin)
+                    )
                 if removed == margin:
-                    lines[i] = lines[i][j+1:]
+                    lines[i] = lines[i][j + 1 :]
                     break
                 elif removed > margin:
-                    lines[i] = ' '*(removed-margin) + lines[i][j+1:]
+                    lines[i] = " " * (removed - margin) + lines[i][j + 1 :]
                     break
             else:
                 if removed:
@@ -185,7 +195,7 @@ def dedent(text, tabsize=8, skip_first_line=False):
     """
     lines = text.splitlines(1)
     dedentlines(lines, tabsize=tabsize, skip_first_line=skip_first_line)
-    return ''.join(lines)
+    return "".join(lines)
 
 
 class memoized(object):
@@ -195,6 +205,7 @@ class memoized(object):
 
     http://wiki.python.org/moin/PythonDecoratorLibrary
     """
+
     def __init__(self, func):
         self.func = func
         self.cache = {}
@@ -215,10 +226,10 @@ class memoized(object):
         return self.func.__doc__
 
 
-
 def xml_oneliner_re_from_tab_width(tab_width):
     """Standalone XML processing instruction regex."""
-    return re.compile(r"""
+    return re.compile(
+        r"""
         (?:
             (?<=\n\n)       # Starting after a blank line
             |               # or
@@ -234,5 +245,36 @@ def xml_oneliner_re_from_tab_width(tab_width):
             [ \t]*
             (?=\n{2,}|\Z)       # followed by a blank line or end of document
         )
-        """ % (tab_width - 1), re.X)
+        """
+        % (tab_width - 1),
+        re.X,
+    )
+
+
 xml_oneliner_re_from_tab_width = memoized(xml_oneliner_re_from_tab_width)
+
+
+def hr_tag_re_from_tab_width(tab_width):
+    return re.compile(
+        r"""
+        (?:
+            (?<=\n\n)       # Starting after a blank line
+            |               # or
+            \A\n?           # the beginning of the doc
+        )
+        (                       # save in \1
+            [ ]{0,%d}
+            <(hr)               # start tag = \2
+            \b                  # word break
+            ([^<>])*?           #
+            /?>                 # the matching end tag
+            [ \t]*
+            (?=\n{2,}|\Z)       # followed by a blank line or end of document
+        )
+        """
+        % (tab_width - 1),
+        re.X,
+    )
+
+
+hr_tag_re_from_tab_width = memoized(hr_tag_re_from_tab_width)

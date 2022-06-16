@@ -121,6 +121,7 @@ from lib.utils import (
     dedent,
     memoized,
     xml_oneliner_re_from_tab_width,
+    hr_tag_re_from_tab_width,
 )
 
 # ---- globals
@@ -787,7 +788,7 @@ class Markdown(object):
         # Special case just for <hr />. It was easier to make a special
         # case than to make the other regex more complicated.
         if "<hr" in text:
-            _hr_tag_re = _hr_tag_re_from_tab_width(self.tab_width)
+            _hr_tag_re = hr_tag_re_from_tab_width(self.tab_width)
             text = _hr_tag_re.sub(hash_html_block_sub, text)
 
         # Special case for standalone HTML comments:
@@ -2478,25 +2479,6 @@ class UnicodeWithAttrs(str):
     """
     metadata = None
     toc_html = None
-
-def _hr_tag_re_from_tab_width(tab_width):
-    return re.compile(r"""
-        (?:
-            (?<=\n\n)       # Starting after a blank line
-            |               # or
-            \A\n?           # the beginning of the doc
-        )
-        (                       # save in \1
-            [ ]{0,%d}
-            <(hr)               # start tag = \2
-            \b                  # word break
-            ([^<>])*?           #
-            /?>                 # the matching end tag
-            [ \t]*
-            (?=\n{2,}|\Z)       # followed by a blank line or end of document
-        )
-        """ % (tab_width - 1), re.X)
-_hr_tag_re_from_tab_width = memoized(_hr_tag_re_from_tab_width)
 
 
 def _xml_escape_attr(attr, skip_single_quote=True):
