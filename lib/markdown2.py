@@ -111,6 +111,8 @@ from random import random, randint
 import codecs
 from collections import defaultdict
 
+from lib.errors import MarkdownError
+
 # ---- globals
 
 DEBUG = False
@@ -132,12 +134,6 @@ g_escape_table = dict([(ch, _hash_text(ch))
 # Ampersand-encoding based entirely on Nat Irons's Amputator MT plugin:
 #   http://bumppo.net/projects/amputator/
 _AMPERSAND_RE = re.compile(r'&(?!#?[xX]?(?:[0-9a-fA-F]+|\w+);)')
-
-
-# ---- exceptions
-class MarkdownError(Exception):
-    pass
-
 
 # ---- public api
 
