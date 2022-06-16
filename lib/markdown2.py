@@ -123,6 +123,7 @@ from lib.utils import (
     xml_oneliner_re_from_tab_width,
     hr_tag_re_from_tab_width,
     xml_escape_attr,
+    xml_encode_email_char_at_random,
 )
 
 # ---- globals
@@ -2363,7 +2364,7 @@ class Markdown(object):
         #
         #  Based on a filter by Matthew Wickline, posted to the BBEdit-Talk
         #  mailing list: <http://tinyurl.com/yu7ue>
-        chars = [_xml_encode_email_char_at_random(ch)
+        chars = [xml_encode_email_char_at_random(ch)
                  for ch in "mailto:" + addr]
         # Strip the mailto: from the visible part.
         addr = '<a href="%s">%s</a>' \
@@ -2480,20 +2481,6 @@ class UnicodeWithAttrs(str):
     """
     metadata = None
     toc_html = None
-
-
-def _xml_encode_email_char_at_random(ch):
-    r = random()
-    # Roughly 10% raw, 45% hex, 45% dec.
-    # '@' *must* be encoded. I [John Gruber] insist.
-    # Issue 26: '_' must be encoded.
-    if r > 0.9 and ch not in "@_":
-        return ch
-    elif r < 0.45:
-        # The [1:] is to drop leading '0': 0x63 -> x63
-        return '&#%s;' % hex(ord(ch))[1:]
-    else:
-        return '&#%s;' % ord(ch)
 
 
 def _html_escape_url(attr, safe_mode=False):

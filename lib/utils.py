@@ -1,3 +1,4 @@
+from random import random
 import re
 
 
@@ -286,12 +287,23 @@ def xml_escape_attr(ampersand_re, attr, skip_single_quote=True):
     By default this doesn't bother with escaping `'` to `&#39;`, presuming that
     the tag attribute is surrounded by double quotes.
     """
-    escaped = ampersand_re.sub('&amp;', attr)
+    escaped = ampersand_re.sub("&amp;", attr)
 
-    escaped = (attr
-        .replace('"', '&quot;')
-        .replace('<', '&lt;')
-        .replace('>', '&gt;'))
+    escaped = attr.replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
     if not skip_single_quote:
         escaped = escaped.replace("'", "&#39;")
     return escaped
+
+
+def xml_encode_email_char_at_random(ch):
+    r = random()
+    # Roughly 10% raw, 45% hex, 45% dec.
+    # '@' *must* be encoded. I [John Gruber] insist.
+    # Issue 26: '_' must be encoded.
+    if r > 0.9 and ch not in "@_":
+        return ch
+    elif r < 0.45:
+        # The [1:] is to drop leading '0': 0x63 -> x63
+        return "&#%s;" % hex(ord(ch))[1:]
+    else:
+        return "&#%s;" % ord(ch)
