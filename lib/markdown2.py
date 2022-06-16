@@ -112,7 +112,7 @@ import codecs
 from collections import defaultdict
 
 from lib.errors import MarkdownError
-from lib.utils import slugify, calculate_toc_html, curry
+from lib.utils import slugify, calculate_toc_html, curry, regex_from_encoded_pattern, dedentlines, dedent
 
 # ---- globals
 
@@ -514,7 +514,7 @@ class Markdown(object):
 
             # Multiline value
             if v[:3] == " >\n":
-                self.metadata[k.strip()] = _dedent(v[3:]).strip()
+                self.metadata[k.strip()] = dedent(v[3:]).strip()
 
             # Empty value
             elif v == "\n":
@@ -944,7 +944,7 @@ class Markdown(object):
 
     def _extract_footnote_def_sub(self, match):
         id, text = match.groups()
-        text = _dedent(text, skip_first_line=not text.startswith('\n')).strip()
+        text = dedent(text, skip_first_line=not text.startswith('\n')).strip()
         normed_id = re.sub(r'\W', '-', id)
         # Ensure footnote text ends with a couple newlines (for some
         # block gamut matches).
@@ -1031,10 +1031,10 @@ class Markdown(object):
 
     def _pyshell_block_sub(self, match):
         if "fenced-code-blocks" in self.extras:
-            dedented = _dedent(match.group(0))
+            dedented = dedent(match.group(0))
             return self._do_fenced_code_blocks("```pycon\n" + dedented + "```\n")
         lines = match.group(0).splitlines(0)
-        _dedentlines(lines)
+        dedentlines(lines)
         indent = ' ' * self.tab_width
         s = ('\n'  # separate from possible cuddled paragraph
              + indent + ('\n'+indent).join(lines)
@@ -2471,123 +2471,6 @@ class UnicodeWithAttrs(str):
     toc_html = None
 
 
-# Recipe: regex_from_encoded_pattern (1.0)
-def _regex_from_encoded_pattern(s):
-    """'foo'    -> re.compile(re.escape('foo'))
-       '/foo/'  -> re.compile('foo')
-       '/foo/i' -> re.compile('foo', re.I)
-    """
-    if s.startswith('/') and s.rfind('/') != 0:
-        # Parse it: /PATTERN/FLAGS
-        idx = s.rfind('/')
-        _, flags_str = s[1:idx], s[idx+1:]
-        flag_from_char = {
-            "i": re.IGNORECASE,
-            "l": re.LOCALE,
-            "s": re.DOTALL,
-            "m": re.MULTILINE,
-            "u": re.UNICODE,
-        }
-        flags = 0
-        for char in flags_str:
-            try:
-                flags |= flag_from_char[char]
-            except KeyError:
-                raise ValueError("unsupported regex flag: '%s' in '%s' "
-                                 "(must be one of '%s')"
-                                 % (char, s, ''.join(list(flag_from_char.keys()))))
-        return re.compile(s[1:idx], flags)
-    else:  # not an encoded regex
-        return re.compile(re.escape(s))
-
-
-# Recipe: dedent (0.1.2)
-def _dedentlines(lines, tabsize=8, skip_first_line=False):
-    """_dedentlines(lines, tabsize=8, skip_first_line=False) -> dedented lines
-
-        "lines" is a list of lines to dedent.
-        "tabsize" is the tab width to use for indent width calculations.
-        "skip_first_line" is a boolean indicating if the first line should
-            be skipped for calculating the indent width and for dedenting.
-            This is sometimes useful for docstrings and similar.
-
-    Same as dedent() except operates on a sequence of lines. Note: the
-    lines list is modified **in-place**.
-    """
-    DEBUG = False
-    if DEBUG:
-        print("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
-              % (tabsize, skip_first_line))
-    margin = None
-    for i, line in enumerate(lines):
-        if i == 0 and skip_first_line: continue
-        indent = 0
-        for ch in line:
-            if ch == ' ':
-                indent += 1
-            elif ch == '\t':
-                indent += tabsize - (indent % tabsize)
-            elif ch in '\r\n':
-                continue  # skip all-whitespace lines
-            else:
-                break
-        else:
-            continue  # skip all-whitespace lines
-        if DEBUG: print("dedent: indent=%d: %r" % (indent, line))
-        if margin is None:
-            margin = indent
-        else:
-            margin = min(margin, indent)
-    if DEBUG: print("dedent: margin=%r" % margin)
-
-    if margin is not None and margin > 0:
-        for i, line in enumerate(lines):
-            if i == 0 and skip_first_line: continue
-            removed = 0
-            for j, ch in enumerate(line):
-                if ch == ' ':
-                    removed += 1
-                elif ch == '\t':
-                    removed += tabsize - (removed % tabsize)
-                elif ch in '\r\n':
-                    if DEBUG: print("dedent: %r: EOL -> strip up to EOL" % line)
-                    lines[i] = lines[i][j:]
-                    break
-                else:
-                    raise ValueError("unexpected non-whitespace char %r in "
-                                     "line %r while removing %d-space margin"
-                                     % (ch, line, margin))
-                if DEBUG:
-                    print("dedent: %r: %r -> removed %d/%d"\
-                          % (line, ch, removed, margin))
-                if removed == margin:
-                    lines[i] = lines[i][j+1:]
-                    break
-                elif removed > margin:
-                    lines[i] = ' '*(removed-margin) + lines[i][j+1:]
-                    break
-            else:
-                if removed:
-                    lines[i] = lines[i][removed:]
-    return lines
-
-
-def _dedent(text, tabsize=8, skip_first_line=False):
-    """_dedent(text, tabsize=8, skip_first_line=False) -> dedented text
-
-        "text" is the text to dedent.
-        "tabsize" is the tab width to use for indent width calculations.
-        "skip_first_line" is a boolean indicating if the first line should
-            be skipped for calculating the indent width and for dedenting.
-            This is sometimes useful for docstrings and similar.
-
-    textwrap.dedent(s), but don't expand tabs to spaces
-    """
-    lines = text.splitlines(1)
-    _dedentlines(lines, tabsize=tabsize, skip_first_line=skip_first_line)
-    return ''.join(lines)
-
-
 class _memoized(object):
     """Decorator that caches a function's return value each time it is called.
     If called later with the same arguments, the cached value is returned, and
@@ -2786,7 +2669,7 @@ def main(argv=None):
                     raise MarkdownError("%s:%d: invalid link pattern line: %r"
                                         % (opts.link_patterns_file, i+1, line))
                 link_patterns.append(
-                    (_regex_from_encoded_pattern(pat), href))
+                    (regex_from_encoded_pattern(pat), href))
         finally:
             f.close()
     else:
