@@ -307,3 +307,15 @@ def xml_encode_email_char_at_random(ch):
         return "&#%s;" % hex(ord(ch))[1:]
     else:
         return "&#%s;" % ord(ch)
+
+
+def html_escape_url(attr, safe_mode=False):
+    """Replace special characters that are potentially malicious in url string."""
+    escaped = (attr
+        .replace('"', '&quot;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;'))
+    if safe_mode:
+        escaped = escaped.replace('+', ' ')
+        escaped = escaped.replace("'", "&#39;")
+    return escaped

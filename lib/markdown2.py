@@ -124,6 +124,7 @@ from lib.utils import (
     hr_tag_re_from_tab_width,
     xml_escape_attr,
     xml_encode_email_char_at_random,
+    html_escape_url,
 )
 
 # ---- globals
@@ -1511,7 +1512,7 @@ class Markdown(object):
                     if is_img:
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
-                            % (_html_escape_url(url, safe_mode=self.safe_mode),
+                            % (html_escape_url(url, safe_mode=self.safe_mode),
                                xml_escape_attr(_AMPERSAND_RE, link_text),
                                title_str,
                                img_class_str,
@@ -1525,7 +1526,7 @@ class Markdown(object):
                         if self.safe_mode and not safe_link:
                             result_head = '<a href="#"%s>' % (title_str)
                         else:
-                            result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
+                            result_head = '<a href="%s"%s>' % (html_escape_url(url, safe_mode=self.safe_mode), title_str)
                         result = '%s%s</a>' % (result_head, link_text)
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
@@ -1567,7 +1568,7 @@ class Markdown(object):
                         if is_img:
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
-                                % (_html_escape_url(url, safe_mode=self.safe_mode),
+                                % (html_escape_url(url, safe_mode=self.safe_mode),
                                    xml_escape_attr(_AMPERSAND_RE, link_text),
                                    title_str,
                                    img_class_str,
@@ -1580,7 +1581,7 @@ class Markdown(object):
                             if self.safe_mode and not self._safe_protocols.match(url):
                                 result_head = '<a href="#"%s>' % (title_str)
                             else:
-                                result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
+                                result_head = '<a href="%s"%s>' % (html_escape_url(url, safe_mode=self.safe_mode), title_str)
                             result = '%s%s</a>' % (result_head, link_text)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
@@ -2482,17 +2483,6 @@ class UnicodeWithAttrs(str):
     metadata = None
     toc_html = None
 
-
-def _html_escape_url(attr, safe_mode=False):
-    """Replace special characters that are potentially malicious in url string."""
-    escaped = (attr
-        .replace('"', '&quot;')
-        .replace('<', '&lt;')
-        .replace('>', '&gt;'))
-    if safe_mode:
-        escaped = escaped.replace('+', ' ')
-        escaped = escaped.replace("'", "&#39;")
-    return escaped
 
 
 # ---- mainline
