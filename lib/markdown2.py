@@ -112,6 +112,7 @@ import codecs
 from collections import defaultdict
 
 from lib.errors import MarkdownError
+from lib.utils import slugify
 
 # ---- globals
 
@@ -1604,7 +1605,7 @@ class Markdown(object):
             None to not have an id attribute and to exclude this header from
             the TOC (if the "toc" extra is specified).
         """
-        header_id = _slugify(text)
+        header_id = slugify(text)
         if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
 
@@ -2503,22 +2504,6 @@ class UnicodeWithAttrs(str):
     """
     metadata = None
     toc_html = None
-
-## {{{ http://code.activestate.com/recipes/577257/ (r1)
-_slugify_strip_re = re.compile(r'[^\w\s-]')
-_slugify_hyphenate_re = re.compile(r'[-\s]+')
-def _slugify(value):
-    """
-    Normalizes string, converts to lowercase, removes non-alpha characters,
-    and converts spaces to hyphens.
-
-    From Django's "django/template/defaultfilters.py".
-    """
-    import unicodedata
-    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode()
-    value = _slugify_strip_re.sub('', value).strip().lower()
-    return _slugify_hyphenate_re.sub('-', value)
-## end of http://code.activestate.com/recipes/577257/ }}}
 
 
 # From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52549
