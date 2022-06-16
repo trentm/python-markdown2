@@ -278,3 +278,20 @@ def hr_tag_re_from_tab_width(tab_width):
 
 
 hr_tag_re_from_tab_width = memoized(hr_tag_re_from_tab_width)
+
+
+def xml_escape_attr(ampersand_re, attr, skip_single_quote=True):
+    """Escape the given string for use in an HTML/XML tag attribute.
+
+    By default this doesn't bother with escaping `'` to `&#39;`, presuming that
+    the tag attribute is surrounded by double quotes.
+    """
+    escaped = ampersand_re.sub('&amp;', attr)
+
+    escaped = (attr
+        .replace('"', '&quot;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;'))
+    if not skip_single_quote:
+        escaped = escaped.replace("'", "&#39;")
+    return escaped

@@ -122,6 +122,7 @@ from lib.utils import (
     memoized,
     xml_oneliner_re_from_tab_width,
     hr_tag_re_from_tab_width,
+    xml_escape_attr,
 )
 
 # ---- globals
@@ -1501,7 +1502,7 @@ class Markdown(object):
                              .replace('_', self._escape_table['_'])
                     if title:
                         title_str = ' title="%s"' % (
-                            _xml_escape_attr(title)
+                            xml_escape_attr(_AMPERSAND_RE, title)
                                 .replace('*', self._escape_table['*'])
                                 .replace('_', self._escape_table['_']))
                     else:
@@ -1510,7 +1511,7 @@ class Markdown(object):
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
                             % (_html_escape_url(url, safe_mode=self.safe_mode),
-                               _xml_escape_attr(link_text),
+                               xml_escape_attr(_AMPERSAND_RE, link_text),
                                title_str,
                                img_class_str,
                                self.empty_element_suffix)
@@ -1556,7 +1557,7 @@ class Markdown(object):
                                  .replace('_', self._escape_table['_'])
                         title = self.titles.get(link_id)
                         if title:
-                            title = _xml_escape_attr(title) \
+                            title = xml_escape_attr(_AMPERSAND_RE, title) \
                                 .replace('*', self._escape_table['*']) \
                                 .replace('_', self._escape_table['_'])
                             title_str = ' title="%s"' % title
@@ -1566,7 +1567,7 @@ class Markdown(object):
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
                                 % (_html_escape_url(url, safe_mode=self.safe_mode),
-                                   _xml_escape_attr(link_text),
+                                   xml_escape_attr(_AMPERSAND_RE, link_text),
                                    title_str,
                                    img_class_str,
                                    self.empty_element_suffix)
@@ -2479,23 +2480,6 @@ class UnicodeWithAttrs(str):
     """
     metadata = None
     toc_html = None
-
-
-def _xml_escape_attr(attr, skip_single_quote=True):
-    """Escape the given string for use in an HTML/XML tag attribute.
-
-    By default this doesn't bother with escaping `'` to `&#39;`, presuming that
-    the tag attribute is surrounded by double quotes.
-    """
-    escaped = _AMPERSAND_RE.sub('&amp;', attr)
-
-    escaped = (attr
-        .replace('"', '&quot;')
-        .replace('<', '&lt;')
-        .replace('>', '&gt;'))
-    if not skip_single_quote:
-        escaped = escaped.replace("'", "&#39;")
-    return escaped
 
 
 def _xml_encode_email_char_at_random(ch):
