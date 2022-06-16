@@ -213,3 +213,26 @@ class memoized(object):
     def __repr__(self):
         """Return the function's docstring."""
         return self.func.__doc__
+
+
+
+def xml_oneliner_re_from_tab_width(tab_width):
+    """Standalone XML processing instruction regex."""
+    return re.compile(r"""
+        (?:
+            (?<=\n\n)       # Starting after a blank line
+            |               # or
+            \A\n?           # the beginning of the doc
+        )
+        (                           # save in $1
+            [ ]{0,%d}
+            (?:
+                <\?\w+\b\s+.*?\?>   # XML processing instruction
+                |
+                <\w+:\w+\b\s+.*?/>  # namespaced single tag
+            )
+            [ \t]*
+            (?=\n{2,}|\Z)       # followed by a blank line or end of document
+        )
+        """ % (tab_width - 1), re.X)
+xml_oneliner_re_from_tab_width = memoized(xml_oneliner_re_from_tab_width)

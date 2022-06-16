@@ -120,6 +120,7 @@ from lib.utils import (
     dedentlines,
     dedent,
     memoized,
+    xml_oneliner_re_from_tab_width,
 )
 
 # ---- globals
@@ -852,7 +853,7 @@ class Markdown(object):
             #    <?foo bar?>
             #
             #    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="chapter_1.md"/>
-            _xml_oneliner_re = _xml_oneliner_re_from_tab_width(self.tab_width)
+            _xml_oneliner_re = xml_oneliner_re_from_tab_width(self.tab_width)
             text = _xml_oneliner_re.sub(hash_html_block_sub, text)
 
         return text
@@ -2477,29 +2478,6 @@ class UnicodeWithAttrs(str):
     """
     metadata = None
     toc_html = None
-
-
-def _xml_oneliner_re_from_tab_width(tab_width):
-    """Standalone XML processing instruction regex."""
-    return re.compile(r"""
-        (?:
-            (?<=\n\n)       # Starting after a blank line
-            |               # or
-            \A\n?           # the beginning of the doc
-        )
-        (                           # save in $1
-            [ ]{0,%d}
-            (?:
-                <\?\w+\b\s+.*?\?>   # XML processing instruction
-                |
-                <\w+:\w+\b\s+.*?/>  # namespaced single tag
-            )
-            [ \t]*
-            (?=\n{2,}|\Z)       # followed by a blank line or end of document
-        )
-        """ % (tab_width - 1), re.X)
-_xml_oneliner_re_from_tab_width = memoized(_xml_oneliner_re_from_tab_width)
-
 
 def _hr_tag_re_from_tab_width(tab_width):
     return re.compile(r"""
