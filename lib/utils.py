@@ -56,3 +56,15 @@ def calculate_toc_html(toc):
             lines[-1] += "</li>"
         lines.append("%s</ul>" % indent())
     return "\n".join(lines) + "\n"
+
+
+# From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52549
+def curry(*args, **kwargs):
+    function, args = args[0], args[1:]
+
+    def result(*rest, **kwrest):
+        combined = kwargs.copy()
+        combined.update(kwrest)
+        return function(*args + rest, **combined)
+
+    return result

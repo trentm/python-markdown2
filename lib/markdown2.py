@@ -112,7 +112,7 @@ import codecs
 from collections import defaultdict
 
 from lib.errors import MarkdownError
-from lib.utils import slugify, calculate_toc_html
+from lib.utils import slugify, calculate_toc_html, curry
 
 # ---- globals
 
@@ -757,7 +757,7 @@ class Markdown(object):
             return text
 
         # Pass `raw` value into our calls to self._hash_html_block_sub.
-        hash_html_block_sub = _curry(self._hash_html_block_sub, raw=raw)
+        hash_html_block_sub = curry(self._hash_html_block_sub, raw=raw)
 
         # First, look for nested blocks, e.g.:
         #   <div>
@@ -2469,16 +2469,6 @@ class UnicodeWithAttrs(str):
     """
     metadata = None
     toc_html = None
-
-
-# From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52549
-def _curry(*args, **kwargs):
-    function, args = args[0], args[1:]
-    def result(*rest, **kwrest):
-        combined = kwargs.copy()
-        combined.update(kwrest)
-        return function(*args + rest, **combined)
-    return result
 
 
 # Recipe: regex_from_encoded_pattern (1.0)
