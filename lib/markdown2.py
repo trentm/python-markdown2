@@ -308,6 +308,7 @@ class Markdown(object):
 
         if self.use_file_vars:
             # Look for emacs-style file variable hints.
+            text = self._emacs_oneliner_vars_pat.sub(self._emacs_vars_oneliner_sub, text)
             emacs_vars = self._get_emacs_vars(text)
             if "markdown-extras" in emacs_vars:
                 splitter = re.compile("[ ,]+")
@@ -538,7 +539,7 @@ class Markdown(object):
 
         return tail
 
-    _emacs_oneliner_vars_pat = re.compile(r"-\*-\s*(?:(\S[^\r\n]*?)([\r\n]\s*)?)?-\*-", re.UNICODE)
+    _emacs_oneliner_vars_pat = re.compile(r"((?:<!--)?\s*-\*-)\s*(?:(\S[^\r\n]*?)([\r\n]\s*)?)?(-\*-\s*(?:-->)?)", re.UNICODE)
     # This regular expression is intended to match blocks like this:
     #    PREFIX Local Variables: SUFFIX
     #    PREFIX mode: Tcl SUFFIX
@@ -553,6 +554,13 @@ class Markdown(object):
         (?P<suffix>.*?)(?:\r\n|\n|\r)
         (?P<content>.*?\1End:)
         """, re.IGNORECASE | re.MULTILINE | re.DOTALL | re.VERBOSE)
+
+    def _emacs_vars_oneliner_sub(self, match):
+        if match.group(1).strip() == '-*-' and match.group(4).strip() == '-*-':
+            return '<!-- %s %s %s -->\n\n' % ('-*-', match.group(2).strip(), '-*-')
+
+        start, end = match.span()
+        return match.string[start: end]
 
     def _get_emacs_vars(self, text):
         """Return a dictionary of emacs-style local variables.
@@ -569,7 +577,7 @@ class Markdown(object):
         if "-*-" in head:
             match = self._emacs_oneliner_vars_pat.search(head)
             if match:
-                emacs_vars_str = match.group(1)
+                emacs_vars_str = match.group(2)
                 assert '\n' not in emacs_vars_str
                 emacs_var_strs = [s.strip() for s in emacs_vars_str.split(';')
                                   if s.strip()]
