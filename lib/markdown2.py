@@ -1886,6 +1886,9 @@ class Markdown(object):
                 codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
                 formatter_opts = self.extras['code-color'] or {}
 
+        # remove leading indent from code block
+        leading_indent, codeblock = self._uniform_outdent(codeblock)
+
         # Use pygments only if not using the highlightjs-lang extra
         if lexer_name and "highlightjs-lang" not in self.extras:
             def unhash_code(codeblock):
@@ -1901,8 +1904,6 @@ class Markdown(object):
                 return codeblock
             lexer = self._get_pygments_lexer(lexer_name)
             if lexer:
-                # remove leading indent from code block
-                leading_indent, codeblock = self._uniform_outdent(codeblock)
 
                 codeblock = unhash_code( codeblock )
                 colored = self._color_with_pygments(codeblock, lexer,
@@ -1919,8 +1920,8 @@ class Markdown(object):
         else:
             code_class_str = self._html_class_str_from_tag("code")
 
-        return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
-            pre_class_str, code_class_str, codeblock)
+        return "\n%s<pre%s><code%s>%s\n</code></pre>\n" % (
+            leading_indent, pre_class_str, code_class_str, codeblock)
 
     def _html_class_str_from_tag(self, tag):
         """Get the appropriate ' class="..."' string (note the leading
