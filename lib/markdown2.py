@@ -259,6 +259,10 @@ class Markdown(object):
         self.html_spans = {}
         self.list_level = 0
         self.extras = self._instance_extras.copy()
+        self._setup_extras()
+        self._toc = None
+
+    def _setup_extras(self):
         if "footnotes" in self.extras:
             self.footnotes = {}
             self.footnote_ids = []
@@ -266,7 +270,6 @@ class Markdown(object):
             self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
             self.metadata = {}
-        self._toc = None
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
@@ -318,6 +321,8 @@ class Markdown(object):
                     else:
                         ename, earg = e, None
                     self.extras[ename] = earg
+
+            self._setup_extras()
 
         # Standardize line endings:
         text = text.replace("\r\n", "\n")
