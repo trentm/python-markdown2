@@ -1,0 +1,71 @@
+Single list tight:
+
+* hi 
+* there
+* fella 
+
+Single list loose in "paragraph mode":
+
+* hey 
+
+* there
+
+* partner 
+
+Single list loose with multiple paragraphs in an item:
+
+* How you doin'?
+
+* this item contains multiple paragraphs.
+
+  More than one that is.
+
+  Three to be exact.
+
+* And this one is just a bunch of lines.
+  Spliced together as a single item.
+  A single paragraph.
+
+A single list that looks like multiple lists
+separated by a blank line:
+
+* list 1
+* with three
+* elements
+
+* still list 1
+* adding four
+* more
+* elements
+
+* sic, this is still list 1
+* now with
+* even
+* more
+* elements
+
+There's no way to actually get multiple consecutive lists in Markdown.
+Neither Markdown.pl nor python-markdown allow it either.
+In a mailing list thread a few years back, John Gruber
+[suggested using double blank lines](https://web.archive.org/web/20181229032814/http://article.gmane.org:80/gmane.text.markdown.general/2554)
+to separate consecutive lists but no implementation does it.
+For now you need to separate consecutive lists with unindented text:
+
+* list 1
+* with three
+* elements
+
+Cough.
+
+* list 2
+* with
+* four
+* elements
+
+Cough. Cough.
+
+* list 3
+* with
+* even
+* more
+* elements
