@@ -1866,15 +1866,10 @@ class Markdown(object):
 
     def _code_block_sub(self, match, is_fenced_code_block=False):
         lexer_name = None
-        leading_indent = ''
         if is_fenced_code_block:
             lexer_name = match.group(2)
             codeblock = match.group(3)
             codeblock = codeblock[:-1]  # drop one trailing newline
-            # with fenced code blocks, we should outdent to the start of the fence,
-            # not the first line of code
-            indent_count = len(match.group(1)) - len(match.group(1).lstrip())
-            leading_indent, codeblock = self._uniform_outdent_limit(codeblock, ' '*indent_count)
         else:
             codeblock = match.group(1)
             codeblock = self._outdent(codeblock)
@@ -1892,9 +1887,9 @@ class Markdown(object):
         if lexer_name and "highlightjs-lang" not in self.extras:
             lexer = self._get_pygments_lexer(lexer_name)
             if lexer:
-                return self._code_block_with_lexer_sub(codeblock, lexer, is_fenced_code_block)
-    
-        codeblock = self._encode_code(codeblock)
+                leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
+                return self._code_block_with_lexer_sub(codeblock, leading_indent, lexer, is_fenced_code_block)
+
         pre_class_str = self._html_class_str_from_tag("pre")
 
         if "highlightjs-lang" in self.extras and lexer_name:
@@ -1902,10 +1897,22 @@ class Markdown(object):
         else:
             code_class_str = self._html_class_str_from_tag("code")
 
-        return "\n%s<pre%s><code%s>%s\n</code></pre>\n" % (
-            leading_indent, pre_class_str, code_class_str, codeblock)
+        if is_fenced_code_block:
+            # Fenced code blocks need to be outdented before encoding, and then reapplied
+            leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
+            leading_indent, codeblock = self._uniform_outdent_limit(codeblock, leading_indent)
 
-    def _code_block_with_lexer_sub(self, codeblock, lexer, is_fenced_code_block):
+            codeblock = self._encode_code(codeblock)
+
+            return "\n%s<pre%s><code%s>%s\n</code></pre>\n" % (
+                leading_indent, pre_class_str, code_class_str, codeblock)
+        else:
+            codeblock = self._encode_code(codeblock)
+
+            return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
+                pre_class_str, code_class_str, codeblock)
+
+    def _code_block_with_lexer_sub(self, codeblock, leading_indent, lexer, is_fenced_code_block):
         if is_fenced_code_block:
             formatter_opts = self.extras['fenced-code-blocks'] or {}
         else:
