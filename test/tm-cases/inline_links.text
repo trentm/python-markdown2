@@ -7,3 +7,9 @@ an inline [link with `code`](/url/)
 an inline ![image link](/url/)
 
 an ![image "with" title](/url/ "title")
+
+[[Link in square brackets](#page)]
+
+[[Previous](/page1)] - [[Next](/page3)]
+
+([Link in brackets](#page))

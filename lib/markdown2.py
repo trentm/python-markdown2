@@ -1476,11 +1476,9 @@ class Markdown(object):
 
             # Now determine what this is by the remainder.
             p += 1
-            if p == text_length:
-                return text
 
             # Inline anchor or img?
-            if text[p] == '(':  # attempt at perf improvement
+            if text[p:p + 1] == '(':  # attempt at perf improvement
                 url, title, url_end_idx = self._extract_url_and_title(text, p)
                 if url is not None:
                     # Handle an inline anchor or img.
