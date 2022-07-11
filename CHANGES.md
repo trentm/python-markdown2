@@ -10,6 +10,7 @@
 - [pull #449] Codespans inside link text issue344
 - [pull #451] Underline and HTML comments
 - [pull #453] Links with brackets
+- [pull #454] Fix emacs local variable one-liners
 
 
 ## python-markdown2 2.4.3
