@@ -9,6 +9,7 @@
 - [pull #443] create proper entry point
 - [pull #449] Codespans inside link text issue344
 - [pull #451] Underline and HTML comments
+- [pull #453] Links with brackets
 
 
 ## python-markdown2 2.4.3
