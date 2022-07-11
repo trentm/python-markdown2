@@ -1,0 +1,6 @@
+-*- markdown-extras: footnotes -*-
+
+This markdown text will be converted with the "footnotes"
+extra enabled.
+
+This test should not raise any errors
