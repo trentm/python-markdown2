@@ -11,6 +11,7 @@
 - [pull #451] Underline and HTML comments
 - [pull #453] Links with brackets
 - [pull #454] Fix emacs local variable one-liners
+- [pull #457] Example of the current mixed-paragraph mode behavior in lists
 
 
 ## python-markdown2 2.4.3
