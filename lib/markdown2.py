@@ -1879,8 +1879,6 @@ class Markdown(object):
         lexer_name = None
         if is_fenced_code_block:
             lexer_name = match.group(2)
-            if lexer_name:
-                formatter_opts = self.extras['fenced-code-blocks'] or {}
             codeblock = match.group(3)
             codeblock = codeblock[:-1]  # drop one trailing newline
         else:
@@ -1895,34 +1893,14 @@ class Markdown(object):
                 lexer_name, rest = codeblock.split('\n', 1)
                 lexer_name = lexer_name[3:].strip()
                 codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
-                formatter_opts = self.extras['code-color'] or {}
 
         # Use pygments only if not using the highlightjs-lang extra
         if lexer_name and "highlightjs-lang" not in self.extras:
-            def unhash_code(codeblock):
-                for key, sanitized in list(self.html_spans.items()):
-                    codeblock = codeblock.replace(key, sanitized)
-                replacements = [
-                    ("&amp;", "&"),
-                    ("&lt;", "<"),
-                    ("&gt;", ">")
-                ]
-                for old, new in replacements:
-                    codeblock = codeblock.replace(old, new)
-                return codeblock
             lexer = self._get_pygments_lexer(lexer_name)
             if lexer:
-                # remove leading indent from code block
-                leading_indent, codeblock = self._uniform_outdent(codeblock)
+                leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
+                return self._code_block_with_lexer_sub(codeblock, leading_indent, lexer, is_fenced_code_block)
 
-                codeblock = unhash_code( codeblock )
-                colored = self._color_with_pygments(codeblock, lexer,
-                                                    **formatter_opts)
-
-                # add back the indent to all lines
-                return "\n%s\n" % self._uniform_indent(colored, leading_indent, True)
-
-        codeblock = self._encode_code(codeblock)
         pre_class_str = self._html_class_str_from_tag("pre")
 
         if "highlightjs-lang" in self.extras and lexer_name:
@@ -1930,8 +1908,47 @@ class Markdown(object):
         else:
             code_class_str = self._html_class_str_from_tag("code")
 
-        return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
-            pre_class_str, code_class_str, codeblock)
+        if is_fenced_code_block:
+            # Fenced code blocks need to be outdented before encoding, and then reapplied
+            leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
+            leading_indent, codeblock = self._uniform_outdent_limit(codeblock, leading_indent)
+
+            codeblock = self._encode_code(codeblock)
+
+            return "\n%s<pre%s><code%s>%s\n</code></pre>\n" % (
+                leading_indent, pre_class_str, code_class_str, codeblock)
+        else:
+            codeblock = self._encode_code(codeblock)
+
+            return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
+                pre_class_str, code_class_str, codeblock)
+
+    def _code_block_with_lexer_sub(self, codeblock, leading_indent, lexer, is_fenced_code_block):
+        if is_fenced_code_block:
+            formatter_opts = self.extras['fenced-code-blocks'] or {}
+        else:
+            formatter_opts = self.extras['code-color'] or {}
+
+        def unhash_code(codeblock):
+            for key, sanitized in list(self.html_spans.items()):
+                codeblock = codeblock.replace(key, sanitized)
+            replacements = [
+                ("&amp;", "&"),
+                ("&lt;", "<"),
+                ("&gt;", ">")
+            ]
+            for old, new in replacements:
+                codeblock = codeblock.replace(old, new)
+            return codeblock
+        # remove leading indent from code block
+        leading_indent, codeblock = self._uniform_outdent(codeblock)
+
+        codeblock = unhash_code( codeblock )
+        colored = self._color_with_pygments(codeblock, lexer,
+                                            **formatter_opts)
+
+        # add back the indent to all lines
+        return "\n%s\n" % self._uniform_indent(colored, leading_indent, True)
 
     def _html_class_str_from_tag(self, tag):
         """Get the appropriate ' class="..."' string (note the leading
@@ -2444,12 +2461,34 @@ class Markdown(object):
 
         # Find leading indentation of each line
         ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
+        if not ws:
+            return '', text
         # Get smallest common leading indent
         ws = sorted(ws)[0]
         # Dedent every line by smallest common indent
         return ws, ''.join(
             (line.replace(ws, '', 1) if line.startswith(ws) else line)
             for line in text.splitlines(True)
+        )
+
+    def _uniform_outdent_limit(self, text, outdent):
+        # Outdents up to `outdent`. Similar to `_uniform_outdent`, but
+        # will leave some indentation on the line with the smallest common
+        # leading indentation depending on the amount specified.
+        # If the smallest leading indentation is less than `outdent`, it will
+        # perform identical to `_uniform_outdent`
+        
+        # Find leading indentation of each line
+        ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
+        if not ws:
+            return outdent, text
+        # Get smallest common leading indent
+        ws = sorted(ws)[0]
+        if len(outdent) > len(ws):
+            outdent = ws
+        return outdent, ''.join(
+                (line.replace(outdent, '', 1) if line.startswith(outdent) else line)
+                for line in text.splitlines(True)
         )
 
     def _uniform_indent(self, text, indent, include_empty_lines=False):
