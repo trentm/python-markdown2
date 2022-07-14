@@ -55,3 +55,4 @@ Crozzers (github.com/Crozzers)
 Bastian Venthur (https://github.com/venthur), removed Python2 support
 gitbra (github.com/gitbra)
 Łukasz Langa (github.com/ambv)
+Max Omdal (github.com/momja)
