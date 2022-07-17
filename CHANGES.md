@@ -13,6 +13,7 @@
 - [pull #454] Fix emacs local variable one-liners
 - [pull #457] Example of the current mixed-paragraph mode behavior in lists
 - [pull #455] Fix code block indentation in lists
+- [pull #434] Fix filter bypass leading to XSS (#362)
 
 
 ## python-markdown2 2.4.3
