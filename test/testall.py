@@ -2,14 +2,11 @@
 #
 # Run the test suite against all the Python versions we can find.
 #
-
-
-
-import sys
 import os
-from os.path import dirname, abspath, join
 import re
-
+import subprocess
+import sys
+from os.path import abspath, dirname, join
 
 TOP = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, join(TOP, "tools"))
@@ -50,7 +47,11 @@ def testall():
         ver_str = "%s.%s" % ver
         print("-- test with Python %s (%s)" % (ver_str, python))
         assert ' ' not in python
-        rv = os.system("MACOSX_DEPLOYMENT_TARGET= %s test.py -- -knownfailure" % python)
+        proc = subprocess.Popen(
+            "MACOSX_DEPLOYMENT_TARGET= %s test.py -- -knownfailure" % python,
+            shell=True
+        )
+        rv = proc.wait()
         if rv:
             sys.exit(os.WEXITSTATUS(rv))
 
