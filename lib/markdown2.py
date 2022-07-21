@@ -557,7 +557,9 @@ class Markdown(object):
 
     def _emacs_vars_oneliner_sub(self, match):
         if match.group(1).strip() == '-*-' and match.group(4).strip() == '-*-':
-            return '<!-- %s %s %s -->\n\n' % ('-*-', match.group(2).strip(), '-*-')
+            lead_ws = re.findall(r'^\s*', match.group(1))[0]
+            tail_ws = re.findall(r'\s*$', match.group(4))[0]
+            return '%s<!-- %s %s %s -->%s' % (lead_ws, '-*-', match.group(2).strip(), '-*-', tail_ws)
 
         start, end = match.span()
         return match.string[start: end]
