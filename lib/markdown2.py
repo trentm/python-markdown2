@@ -1864,14 +1864,20 @@ class Markdown(object):
                     yield tup
                 yield 0, "</code>"
 
+            def _add_newline(self, inner):
+                # Add newlines around the inner contents so that _strict_tag_block_re matches the outer div.
+                yield 0, "\n"
+                yield from inner
+                yield 0, "\n"
+
             def wrap(self, source, outfile=None):
                 """Return the source with a code, pre, and div."""
                 if outfile is None:
                     # pygments >= 2.12
-                    return self._wrap_pre(self._wrap_code(source))
+                    return self._add_newline(self._wrap_pre(self._wrap_code(source)))
                 else:
                     # pygments < 2.12
-                    return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
+                    return self._wrap_div(self._add_newline(self._wrap_pre(self._wrap_code(source))))
 
         formatter_opts.setdefault("cssclass", "codehilite")
         formatter = HtmlCodeFormatter(**formatter_opts)
