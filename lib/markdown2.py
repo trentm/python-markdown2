@@ -2021,7 +2021,7 @@ class Markdown(object):
     def _code_span_sub(self, match):
         c = match.group(2).strip(" \t")
         c = self._encode_code(c)
-        return "<code>%s</code>" % c
+        return "<code%s>%s</code>" % (self._html_class_str_from_tag("code"), c)
 
     def _do_code_spans(self, text):
         #   *   Backtick quotes are used for <code></code> spans.
