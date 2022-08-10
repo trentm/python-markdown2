@@ -14,6 +14,7 @@
 - [pull #457] Example of the current mixed-paragraph mode behavior in lists
 - [pull #455] Fix code block indentation in lists
 - [pull #434] Fix filter bypass leading to XSS (#362)
+- [pull #464] Fix html-classes extra not applying to code spans
 
 
 ## python-markdown2 2.4.3
