@@ -1056,7 +1056,7 @@ class Markdown(object):
         indent = ' ' * self.tab_width
         s = ('\n'  # separate from possible cuddled paragraph
              + indent + ('\n'+indent).join(lines)
-             + '\n\n')
+             + '\n')
         return s
 
     def _prepare_pyshell_blocks(self, text):
@@ -1070,7 +1070,7 @@ class Markdown(object):
         _pyshell_block_re = re.compile(r"""
             ^([ ]{0,%d})>>>[ ].*\n  # first line
             ^(\1[^\S\n]*\S.*\n)*    # any number of subsequent lines with at least one character
-            ^\n                     # ends with a blank line
+            (?=^\1?\n|\Z)           # ends with a blank line or end of document
             """ % less_than_tab, re.M | re.X)
 
         return _pyshell_block_re.sub(self._pyshell_block_sub, text)
