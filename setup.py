@@ -30,6 +30,12 @@ Topic :: Text Processing :: Filters
 Topic :: Text Processing :: Markup :: HTML
 """
 
+extras_require = {
+    "code_syntax_highlighting": ["pygments>=2.7.3"]
+}
+# nested listcomp to combine all optional extras into convenient "all" option
+extras_require["all"] = [i for v in tuple(extras_require.values()) for i in v]
+
 setup(
     name="markdown2",
     version=markdown2.__version__,
@@ -49,6 +55,7 @@ setup(
     },
     description="A fast and complete Python implementation of Markdown",
     python_requires=">=3.5, <4",
+    extras_require=extras_require,
     classifiers=classifiers.strip().split("\n"),
     long_description="""markdown2: A fast and complete Python implementation of Markdown.
 

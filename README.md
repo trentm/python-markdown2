@@ -33,6 +33,7 @@ for updates to python-markdown2.
 To install it in your Python installation run *one* of the following:
 
     pip install markdown2
+    pip install markdown2[all]  # to install all optional dependencies (eg: Pygments for code syntax highlighting)
     pypm install markdown2      # if you use ActivePython (activestate.com/activepython)
     easy_install markdown2      # if this is the best you have
     python setup.py install
