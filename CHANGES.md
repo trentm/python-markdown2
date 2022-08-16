@@ -15,6 +15,7 @@
 - [pull #455] Fix code block indentation in lists
 - [pull #434] Fix filter bypass leading to XSS (#362)
 - [pull #464] Fix html-classes extra not applying to code spans
+- [pull #466] Add optional dependencies to `setup.py`
 
 
 ## python-markdown2 2.4.3
