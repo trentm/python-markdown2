@@ -7,3 +7,17 @@ shopping list:
     + oranges
     + apples
     + *peaches*
+
+
+Slightly more nested list:
+
+* Item 1
+  1. Hello
+  2. World
+* Item 2
+  - Subitem A
+  - Subitem B following:
+    + What
+    + The
+    + Code
+* Item 3 - yes! just a single item

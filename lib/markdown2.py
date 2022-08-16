@@ -1056,7 +1056,7 @@ class Markdown(object):
         indent = ' ' * self.tab_width
         s = ('\n'  # separate from possible cuddled paragraph
              + indent + ('\n'+indent).join(lines)
-             + '\n\n')
+             + '\n')
         return s
 
     def _prepare_pyshell_blocks(self, text):
@@ -1070,7 +1070,7 @@ class Markdown(object):
         _pyshell_block_re = re.compile(r"""
             ^([ ]{0,%d})>>>[ ].*\n  # first line
             ^(\1[^\S\n]*\S.*\n)*    # any number of subsequent lines with at least one character
-            ^\n                     # ends with a blank line
+            (?=^\1?\n|\Z)           # ends with a blank line or end of document
             """ % less_than_tab, re.M | re.X)
 
         return _pyshell_block_re.sub(self._pyshell_block_sub, text)
@@ -1798,7 +1798,7 @@ class Markdown(object):
             item = self._run_block_gamut(self._outdent(item))
         else:
             # Recursion for sub-lists:
-            item = self._do_lists(self._outdent(item))
+            item = self._do_lists(self._uniform_outdent(item, min_outdent=' ')[1])
             if item.endswith('\n'):
                 item = item[:-1]
             item = self._run_span_gamut(item)
@@ -1864,14 +1864,20 @@ class Markdown(object):
                     yield tup
                 yield 0, "</code>"
 
+            def _add_newline(self, inner):
+                # Add newlines around the inner contents so that _strict_tag_block_re matches the outer div.
+                yield 0, "\n"
+                yield from inner
+                yield 0, "\n"
+
             def wrap(self, source, outfile=None):
                 """Return the source with a code, pre, and div."""
                 if outfile is None:
                     # pygments >= 2.12
-                    return self._wrap_pre(self._wrap_code(source))
+                    return self._add_newline(self._wrap_pre(self._wrap_code(source)))
                 else:
                     # pygments < 2.12
-                    return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
+                    return self._wrap_div(self._add_newline(self._wrap_pre(self._wrap_code(source))))
 
         formatter_opts.setdefault("cssclass", "codehilite")
         formatter = HtmlCodeFormatter(**formatter_opts)
@@ -2457,12 +2463,19 @@ class Markdown(object):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
-    def _uniform_outdent(self, text):
+    def _uniform_outdent(self, text, min_outdent=None):
         # Removes the smallest common leading indentation from each line
         # of `text` and returns said indent along with the outdented text.
+        # The `min_outdent` kwarg only outdents lines that start with at
+        # least this level of indentation or more.
 
         # Find leading indentation of each line
         ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
+        # Sort the indents within bounds
+        if min_outdent:
+            # dont use "is not None" here so we avoid iterating over ws
+            # if min_outdent == '', which would do nothing
+            ws = [i for i in ws if len(min_outdent) <= len(i)]
         if not ws:
             return '', text
         # Get smallest common leading indent
