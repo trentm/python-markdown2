@@ -1798,7 +1798,7 @@ class Markdown(object):
             item = self._run_block_gamut(self._outdent(item))
         else:
             # Recursion for sub-lists:
-            item = self._do_lists(self._outdent(item))
+            item = self._do_lists(self._uniform_outdent(item, min_outdent=' ')[1])
             if item.endswith('\n'):
                 item = item[:-1]
             item = self._run_span_gamut(item)
@@ -2457,12 +2457,19 @@ class Markdown(object):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
-    def _uniform_outdent(self, text):
+    def _uniform_outdent(self, text, min_outdent=None):
         # Removes the smallest common leading indentation from each line
         # of `text` and returns said indent along with the outdented text.
+        # The `min_outdent` kwarg only outdents lines that start with at
+        # least this level of indentation or more.
 
         # Find leading indentation of each line
         ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
+        # Sort the indents within bounds
+        if min_outdent:
+            # dont use "is not None" here so we avoid iterating over ws
+            # if min_outdent == '', which would do nothing
+            ws = [i for i in ws if len(min_outdent) <= len(i)]
         if not ws:
             return '', text
         # Get smallest common leading indent
