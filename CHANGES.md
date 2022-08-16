@@ -15,6 +15,8 @@
 - [pull #455] Fix code block indentation in lists
 - [pull #434] Fix filter bypass leading to XSS (#362)
 - [pull #464] Fix html-classes extra not applying to code spans
+- [pull #462] Fix pygments block matching
+- [pull #462] Fix pyshell blocks in blockquotes
 - [pull #463] Fix multilevel lists
 
 

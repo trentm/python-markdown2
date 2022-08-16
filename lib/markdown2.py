@@ -1056,7 +1056,7 @@ class Markdown(object):
         indent = ' ' * self.tab_width
         s = ('\n'  # separate from possible cuddled paragraph
              + indent + ('\n'+indent).join(lines)
-             + '\n\n')
+             + '\n')
         return s
 
     def _prepare_pyshell_blocks(self, text):
@@ -1070,7 +1070,7 @@ class Markdown(object):
         _pyshell_block_re = re.compile(r"""
             ^([ ]{0,%d})>>>[ ].*\n  # first line
             ^(\1[^\S\n]*\S.*\n)*    # any number of subsequent lines with at least one character
-            ^\n                     # ends with a blank line
+            (?=^\1?\n|\Z)           # ends with a blank line or end of document
             """ % less_than_tab, re.M | re.X)
 
         return _pyshell_block_re.sub(self._pyshell_block_sub, text)
@@ -1864,14 +1864,20 @@ class Markdown(object):
                     yield tup
                 yield 0, "</code>"
 
+            def _add_newline(self, inner):
+                # Add newlines around the inner contents so that _strict_tag_block_re matches the outer div.
+                yield 0, "\n"
+                yield from inner
+                yield 0, "\n"
+
             def wrap(self, source, outfile=None):
                 """Return the source with a code, pre, and div."""
                 if outfile is None:
                     # pygments >= 2.12
-                    return self._wrap_pre(self._wrap_code(source))
+                    return self._add_newline(self._wrap_pre(self._wrap_code(source)))
                 else:
                     # pygments < 2.12
-                    return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
+                    return self._wrap_div(self._add_newline(self._wrap_pre(self._wrap_code(source))))
 
         formatter_opts.setdefault("cssclass", "codehilite")
         formatter = HtmlCodeFormatter(**formatter_opts)
