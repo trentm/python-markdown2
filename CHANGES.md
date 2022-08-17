@@ -18,6 +18,7 @@
 - [pull #462] Fix pygments block matching
 - [pull #462] Fix pyshell blocks in blockquotes
 - [pull #463] Fix multilevel lists
+- [pull #468] Remove `_uniform_outdent_limit` function
 
 
 ## python-markdown2 2.4.3
