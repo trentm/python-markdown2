@@ -1883,10 +1883,23 @@ class Markdown(object):
         formatter = HtmlCodeFormatter(**formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
+    def _wavedrom_sub(self, match):
+        try:
+            import wavedrom
+        except ImportError:
+            return None
+        svg = wavedrom.render(match.group(3)).tostring()
+        self._escape_table[svg] = _hash_text(svg)
+        return '<p>%s</p>' % self._escape_table[svg]
+
     def _code_block_sub(self, match, is_fenced_code_block=False):
         lexer_name = None
         if is_fenced_code_block:
             lexer_name = match.group(2)
+            if 'wavedrom' in self.extras and lexer_name == 'wavedrom':
+                wavedrom_result = self._wavedrom_sub(match)
+                if wavedrom_result is not None:
+                    return wavedrom_result
             codeblock = match.group(3)
             codeblock = codeblock[:-1]  # drop one trailing newline
         else:
