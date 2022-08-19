@@ -4,11 +4,11 @@
 
 """The markdown2 test suite entry point."""
 
+import importlib
 import os
 from os.path import join, abspath, dirname
 import sys
 import logging
-
 import testlib
 
 log = logging.getLogger("test")
@@ -37,11 +37,12 @@ if __name__ == "__main__":
 
     setup()
     default_tags = []
-    try:
-        import pygments  # noqa
-    except ImportError:
-        log.warning("skipping pygments tests ('pygments' module not found)")
-        default_tags.append("-pygments")
+    for extra_lib in ('pygments', 'wavedrom'):
+        try:
+            importlib.import_module(extra_lib)
+        except ImportError:
+            log.warning("skipping %s tests ('%s' module not found)" % (extra_lib, extra_lib))
+            default_tags.append("-%s" % extra_lib)
 
     retval = testlib.harness(testdir_from_ns=testdir_from_ns,
                              default_tags=default_tags)
