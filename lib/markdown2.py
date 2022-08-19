@@ -90,6 +90,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   on Extras.
 * wiki-tables: Google Code Wiki-style tables. See
   <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
+* wavedrom: Support for generating Wavedrom digital timing diagrams
 * xml: Passes one-liner processing instructions and namespaced XML tags.
 """
 
@@ -346,6 +347,9 @@ class Markdown(object):
             text = self._extract_metadata(text)
 
         text = self.preprocess(text)
+
+        if "wavedrom" in self.extras:
+            text = self._do_wavedrom_blocks(text)
 
         if "fenced-code-blocks" in self.extras and not self.safe_mode:
             text = self._do_fenced_code_blocks(text)
@@ -1883,23 +1887,10 @@ class Markdown(object):
         formatter = HtmlCodeFormatter(**formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
-    def _wavedrom_sub(self, match):
-        try:
-            import wavedrom
-        except ImportError:
-            return None
-        svg = wavedrom.render(match.group(3)).tostring()
-        self._escape_table[svg] = _hash_text(svg)
-        return '<p>%s</p>' % self._escape_table[svg]
-
     def _code_block_sub(self, match, is_fenced_code_block=False):
         lexer_name = None
         if is_fenced_code_block:
             lexer_name = match.group(2)
-            if 'wavedrom' in self.extras and lexer_name == 'wavedrom':
-                wavedrom_result = self._wavedrom_sub(match)
-                if wavedrom_result is not None:
-                    return wavedrom_result
             codeblock = match.group(3)
             codeblock = codeblock[:-1]  # drop one trailing newline
         else:
@@ -2085,6 +2076,18 @@ class Markdown(object):
         hashed = _hash_text(text)
         self._code_table[text] = hashed
         return hashed
+
+    def _wavedrom_block_sub(self, match):
+        try:
+            import wavedrom
+        except ImportError:
+            return match.string[match.start():match.end()]
+        svg = wavedrom.render(match.group(3)).tostring()
+        self._escape_table[svg] = _hash_text(svg)
+        return '\n<p>%s</p>\n' % self._escape_table[svg]
+
+    def _do_wavedrom_blocks(self, text):
+        return self._fenced_code_block_re.sub(self._wavedrom_block_sub, text)
 
     _admonitions = r'admonition|attention|caution|danger|error|hint|important|note|tip|warning'
     _admonitions_re = re.compile(r'''
