@@ -2082,9 +2082,11 @@ class Markdown(object):
             import wavedrom
         except ImportError:
             return match.string[match.start():match.end()]
-        svg = wavedrom.render(match.group(3)).tostring()
+
+        lead_indent, waves = self._uniform_outdent(match.group(3))
+        svg = wavedrom.render(waves).tostring()
         self._escape_table[svg] = _hash_text(svg)
-        return '\n<p>%s</p>\n' % self._escape_table[svg]
+        return self._uniform_indent('\n<p>%s</p>\n' % self._escape_table[svg], lead_indent)
 
     def _do_wavedrom_blocks(self, text):
         return self._fenced_code_block_re.sub(self._wavedrom_block_sub, text)
