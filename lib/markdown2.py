@@ -2078,6 +2078,9 @@ class Markdown(object):
         return hashed
 
     def _wavedrom_block_sub(self, match):
+        if match.group(2) != 'wavedrom':
+            return match.string[match.start():match.end()]
+
         try:
             import wavedrom
         except ImportError:
