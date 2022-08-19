@@ -1015,6 +1015,9 @@ class Markdown(object):
         if 'admonitions' in self.extras:
             text = self._do_admonitions(text)
 
+        if 'wavedrom' in self.extras:
+            text = self._do_wavedrom_blocks(text)
+
         if "fenced-code-blocks" in self.extras:
             text = self._do_fenced_code_blocks(text)
 
@@ -2089,7 +2092,7 @@ class Markdown(object):
         lead_indent, waves = self._uniform_outdent(match.group(3))
         svg = wavedrom.render(waves).tostring()
         self._escape_table[svg] = _hash_text(svg)
-        return self._uniform_indent('\n<p>%s</p>\n' % self._escape_table[svg], lead_indent)
+        return self._uniform_indent('\n<div>%s\n</div>\n' % self._escape_table[svg], lead_indent, include_empty_lines=True)
 
     def _do_wavedrom_blocks(self, text):
         return self._fenced_code_block_re.sub(self._wavedrom_block_sub, text)
