@@ -2081,18 +2081,37 @@ class Markdown(object):
         return hashed
 
     def _wavedrom_block_sub(self, match):
+        # if this isn't a wavedrom diagram block, exit now
         if match.group(2) != 'wavedrom':
             return match.string[match.start():match.end()]
 
-        try:
-            import wavedrom
-        except ImportError:
-            return match.string[match.start():match.end()]
-
+        # dedent the block for processing
         lead_indent, waves = self._uniform_outdent(match.group(3))
-        svg = wavedrom.render(waves).tostring()
-        self._escape_table[svg] = _hash_text(svg)
-        return self._uniform_indent('\n<div>%s\n</div>\n' % self._escape_table[svg], lead_indent, include_empty_lines=True)
+        # default tags to wrap the wavedrom block in
+        open_tag, close_tag = '<script type="WaveDrom">\n', "</script>"
+
+        # check if the user would prefer to have the SVG embedded directly
+        if not isinstance(self.extras['wavedrom'], dict):
+            embed_svg = True
+        else:
+            # default behaviour is to embed SVGs
+            embed_svg = self.extras['wavedrom'].get('prefer_embed_svg', True)
+
+        if embed_svg:
+            try:
+                import wavedrom
+                waves = wavedrom.render(waves).tostring()
+                open_tag, close_tag = "<div>", "\n</div>"
+            except ImportError:
+                pass
+
+        # hash SVG to prevent <> chars being messed with
+        self._escape_table[waves] = _hash_text(waves)
+
+        return self._uniform_indent(
+            '\n%s%s%s\n' % (open_tag, self._escape_table[waves], close_tag),
+            lead_indent, include_empty_lines=True
+        )
 
     def _do_wavedrom_blocks(self, text):
         return self._fenced_code_block_re.sub(self._wavedrom_block_sub, text)
