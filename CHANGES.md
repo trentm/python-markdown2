@@ -18,6 +18,7 @@
 - [pull #462] Fix pygments block matching
 - [pull #462] Fix pyshell blocks in blockquotes
 - [pull #463] Fix multilevel lists
+- [pull #470] Add support for ordered lists that don't start at 1. (#469)
 
 
 ## python-markdown2 2.4.3
