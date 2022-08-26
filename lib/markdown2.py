@@ -2272,7 +2272,7 @@ class Markdown(object):
                     ):
                         start = li.start()
                         cuddled_list = self._do_lists(graf[start:]).rstrip("\n")
-                        assert cuddled_list.startswith("<ul>") or cuddled_list.startswith("<ol>")
+                        assert re.match(r'^<(?:ul|ol).*?>', cuddled_list)
                         graf = graf[:start]
 
                 # Wrap <p> tags.
