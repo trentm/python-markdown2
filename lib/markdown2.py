@@ -1707,11 +1707,18 @@ class Markdown(object):
     def _list_sub(self, match):
         lst = match.group(1)
         lst_type = match.group(3) in self._marker_ul_chars and "ul" or "ol"
+
+        if lst_type == 'ol' and match.group(3) != '1.':
+            # if list doesn't start at 1 then set the ol start attribute
+            lst_opts = ' start="%s"' % match.group(3)[:-1]
+        else:
+            lst_opts = ''
+
         result = self._process_list_items(lst)
         if self.list_level:
-            return "<%s>\n%s</%s>\n" % (lst_type, result, lst_type)
+            return "<%s%s>\n%s</%s>\n" % (lst_type, lst_opts, result, lst_type)
         else:
-            return "<%s>\n%s</%s>\n\n" % (lst_type, result, lst_type)
+            return "<%s%s>\n%s</%s>\n\n" % (lst_type, lst_opts, result, lst_type)
 
     def _do_lists(self, text):
         # Form HTML ordered (numbered) and unordered (bulleted) lists.
@@ -2267,7 +2274,7 @@ class Markdown(object):
                     ):
                         start = li.start()
                         cuddled_list = self._do_lists(graf[start:]).rstrip("\n")
-                        assert cuddled_list.startswith("<ul>") or cuddled_list.startswith("<ol>")
+                        assert re.match(r'^<(?:ul|ol).*?>', cuddled_list)
                         graf = graf[:start]
 
                 # Wrap <p> tags.
