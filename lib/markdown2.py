@@ -1926,7 +1926,9 @@ class Markdown(object):
         if is_fenced_code_block:
             # Fenced code blocks need to be outdented before encoding, and then reapplied
             leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
-            leading_indent, codeblock = self._uniform_outdent_limit(codeblock, leading_indent)
+            if codeblock:
+                # only run the codeblock through the outdenter if not empty
+                leading_indent, codeblock = self._uniform_outdent(codeblock, max_outdent=leading_indent)
 
             codeblock = self._encode_code(codeblock)
 
@@ -2470,48 +2472,40 @@ class Markdown(object):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
-    def _uniform_outdent(self, text, min_outdent=None):
-        # Removes the smallest common leading indentation from each line
-        # of `text` and returns said indent along with the outdented text.
-        # The `min_outdent` kwarg only outdents lines that start with at
-        # least this level of indentation or more.
+    def _uniform_outdent(self, text, min_outdent=None, max_outdent=None):
+        # Removes the smallest common leading indentation from each (non empty)
+        # line of `text` and returns said indent along with the outdented text.
+        # The `min_outdent` kwarg makes sure the smallest common whitespace
+        # must be at least this size
+        # The `max_outdent` sets the maximum amount a line can be
+        # outdented by
 
-        # Find leading indentation of each line
-        ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
-        # Sort the indents within bounds
-        if min_outdent:
-            # dont use "is not None" here so we avoid iterating over ws
-            # if min_outdent == '', which would do nothing
-            ws = [i for i in ws if len(min_outdent) <= len(i)]
-        if not ws:
-            return '', text
-        # Get smallest common leading indent
-        ws = sorted(ws)[0]
-        # Dedent every line by smallest common indent
-        return ws, ''.join(
-            (line.replace(ws, '', 1) if line.startswith(ws) else line)
-            for line in text.splitlines(True)
-        )
+        # find the leading whitespace for every line
+        whitespace = [
+            re.findall(r'^[ \t]*', line)[0] if line else None
+            for line in text.splitlines()
+        ]
 
-    def _uniform_outdent_limit(self, text, outdent):
-        # Outdents up to `outdent`. Similar to `_uniform_outdent`, but
-        # will leave some indentation on the line with the smallest common
-        # leading indentation depending on the amount specified.
-        # If the smallest leading indentation is less than `outdent`, it will
-        # perform identical to `_uniform_outdent`
-        
-        # Find leading indentation of each line
-        ws = re.findall(r'(^[ \t]*)(?:[^ \t\n])', text, re.MULTILINE)
-        if not ws:
-            return outdent, text
-        # Get smallest common leading indent
-        ws = sorted(ws)[0]
-        if len(outdent) > len(ws):
-            outdent = ws
-        return outdent, ''.join(
-                (line.replace(outdent, '', 1) if line.startswith(outdent) else line)
-                for line in text.splitlines(True)
-        )
+        # get minimum common whitespace
+        outdent = min(i for i in whitespace if i is not None)
+        # adjust min common ws to be within bounds
+        if min_outdent is not None:
+            outdent = min([i for i in whitespace if i is not None and i >= min_outdent] or [min_outdent])
+        if max_outdent is not None:
+            outdent = min(outdent, max_outdent)
+
+        outdented = []
+        for line_ws, line in zip(whitespace, text.splitlines(True)):
+            if line.startswith(outdent):
+                # if line starts with smallest common ws, dedent it
+                outdented.append(line.replace(outdent, '', 1))
+            elif line_ws is not None and line_ws < outdent:
+                # if less indented than min common whitespace then outdent as much as possible
+                outdented.append(line.replace(line_ws, '', 1))
+            else:
+                outdented.append(line)
+
+        return outdent, ''.join(outdented)
 
     def _uniform_indent(self, text, indent, include_empty_lines=False):
         return ''.join(

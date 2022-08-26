@@ -18,6 +18,7 @@
 - [pull #462] Fix pygments block matching
 - [pull #462] Fix pyshell blocks in blockquotes
 - [pull #463] Fix multilevel lists
+- [pull #468] Remove `_uniform_outdent_limit` function
 - [pull #470] Add support for ordered lists that don't start at 1. (#469)
 - [pull #472] Fix `AssertionError` with lazy numbered lists (issue #471)
 
