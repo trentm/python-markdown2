@@ -56,8 +56,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   highlighting when using fenced-code-blocks and highlightjs.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
   string to use for a "class" tag attribute. Currently only supports "img",
-  "table", "pre" and "code" tags. Add an issue if you require this for other
-  tags.
+  "table", "pre", "code", "ul" and "ol" tags. Add an issue if you require
+  this for other tags.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
   references, revision number references).
 * markdown-in-html: Allow the use of `markdown="1"` in a block HTML tag to
@@ -1713,6 +1713,8 @@ class Markdown(object):
             lst_opts = ' start="%s"' % match.group(3)[:-1]
         else:
             lst_opts = ''
+
+        lst_opts = lst_opts + self._html_class_str_from_tag(lst_type)
 
         result = self._process_list_items(lst)
         if self.list_level:
