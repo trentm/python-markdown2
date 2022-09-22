@@ -2358,7 +2358,10 @@ class Markdown(object):
         if text.endswith(">"):
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
-        return self._incomplete_tags_re.sub("&lt;\\1", text)
+        def incomplete_tags_sub(match):
+            return match.group().replace('<', '&lt;')
+
+        return self._incomplete_tags_re.sub(incomplete_tags_sub, text)
 
     def _encode_backslash_escapes(self, text):
         for ch, escape in list(self._escape_table.items()):
