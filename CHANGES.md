@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.5 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.4
 
 - [pull #439] Fix TypeError if html-classes extra is None
