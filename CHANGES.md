@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.4.5 (not yet released)
 
-(nothing yet)
+- [pull #466] Add optional dependencies to `setup.py`
 
 
 ## python-markdown2 2.4.4
