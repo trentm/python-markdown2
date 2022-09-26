@@ -1,6 +1,16 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.4.4 (not yet released)
+## python-markdown2 2.4.6 (not yet released)
+
+(nothing yet)
+
+
+## python-markdown2 2.4.5
+
+- [pull #466] Add optional dependencies to `setup.py`
+
+
+## python-markdown2 2.4.4
 
 - [pull #439] Fix TypeError if html-classes extra is None
 - [pull #441] Remove Python2 support
@@ -18,6 +28,11 @@
 - [pull #462] Fix pygments block matching
 - [pull #462] Fix pyshell blocks in blockquotes
 - [pull #463] Fix multilevel lists
+- [pull #468] Remove `_uniform_outdent_limit` function
+- [pull #470] Add support for ordered lists that don't start at 1. (#469)
+- [pull #472] Fix `AssertionError` with lazy numbered lists (issue #471)
+- [pull #475] Add `<ul>` and `<ol>` tags to html-classes extra (#352)
+- [pull #473] XSS test and fix
 
 
 ## python-markdown2 2.4.3
