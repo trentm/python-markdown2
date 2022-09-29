@@ -348,7 +348,7 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
-        if "wavedrom" in self.extras:
+        if 'wavedrom' in self.extras:
             text = self._do_wavedrom_blocks(text)
 
         if "fenced-code-blocks" in self.extras and not self.safe_mode:
@@ -2099,7 +2099,7 @@ class Markdown(object):
         # dedent the block for processing
         lead_indent, waves = self._uniform_outdent(match.group(3))
         # default tags to wrap the wavedrom block in
-        open_tag, close_tag = '<script type="WaveDrom">\n', "</script>"
+        open_tag, close_tag = '<script type="WaveDrom">\n', '</script>'
 
         # check if the user would prefer to have the SVG embedded directly
         if not isinstance(self.extras['wavedrom'], dict):
@@ -2112,7 +2112,7 @@ class Markdown(object):
             try:
                 import wavedrom
                 waves = wavedrom.render(waves).tostring()
-                open_tag, close_tag = "<div>", "\n</div>"
+                open_tag, close_tag = '<div>', '\n</div>'
             except ImportError:
                 pass
 
