@@ -1,0 +1,24 @@
+Here is a basic wavedrom diagram:
+```wavedrom
+{ "signal": [{ "name": "Alfa", "wave": "01.zx=ud.23.456789" }] }
+```
+
+And here is a more complex one, inside of a list
+
+* More complex diagram
+  * Inside of nested list
+    ```wavedrom
+    { signal: [
+        { name: "pclk", wave: 'p.......' },
+        { name: "Pclk", wave: 'P.......' },
+        { name: "nclk", wave: 'n.......' },
+        { name: "Nclk", wave: 'N.......' },
+        {},
+        { name: 'clk0', wave: 'phnlPHNL' },
+        { name: 'clk1', wave: 'xhlhLHl.' },
+        { name: 'clk2', wave: 'hpHplnLn' },
+        { name: 'clk3', wave: 'nhNhplPl' },
+        { name: 'clk4', wave: 'xlh.L.Hx' },
+    ]}
+    ```
+  * Making sure not to break indentation
