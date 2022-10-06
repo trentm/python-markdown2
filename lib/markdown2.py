@@ -1713,11 +1713,11 @@ class Markdown(object):
 
     def _list_sub(self, match):
         lst = match.group(1)
-        lst_type = match.group(3) in self._marker_ul_chars and "ul" or "ol"
+        lst_type = match.group(4) in self._marker_ul_chars and "ul" or "ol"
 
-        if lst_type == 'ol' and match.group(3) != '1.':
+        if lst_type == 'ol' and match.group(4) != '1.':
             # if list doesn't start at 1 then set the ol start attribute
-            lst_opts = ' start="%s"' % match.group(3)[:-1]
+            lst_opts = ' start="%s"' % match.group(4)[:-1]
         else:
             lst_opts = ''
 
@@ -1741,16 +1741,17 @@ class Markdown(object):
             hits = []
             for marker_pat in (self._marker_ul, self._marker_ol):
                 less_than_tab = self.tab_width - 1
+                other_marker_pat = self._marker_ul if marker_pat == self._marker_ol else self._marker_ol
                 whole_list = r'''
                     (                   # \1 = whole list
                       (                 # \2
-                        [ ]{0,%d}
-                        (%s)            # \3 = first list item marker
+                        ([ ]{0,%d})     # \3 = the indentation level of the list item marker
+                        (%s)            # \4 = first list item marker
                         [ \t]+
-                        (?!\ *\3\ )     # '- - - ...' isn't a list. See 'not_quite_a_list' test case.
+                        (?!\ *\4\ )     # '- - - ...' isn't a list. See 'not_quite_a_list' test case.
                       )
                       (?:.+?)
-                      (                 # \4
+                      (                 # \5
                           \Z
                         |
                           \n{2,}
@@ -1759,9 +1760,15 @@ class Markdown(object):
                             [ \t]*
                             %s[ \t]+
                           )
+                        |
+                          \n+
+                          (?=
+                            \3          # lookahead for a different style of list item marker
+                            %s[ \t]+
+                          )
                       )
                     )
-                ''' % (less_than_tab, marker_pat, marker_pat)
+                ''' % (less_than_tab, marker_pat, marker_pat, other_marker_pat)
                 if self.list_level:  # sub-list
                     list_re = re.compile("^"+whole_list, re.X | re.M | re.S)
                 else:
