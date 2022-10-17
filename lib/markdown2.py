@@ -1240,6 +1240,9 @@ class Markdown(object):
 
         text = self._do_italics_and_bold(text)
 
+        if "tg-spoiler" in self.extras:
+            text = self._do_tg_spoiler(text)
+
         if "smarty-pants" in self.extras:
             text = self._do_smart_punctuation(text)
 
@@ -2180,6 +2183,11 @@ class Markdown(object):
     _underline_re = re.compile(r"(?<!<!)--(?!>)(?=\S)(.+?)(?<=\S)(?<!<!)--(?!>)", re.S)
     def _do_underline(self, text):
         text = self._underline_re.sub(r"<u>\1</u>", text)
+        return text
+    
+    _tg_spoiler_re = re.compile(r"\|\|(?=\S)(.+?)(?<=\S)\|\|", re.S)
+    def _do_tg_spoiler(self, text):
+        text = self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
         return text
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
