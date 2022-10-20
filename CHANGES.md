@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.4.6 (not yet released)
+## python-markdown2 2.4.6
 
 - [pull #477] Feature wavedrom support
 - [pull #480] Fix mixing ordered and un-ordered lists combining into single list type
