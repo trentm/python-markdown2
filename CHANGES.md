@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.7 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.6
 
 - [pull #477] Feature wavedrom support
