@@ -741,7 +741,11 @@ class Markdown(object):
     _html_markdown_attr_re = re.compile(
         r'''\s+markdown=("1"|'1')''')
     def _hash_html_block_sub(self, match, raw=False):
-        html = match.group(1)
+        if isinstance(match, str):
+            html = match
+        else:
+            html = match.group(1)
+
         if raw and self.safe_mode:
             html = self._sanitize_html(html)
         elif 'markdown-in-html' in self.extras and 'markdown=' in html:
@@ -792,7 +796,7 @@ class Markdown(object):
         # the inner nested divs must be indented.
         # We need to do this before the next, more liberal match, because the next
         # match will start at the first `<div>` and stop at the first `</div>`.
-        text = self._strict_tag_block_re.sub(hash_html_block_sub, text)
+        text = self._strict_tag_block_sub(text, self._block_tags_a, hash_html_block_sub)
 
         # Now match more liberally, simply from `\n<tag>` to `</tag>\n`
         text = self._liberal_tag_block_re.sub(hash_html_block_sub, text)
@@ -870,6 +874,42 @@ class Markdown(object):
             text = _xml_oneliner_re.sub(hash_html_block_sub, text)
 
         return text
+
+    def _strict_tag_block_sub(self, text, html_tags_re, callback):
+        tag_count = 0
+        current_tag = html_tags_re
+        block = ''
+        result = ''
+
+        for chunk in text.splitlines(True):
+            is_markup = re.match(r'^(</?(%s)\b>?)' % current_tag, chunk)
+            block += chunk
+
+            if is_markup:
+                if is_markup.group(2) == 'pre':
+                    is_markup = None
+                else:
+                    if chunk.startswith('</'):
+                        tag_count -= 1
+                    else:
+                        # if close tag is in same line
+                        if '</%s>' % is_markup.group(2) in chunk[is_markup.end():]:
+                            # we must ignore these
+                            is_markup = None
+                        else:
+                            tag_count += 1
+                            current_tag = is_markup.group(2)
+
+            if tag_count == 0:
+                if is_markup:
+                    block = callback(block.rstrip('\n'))  # remove trailing newline
+                current_tag = html_tags_re
+                result += block
+                block = ''
+
+        result += block
+
+        return result
 
     def _strip_link_definitions(self, text):
         # Strips link definitions from text, stores the URLs and titles in
