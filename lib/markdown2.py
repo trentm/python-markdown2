@@ -882,23 +882,20 @@ class Markdown(object):
         result = ''
 
         for chunk in text.splitlines(True):
-            is_markup = re.match(r'^(</?(%s)\b>?)' % current_tag, chunk)
+            is_markup = re.match(r'^(?:</code>(?=</pre>))?(</?(%s)\b>?)' % current_tag, chunk)
             block += chunk
 
             if is_markup:
-                if is_markup.group(2) == 'pre':
-                    is_markup = None
+                if chunk.startswith('</'):
+                    tag_count -= 1
                 else:
-                    if chunk.startswith('</'):
-                        tag_count -= 1
+                    # if close tag is in same line
+                    if '</%s>' % is_markup.group(2) in chunk[is_markup.end():]:
+                        # we must ignore these
+                        is_markup = None
                     else:
-                        # if close tag is in same line
-                        if '</%s>' % is_markup.group(2) in chunk[is_markup.end():]:
-                            # we must ignore these
-                            is_markup = None
-                        else:
-                            tag_count += 1
-                            current_tag = is_markup.group(2)
+                        tag_count += 1
+                        current_tag = is_markup.group(2)
 
             if tag_count == 0:
                 if is_markup:
