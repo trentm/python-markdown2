@@ -449,17 +449,17 @@ class Markdown(object):
     #
     #   # header
     _meta_data_pattern = re.compile(r'''
-        ^(?:---[\ \t]*\n)?(  # optional opening fence
+        ^{0}(  # optional opening fence
             (?:
-                [\S \t]*\w[\S \t]*\s*:(?:\n+[ \t]+.*)+  # indented lists
+                {1}:(?:\n+[ \t]+.*)+  # indented lists
             )|(?:
-                (?:[\S \t]*\w[\S \t]*\s*:\s+>(?:\n\s+.*)+?)  # multiline long descriptions
-                (?=\n[\S \t]*\w[\S \t]*\s*:\s*.*\n|\s*\Z)  # match up until the start of the next key:value definition or the end of the input text
+                (?:{1}:\s+>(?:\n\s+.*)+?)  # multiline long descriptions
+                (?=\n{1}:\s*.*\n|\s*\Z)  # match up until the start of the next key:value definition or the end of the input text
             )|(?:
-                [\S \t]*\w[\S \t]*\s*:(?! >).*\n?  # simple key:value pair, leading spaces allowed
+                {1}:(?! >).*\n?  # simple key:value pair, leading spaces allowed
             )
-        )(?:---[\ \t]*\n)?  # optional closing fence
-        ''', re.MULTILINE | re.VERBOSE
+        ){0}  # optional closing fence
+        '''.format(r'(?:---[\ \t]*\n)?', r'[\S \t]*\w[\S \t]*\s*'), re.MULTILINE | re.VERBOSE
     )
 
     _key_val_list_pat = re.compile(
