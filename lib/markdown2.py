@@ -1985,6 +1985,10 @@ class Markdown(object):
 
             codeblock = self._encode_code(codeblock)
 
+            if lexer_name == 'mermaid' and 'mermaid' in self.extras:
+                return '\n%s<pre class="mermaid-pre"><div class="mermaid">%s\n</div></pre>\n' % (
+                    leading_indent, codeblock)
+
             return "\n%s<pre%s><code%s>%s\n</code></pre>\n" % (
                 leading_indent, pre_class_str, code_class_str, codeblock)
         else:
