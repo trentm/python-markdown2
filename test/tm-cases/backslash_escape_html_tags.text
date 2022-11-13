@@ -1,0 +1,13 @@
+this is \<strong>some strong\</strong> text
+
+[\<strong>](http://localhost/)text\</strong>
+
+text \\<strong>with double\\</strong> escapes
+
+how about text \\\<strong>with triple\\\</strong> escapes
+
+escaped auto-link \<https://www.example.com>
+not quite escaped auto link \\<https://www.example.com>
+escaped auto-link \\\<https://www.example.com>
+
+\<!-- and escaped HTML comment --> \\<!-- followed by one that isn't --> \\\<!--and another that is-->
