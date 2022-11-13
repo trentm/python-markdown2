@@ -3,6 +3,7 @@
 ## python-markdown2 2.4.7 (not yet released)
 
 - [pull #483] Fix hashing nested HTML blocks
+- [pull #486] Fix backslash being unable to escape raw HTML tags
 
 
 ## python-markdown2 2.4.6
