@@ -1291,18 +1291,21 @@ class Markdown(object):
     # "Sorta" because auto-links are identified as "tag" tokens.
     _sorta_html_tokenize_re = re.compile(r"""
         (
-            # tag
-            </?
-            (?:\w+)                                     # tag name
-            (?:\s+(?:[\w-]+:)?[\w-]+=(?:".*?"|'.*?'))*  # attributes
-            \s*/?>
-            |
-            # auto-link (e.g., <http://www.activestate.com/>)
-            <[\w~:/?#\[\]@!$&'\(\)*+,;%=\.\\-]+>
-            |
-            <!--.*?-->      # comment
-            |
-            <\?.*?\?>       # processing instruction
+            \\*  # escapes
+            (?:
+                # tag
+                </?
+                (?:\w+)                                     # tag name
+                (?:\s+(?:[\w-]+:)?[\w-]+=(?:".*?"|'.*?'))*  # attributes
+                \s*/?>
+                |
+                # auto-link (e.g., <http://www.activestate.com/>)
+                <[\w~:/?#\[\]@!$&'\(\)*+,;%=\.\\-]+>
+                |
+                <!--.*?-->      # comment
+                |
+                <\?.*?\?>       # processing instruction
+            )
         )
         """, re.X)
 
@@ -1313,20 +1316,27 @@ class Markdown(object):
         # it isn't susceptible to unmatched '<' and '>' in HTML tags).
         # Note, however, that '>' is not allowed in an auto-link URL
         # here.
+        lead_escape_re = re.compile(r'^((?:\\\\)*(?!\\))')
         escaped = []
         is_html_markup = False
         for token in self._sorta_html_tokenize_re.split(text):
-            if is_html_markup:
+            # check token is preceded by 0 or more PAIRS of escapes, because escape pairs
+            # escape themselves and don't affect the token
+            if is_html_markup and lead_escape_re.match(token):
                 # Within tags/HTML-comments/auto-links, encode * and _
                 # so they don't conflict with their use in Markdown for
                 # italics and strong.  We're replacing each such
                 # character with its corresponding MD5 checksum value;
                 # this is likely overkill, but it should prevent us from
                 # colliding with the escape values by accident.
-                escaped.append(token.replace('*', self._escape_table['*'])
-                                    .replace('_', self._escape_table['_']))
+                escape_seq, token = lead_escape_re.split(token)[1:] or ('', token)
+                escaped.append(
+                    escape_seq.replace('\\\\', self._escape_table['\\'])
+                    + token.replace('*', self._escape_table['*'])
+                           .replace('_', self._escape_table['_'])
+                )
             else:
-                escaped.append(self._encode_backslash_escapes(token))
+                escaped.append(self._encode_backslash_escapes(token.replace('\\<', '&lt;')))
             is_html_markup = not is_html_markup
         return ''.join(escaped)
 
