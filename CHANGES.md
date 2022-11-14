@@ -4,6 +4,7 @@
 
 - [pull #483] Fix hashing nested HTML blocks
 - [pull #486] Fix backslash being unable to escape raw HTML tags
+- [pull #487] Fix escaping ampersands in hrefs
 
 
 ## python-markdown2 2.4.6
