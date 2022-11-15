@@ -2579,12 +2579,9 @@ class Markdown(object):
         # Swap back in all the special characters we've hidden.
         while True:
             orig_text = text
-            has_changed = False
             for ch, hash in list(self._escape_table.items()) + list(self._code_table.items()):
                 text = text.replace(hash, ch)
-                if text != orig_text:
-                    has_changed = True
-            if not has_changed:
+            if text != orig_text:
                 break
         return text
 
