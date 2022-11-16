@@ -2581,7 +2581,7 @@ class Markdown(object):
             orig_text = text
             for ch, hash in list(self._escape_table.items()) + list(self._code_table.items()):
                 text = text.replace(hash, ch)
-            if text != orig_text:
+            if text == orig_text:
                 break
         return text
 
