@@ -1985,7 +1985,7 @@ class Markdown(object):
 
         if is_fenced_code_block:
             # Fenced code blocks need to be outdented before encoding, and then reapplied
-            leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
+            leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
             if codeblock:
                 # only run the codeblock through the outdenter if not empty
                 leading_indent, codeblock = self._uniform_outdent(codeblock, max_outdent=leading_indent)
@@ -2022,9 +2022,9 @@ class Markdown(object):
                 codeblock = codeblock.replace(old, new)
             return codeblock
         # remove leading indent from code block
-        leading_indent, codeblock = self._uniform_outdent(codeblock)
+        _, codeblock = self._uniform_outdent(codeblock, max_outdent=leading_indent)
 
-        codeblock = unhash_code( codeblock )
+        codeblock = unhash_code(codeblock)
         colored = self._color_with_pygments(codeblock, lexer,
                                             **formatter_opts)
 
