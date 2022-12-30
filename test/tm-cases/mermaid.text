@@ -1,0 +1,15 @@
+This is a sample workflow
+
+```mermaid
+graph LR
+  A-->B
+  A-->C
+  C-->E
+  B-->D
+  C-->D
+  D-->F
+  E-->F
+```
+
+left-right type mermaid graph.
+

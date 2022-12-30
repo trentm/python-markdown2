@@ -1277,6 +1277,9 @@ class Markdown(object):
 
         text = self._do_italics_and_bold(text)
 
+        if "tg-spoiler" in self.extras:
+            text = self._do_tg_spoiler(text)
+
         if "smarty-pants" in self.extras:
             text = self._do_smart_punctuation(text)
 
@@ -1977,12 +1980,6 @@ class Markdown(object):
             codeblock = codeblock.lstrip('\n')  # trim leading newlines
             codeblock = codeblock.rstrip()      # trim trailing whitespace
 
-            # Note: "code-color" extra is DEPRECATED.
-            if "code-color" in self.extras and codeblock.startswith(":::"):
-                lexer_name, rest = codeblock.split('\n', 1)
-                lexer_name = lexer_name[3:].strip()
-                codeblock = rest.lstrip("\n")   # Remove lexer declaration line.
-
         # Use pygments only if not using the highlightjs-lang extra
         if lexer_name and "highlightjs-lang" not in self.extras:
             lexer = self._get_pygments_lexer(lexer_name)
@@ -1999,12 +1996,16 @@ class Markdown(object):
 
         if is_fenced_code_block:
             # Fenced code blocks need to be outdented before encoding, and then reapplied
-            leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
+            leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
             if codeblock:
                 # only run the codeblock through the outdenter if not empty
                 leading_indent, codeblock = self._uniform_outdent(codeblock, max_outdent=leading_indent)
 
             codeblock = self._encode_code(codeblock)
+
+            if lexer_name == 'mermaid' and 'mermaid' in self.extras:
+                return '\n%s<pre class="mermaid-pre"><div class="mermaid">%s\n</div></pre>\n' % (
+                    leading_indent, codeblock)
 
             return "\n%s<pre%s><code%s>%s\n</code></pre>\n" % (
                 leading_indent, pre_class_str, code_class_str, codeblock)
@@ -2018,7 +2019,7 @@ class Markdown(object):
         if is_fenced_code_block:
             formatter_opts = self.extras['fenced-code-blocks'] or {}
         else:
-            formatter_opts = self.extras['code-color'] or {}
+            formatter_opts = {}
 
         def unhash_code(codeblock):
             for key, sanitized in list(self.html_spans.items()):
@@ -2032,9 +2033,9 @@ class Markdown(object):
                 codeblock = codeblock.replace(old, new)
             return codeblock
         # remove leading indent from code block
-        leading_indent, codeblock = self._uniform_outdent(codeblock)
+        _, codeblock = self._uniform_outdent(codeblock, max_outdent=leading_indent)
 
-        codeblock = unhash_code( codeblock )
+        codeblock = unhash_code(codeblock)
         colored = self._color_with_pygments(codeblock, lexer,
                                             **formatter_opts)
 
@@ -2238,6 +2239,11 @@ class Markdown(object):
     _underline_re = re.compile(r"(?<!<!)--(?!>)(?=\S)(.+?)(?<=\S)(?<!<!)--(?!>)", re.S)
     def _do_underline(self, text):
         text = self._underline_re.sub(r"<u>\1</u>", text)
+        return text
+    
+    _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
+    def _do_tg_spoiler(self, text):
+        text = self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
         return text
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
@@ -2635,7 +2641,7 @@ class MarkdownWithExtras(Markdown):
     """A markdowner class that enables most extras:
 
     - footnotes
-    - code-color (only has effect if 'pygments' Python module on path)
+    - fenced-code-blocks (only highlights code if 'pygments' Python module on path)
 
     These are not included:
     - pyshell (specific to Python-related documenting)
@@ -2643,7 +2649,7 @@ class MarkdownWithExtras(Markdown):
     - link-patterns (because you need to specify some actual
       link-patterns anyway)
     """
-    extras = ["footnotes", "code-color"]
+    extras = ["footnotes", "fenced-code-blocks"]
 
 
 # ---- internal support functions

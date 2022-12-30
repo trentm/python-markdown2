@@ -4,7 +4,11 @@
 
 - [pull #483] Fix hashing nested HTML blocks
 - [pull #486] Fix backslash being unable to escape raw HTML tags
+- [pull #482] Add support for telegram spoiler in extras
+- [pull #485] mermaid support
 - [pull #487] Fix escaping ampersands in hrefs
+- [pull #490] Fix indented codeblocks inside fences (#489)
+- [pull #490] Remove `code-color` extra
 
 
 ## python-markdown2 2.4.6
