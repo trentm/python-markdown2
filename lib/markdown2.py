@@ -1465,6 +1465,17 @@ class Markdown(object):
             url = self._strip_anglebrackets.sub(r'\1', url)
         return url, title, end_idx
 
+    def _protect_url(self, url):
+        '''
+        Function that passes a URL through `_html_escape_url` to remove any nasty characters,
+        and then hashes the now "safe" URL to prevent other safety mechanisms from tampering
+        with it (eg: escaping "&" in URL parameters)
+        '''
+        url = _html_escape_url(url, safe_mode=self.safe_mode)
+        key = _hash_text(url)
+        self._escape_table[url] = key
+        return key
+
     _safe_protocols = re.compile(r'(https?|ftp):', re.I)
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
@@ -1572,7 +1583,7 @@ class Markdown(object):
                     if is_img:
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
-                            % (_html_escape_url(url, safe_mode=self.safe_mode),
+                            % (self._protect_url(url),
                                _xml_escape_attr(link_text),
                                title_str,
                                img_class_str,
@@ -1586,7 +1597,7 @@ class Markdown(object):
                         if self.safe_mode and not safe_link:
                             result_head = '<a href="#"%s>' % (title_str)
                         else:
-                            result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
+                            result_head = '<a href="%s"%s>' % (self._protect_url(url), title_str)
                         result = '%s%s</a>' % (result_head, link_text)
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
@@ -1628,7 +1639,7 @@ class Markdown(object):
                         if is_img:
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
-                                % (_html_escape_url(url, safe_mode=self.safe_mode),
+                                % (self._protect_url(url),
                                    _xml_escape_attr(link_text),
                                    title_str,
                                    img_class_str,
@@ -1641,7 +1652,7 @@ class Markdown(object):
                             if self.safe_mode and not self._safe_protocols.match(url):
                                 result_head = '<a href="#"%s>' % (title_str)
                             else:
-                                result_head = '<a href="%s"%s>' % (_html_escape_url(url, safe_mode=self.safe_mode), title_str)
+                                result_head = '<a href="%s"%s>' % (self._protect_url(url), title_str)
                             result = '%s%s</a>' % (result_head, link_text)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
@@ -2474,7 +2485,7 @@ class Markdown(object):
     _auto_link_re = re.compile(r'<((https?|ftp):[^\'">\s]+)>', re.I)
     def _auto_link_sub(self, match):
         g1 = match.group(1)
-        return '<a href="%s">%s</a>' % (g1, g1)
+        return '<a href="%s">%s</a>' % (self._protect_url(g1), g1)
 
     _auto_email_link_re = re.compile(r"""
           <
@@ -2572,8 +2583,12 @@ class Markdown(object):
 
     def _unescape_special_chars(self, text):
         # Swap back in all the special characters we've hidden.
-        for ch, hash in list(self._escape_table.items()) + list(self._code_table.items()):
-            text = text.replace(hash, ch)
+        while True:
+            orig_text = text
+            for ch, hash in list(self._escape_table.items()) + list(self._code_table.items()):
+                text = text.replace(hash, ch)
+            if text == orig_text:
+                break
         return text
 
     def _outdent(self, text):
