@@ -56,6 +56,7 @@ setup(
     },
     description="A fast and complete Python implementation of Markdown",
     python_requires=">=3.5, <4",
+    install_requires=['pyre2'],
     extras_require=extras_require,
     classifiers=classifiers.strip().split("\n"),
     long_description="""markdown2: A fast and complete Python implementation of Markdown.
