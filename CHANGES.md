@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.8 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.7
 
 - [pull #483] Fix hashing nested HTML blocks
