@@ -1591,6 +1591,7 @@ class Markdown(object):
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
                         curr_pos = start_idx + len(result)
+                        anchor_allowed_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[url_end_idx:]
                     elif start_idx >= anchor_allowed_pos:
                         safe_link = self._safe_protocols.match(url) or url.startswith('#')
