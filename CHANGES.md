@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.4.8 (not yet released)
+## python-markdown2 2.4.8
 
 - [pull #499] Fix images not being procesed correctly (#498)
 
