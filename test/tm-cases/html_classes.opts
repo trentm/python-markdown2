@@ -7,6 +7,7 @@
       "code": "codesyntaxcolor",
       "img": "custom-image-class",
       "table": "table table-striped",
+      "thead": "table-light",
       "p": "col-xs-3 custom-paragraph-class",
       "ul": "custom-unordered-list-class",
       "ol": "custom-ordered-list-class"
