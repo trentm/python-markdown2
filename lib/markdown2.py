@@ -1215,7 +1215,7 @@ class Markdown(object):
         add_hline('<table%s>' % self._html_class_str_from_tag('table'))
         # Check if first cell of first row is a header cell. If so, assume the whole row is a header row.
         if rows and rows[0] and re.match(r"^\s*~", rows[0][0]):
-            add_hline('<thead>', 1)
+            add_hline('<thead%s>' % self._html_class_str_from_tag('thead'), 1)
             add_hline('<tr>', 2)
             for cell in rows[0]:
                 add_hline("<th>{}</th>".format(format_cell(cell)), 3)
