@@ -2957,7 +2957,7 @@ def _html_escape_url(attr, safe_mode=False):
 # ---- mainline
 
 class _NoReflowFormatter(argparse.RawDescriptionHelpFormatter):
-    """An optparse formatter that does NOT reflow the description."""
+    """An argparse formatter that does NOT reflow the description."""
     def format_description(self, description):
         return description or ""
 
