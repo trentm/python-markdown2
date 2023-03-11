@@ -3,6 +3,7 @@
 ## python-markdown2 2.4.9 (not yet released)
 
 - [pull #500] Add `<thead>` tag to html-classes extra
+- [pull #501] Fix link patterns extra matching against internal hashes
 
 
 ## python-markdown2 2.4.8
