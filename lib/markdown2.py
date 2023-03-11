@@ -2241,7 +2241,7 @@ class Markdown(object):
     def _do_underline(self, text):
         text = self._underline_re.sub(r"<u>\1</u>", text)
         return text
-    
+
     _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
     def _do_tg_spoiler(self, text):
         text = self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
@@ -2533,6 +2533,9 @@ class Markdown(object):
         for regex, repl in self.link_patterns:
             replacements = []
             for match in regex.finditer(text):
+                if any(self._match_overlaps_substr(text, match, h) for h in link_from_hash):
+                    continue
+
                 if hasattr(repl, "__call__"):
                     href = repl(match)
                 else:
@@ -2636,6 +2639,16 @@ class Markdown(object):
             (indent + line if line.strip() or include_empty_lines else '')
             for line in text.splitlines(True)
         )
+
+    @staticmethod
+    def _match_overlaps_substr(text, match, substr):
+        for instance in re.finditer(re.escape(substr), text):
+            start, end = instance.span()
+            if start <= match.start() <= end:
+                return True
+            if start <= match.end() <= end:
+                return True
+        return False
 
 
 class MarkdownWithExtras(Markdown):
