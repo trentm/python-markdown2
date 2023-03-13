@@ -111,6 +111,8 @@ import optparse
 from random import random, randint
 import codecs
 from collections import defaultdict
+from abc import ABC, abstractmethod
+import functools
 
 # ---- globals
 
@@ -168,6 +170,92 @@ def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
                     footnote_title=footnote_title,
                     footnote_return_symbol=footnote_return_symbol,
                     use_file_vars=use_file_vars, cli=cli).convert(text)
+
+
+class Stage():
+    PREPROCESS = 50
+    HASH_HTML = 150
+    LINK_DEFS = 250
+
+    BLOCK_GAMUT = 350
+    HEADERS = 450
+    LISTS = 550
+    CODE_BLOCKS = 650
+    BLOCK_QUOTES = 750
+    PARAGRAPHS = 850
+
+    SPAN_GAMUT = 950
+    CODE_SPANS = 1050
+    ESCAPE_SPECIAL = 1150
+    LINKS = 1250  # and auto links
+    ITALIC_AND_BOLD = 1350
+
+    POSTPROCESS = 1450
+    UNHASH_HTML = 1550
+
+    __counts = {}
+
+    @classmethod
+    def after(cls, *items: 'Stage') -> list:
+        ret = []
+        counts = cls._Stage__counts
+        for item in items:
+            if item in counts:
+                counts[item][1] += 5
+            else:
+                counts[item] = [0, 5]
+            ret.append(item + counts[item][1])
+        return ret
+
+    @classmethod
+    def before(cls, *items: 'Stage') -> list:
+        ret = []
+        counts = cls._Stage__counts
+        for item in items:
+            if item in counts:
+                counts[item][0] -= 5
+            else:
+                counts[item] = [-5, 0]
+            ret.append(item + counts[item][0])
+        return ret
+
+    @staticmethod
+    def mark(stage):
+        def wrapper(func):
+            @functools.wraps(func)
+            def inner(self, text, *args, **kwargs):
+                before = []
+                after = []
+
+                for extra in self.extras:
+                    if extra not in Extra._registry:
+                        continue
+                    klass = Extra._registry[extra]
+                    for order in klass.order:
+                        if order // 100 == stage // 100:
+                            if order < stage:
+                                before.append((order, klass))
+                            else:
+                                after.append((order, klass))
+
+                before.sort(key=lambda k: k[0])
+                after.sort(key=lambda k: k[0])
+
+                for _, klass in before:
+                    if klass.match(text):
+                        text = klass.run(self, text, **(self.extras[klass.name] or {}))
+
+                text =  func(self, text, *args, **kwargs)
+
+                for _, klass in after:
+                    if klass.match(text):
+                        text = klass.run(self, text, **(self.extras[klass.name] or {}))
+
+                return text
+
+            return inner
+
+        return wrapper
 
 
 class Markdown(object):
@@ -271,6 +359,7 @@ class Markdown(object):
             self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
             self.metadata = {}
+        Extra.collect()
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
@@ -363,9 +452,6 @@ class Markdown(object):
         if "fenced-code-blocks" in self.extras and self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
-        if 'admonitions' in self.extras:
-            text = self._do_admonitions(text)
-
         # Because numbering references aren't links (yet?) then we can do everything associated with counters
         # before we get started
         if "numbering" in self.extras:
@@ -422,6 +508,7 @@ class Markdown(object):
             rv.metadata = self.metadata
         return rv
 
+    @Stage.mark(Stage.POSTPROCESS)
     def postprocess(self, text):
         """A hook for subclasses to do some postprocessing of the html, if
         desired. This is called before unescaping of special chars and
@@ -429,6 +516,7 @@ class Markdown(object):
         """
         return text
 
+    @Stage.mark(Stage.PREPROCESS)
     def preprocess(self, text):
         """A hook for subclasses to do some preprocessing of the Markdown, if
         desired. This is called after basic formatting of the text, but prior
@@ -767,6 +855,7 @@ class Markdown(object):
         self.html_blocks[key] = html
         return "\n\n" + key + "\n\n"
 
+    @Stage.mark(Stage.HASH_HTML)
     def _hash_html_blocks(self, text, raw=False):
         """Hashify HTML blocks
 
@@ -908,6 +997,7 @@ class Markdown(object):
 
         return result
 
+    @Stage.mark(Stage.LINK_DEFS)
     def _strip_link_definitions(self, text):
         # Strips link definitions from text, stores the URLs and titles in
         # hash references.
@@ -1045,12 +1135,10 @@ class Markdown(object):
 
     _hr_re = re.compile(r'^[ ]{0,3}([-_*])[ ]{0,2}(\1[ ]{0,2}){2,}$', re.M)
 
+    @Stage.mark(Stage.BLOCK_GAMUT)
     def _run_block_gamut(self, text):
         # These are all the transformations that form block-level
         # tags like paragraphs, headers, and list items.
-
-        if 'admonitions' in self.extras:
-            text = self._do_admonitions(text)
 
         if 'wavedrom' in self.extras:
             text = self._do_wavedrom_blocks(text)
@@ -1248,6 +1336,7 @@ class Markdown(object):
             ''' % less_than_tab, re.M | re.X)
         return wiki_table_re.sub(self._wiki_table_sub, text)
 
+    @Stage.mark(Stage.SPAN_GAMUT)
     def _run_span_gamut(self, text):
         # These are all the transformations that occur *within* block-level
         # tags like paragraphs, headers, and list items.
@@ -1312,6 +1401,7 @@ class Markdown(object):
         )
         """, re.X)
 
+    @Stage.mark(Stage.ESCAPE_SPECIAL)
     def _escape_special_chars(self, text):
         # Python markdown note: the HTML tokenization here differs from
         # that in Markdown.pl, hence the behaviour for subtle cases can
@@ -1343,6 +1433,7 @@ class Markdown(object):
             is_html_markup = not is_html_markup
         return ''.join(escaped)
 
+    @Stage.mark(Stage.HASH_HTML)
     def _hash_html_spans(self, text):
         # Used for safe_mode.
 
@@ -1477,6 +1568,7 @@ class Markdown(object):
         return key
 
     _safe_protocols = re.compile(r'(https?|ftp):', re.I)
+    @Stage.mark(Stage.LINKS)
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
 
@@ -1749,6 +1841,7 @@ class Markdown(object):
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
+    @Stage.mark(Stage.HEADERS)
     def _do_headers(self, text):
         # Setext-style headers:
         #     Header 1
@@ -1791,6 +1884,7 @@ class Markdown(object):
         else:
             return "<%s%s>\n%s</%s>\n\n" % (lst_type, lst_opts, result, lst_type)
 
+    @Stage.mark(Stage.LISTS)
     def _do_lists(self, text):
         # Form HTML ordered (numbered) and unordered (bulleted) lists.
 
@@ -2059,6 +2153,7 @@ class Markdown(object):
                     return ' class="%s"' % html_classes_from_tag[tag]
         return ""
 
+    @Stage.mark(Stage.CODE_BLOCKS)
     def _do_code_blocks(self, text):
         """Process Markdown `<pre><code>` blocks."""
         code_block_re = re.compile(r'''
@@ -2114,6 +2209,7 @@ class Markdown(object):
         c = self._encode_code(c)
         return "<code%s>%s</code>" % (self._html_class_str_from_tag("code"), c)
 
+    @Stage.mark(Stage.CODE_SPANS)
     def _do_code_spans(self, text):
         #   *   Backtick quotes are used for <code></code> spans.
         #
@@ -2194,44 +2290,6 @@ class Markdown(object):
     def _do_wavedrom_blocks(self, text):
         return self._fenced_code_block_re.sub(self._wavedrom_block_sub, text)
 
-    _admonitions = r'admonition|attention|caution|danger|error|hint|important|note|tip|warning'
-    _admonitions_re = re.compile(r'''
-        ^(\ *)\.\.\ (%s)::\ *                # $1 leading indent, $2 the admonition
-        (.*)?                                # $3 admonition title
-        ((?:\s*\n\1\ {3,}.*)+?)              # $4 admonition body (required)
-        (?=\s*(?:\Z|\n{4,}|\n\1?\ {0,2}\S))  # until EOF, 3 blank lines or something less indented
-        ''' % _admonitions,
-        re.IGNORECASE | re.MULTILINE | re.VERBOSE
-    )
-
-    def _do_admonitions_sub(self, match):
-        lead_indent, admonition_name, title, body = match.groups()
-
-        admonition_type = '<strong>%s</strong>' % admonition_name
-
-        # figure out the class names to assign the block
-        if admonition_name.lower() == 'admonition':
-            admonition_class = 'admonition'
-        else:
-            admonition_class = 'admonition %s' % admonition_name.lower()
-
-        # titles are generally optional
-        if title:
-            title = '<em>%s</em>' % title
-
-        # process the admonition body like regular markdown
-        body = self._run_block_gamut("\n%s\n" % self._uniform_outdent(body)[1])
-
-        # indent the body before placing inside the aside block
-        admonition = self._uniform_indent('%s\n%s\n\n%s\n' % (admonition_type, title, body), self.tab, False)
-        # wrap it in an aside
-        admonition = '<aside class="%s">\n%s</aside>' % (admonition_class, admonition)
-        # now indent the whole admonition back to where it started
-        return self._uniform_indent(admonition, lead_indent, False)
-
-    def _do_admonitions(self, text):
-        return self._admonitions_re.sub(self._do_admonitions_sub, text)
-
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
     def _do_strike(self, text):
         text = self._strike_re.sub(r"<s>\1</s>", text)
@@ -2241,7 +2299,7 @@ class Markdown(object):
     def _do_underline(self, text):
         text = self._underline_re.sub(r"<u>\1</u>", text)
         return text
-    
+
     _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
     def _do_tg_spoiler(self, text):
         text = self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
@@ -2251,6 +2309,8 @@ class Markdown(object):
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
     _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
     _code_friendly_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
+
+    @Stage.mark(Stage.ITALIC_AND_BOLD)
     def _do_italics_and_bold(self, text):
         # <strong> must go first:
         if "code-friendly" in self.extras:
@@ -2353,6 +2413,7 @@ class Markdown(object):
         else:
             return '<blockquote>\n%s\n</blockquote>\n\n' % bq
 
+    @Stage.mark(Stage.BLOCK_QUOTES)
     def _do_block_quotes(self, text):
         if '>' not in text:
             return text
@@ -2361,6 +2422,7 @@ class Markdown(object):
         else:
             return self._block_quote_re.sub(self._block_quote_sub, text)
 
+    @Stage.mark(Stage.PARAGRAPHS)
     def _form_paragraphs(self, text):
         # Strip leading and trailing lines:
         text = text.strip('\n')
@@ -2596,7 +2658,8 @@ class Markdown(object):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
-    def _uniform_outdent(self, text, min_outdent=None, max_outdent=None):
+    @staticmethod
+    def _uniform_outdent(text, min_outdent=None, max_outdent=None):
         # Removes the smallest common leading indentation from each (non empty)
         # line of `text` and returns said indent along with the outdented text.
         # The `min_outdent` kwarg makes sure the smallest common whitespace
@@ -2631,7 +2694,8 @@ class Markdown(object):
 
         return outdent, ''.join(outdented)
 
-    def _uniform_indent(self, text, indent, include_empty_lines=False):
+    @staticmethod
+    def _uniform_indent(text, indent, include_empty_lines=False):
         return ''.join(
             (indent + line if line.strip() or include_empty_lines else '')
             for line in text.splitlines(True)
@@ -2651,6 +2715,95 @@ class MarkdownWithExtras(Markdown):
       link-patterns anyway)
     """
     extras = ["footnotes", "fenced-code-blocks"]
+
+
+# ----------------------------------------------------------
+# Extras
+# ----------------------------------------------------------
+
+class Extra(ABC):
+    _registry = {}
+
+    name: str
+    order: list
+
+    def __init__(self):
+        self.register()
+
+    @classmethod
+    def collect(cls):
+        for s in cls.__subclasses(cls):
+            s_inst = s()
+            cls._registry[s_inst.name] = s_inst
+
+    @abstractmethod
+    def match(self, text: str) -> bool:
+        ...
+
+    @abstractmethod
+    def run(self, md: Markdown, text: str, **opts) -> str:
+        ...
+
+    def register(self):
+        self.__class__._registry[self.name] = self
+
+    @staticmethod
+    def __subclasses(cls):
+        return set(cls.__subclasses__()).union(
+            s for c in cls.__subclasses__() for s in cls.__subclasses(c)
+        )
+
+
+class Admonitions(Extra):
+    name = 'admonitions'
+    order = Stage.before(Stage.BLOCK_GAMUT, Stage.LINK_DEFS)
+
+    admonitions = r'admonition|attention|caution|danger|error|hint|important|note|tip|warning'
+
+    admonitions_re = re.compile(r'''
+        ^(\ *)\.\.\ (%s)::\ *                # $1 leading indent, $2 the admonition
+        (.*)?                                # $3 admonition title
+        ((?:\s*\n\1\ {3,}.*)+?)              # $4 admonition body (required)
+        (?=\s*(?:\Z|\n{4,}|\n\1?\ {0,2}\S))  # until EOF, 3 blank lines or something less indented
+        ''' % admonitions,
+        re.IGNORECASE | re.MULTILINE | re.VERBOSE
+    )
+
+    def match(self, text):
+        return self.admonitions_re.search(text) is not None
+
+    def sub(self, md: Markdown, match):
+        lead_indent, admonition_name, title, body = match.groups()
+
+        admonition_type = '<strong>%s</strong>' % admonition_name
+
+        # figure out the class names to assign the block
+        if admonition_name.lower() == 'admonition':
+            admonition_class = 'admonition'
+        else:
+            admonition_class = 'admonition %s' % admonition_name.lower()
+
+        # titles are generally optional
+        if title:
+            title = '<em>%s</em>' % title
+
+        # process the admonition body like regular markdown
+        body = md._run_block_gamut("\n%s\n" % md._uniform_outdent(body)[1])
+
+        # indent the body before placing inside the aside block
+        admonition = md._uniform_indent(
+            '%s\n%s\n\n%s\n' % (admonition_type, title, body),
+            md.tab, False
+        )
+        # wrap it in an aside
+        admonition = '<aside class="%s">\n%s</aside>' % (admonition_class, admonition)
+        # now indent the whole admonition back to where it started
+        return md._uniform_indent(admonition, lead_indent, False)
+
+    def run(self, md, text):
+        return self.admonitions_re.sub(lambda *_: self.sub(md, *_), text)
+
+# ----------------------------------------------------------
 
 
 # ---- internal support functions
