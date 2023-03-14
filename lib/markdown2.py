@@ -223,7 +223,8 @@ class Stage():
     def mark(stage):
         def wrapper(func):
             @functools.wraps(func)
-            def inner(self, text, *args, **kwargs):
+            def inner(self: 'Markdown', text, *args, **kwargs):
+                self.stage = stage
                 before = []
                 after = []
 
@@ -242,13 +243,13 @@ class Stage():
                 after.sort(key=lambda k: k[0])
 
                 for _, klass in before:
-                    if klass.match(text):
+                    if klass.match(self, text):
                         text = klass.run(self, text, **(self.extras[klass.name] or {}))
 
                 text =  func(self, text, *args, **kwargs)
 
                 for _, klass in after:
-                    if klass.match(text):
+                    if klass.match(self, text):
                         text = klass.run(self, text, **(self.extras[klass.name] or {}))
 
                 return text
@@ -279,6 +280,8 @@ class Markdown(object):
     # Used to track when we're inside an ordered or unordered list
     # (see _ProcessListItems() for details):
     list_level = 0
+
+    stage: Stage = None
 
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
@@ -437,9 +440,6 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
-        if 'wavedrom' in self.extras:
-            text = self._do_wavedrom_blocks(text)
-
         if "fenced-code-blocks" in self.extras and not self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
@@ -451,11 +451,6 @@ class Markdown(object):
 
         if "fenced-code-blocks" in self.extras and self.safe_mode:
             text = self._do_fenced_code_blocks(text)
-
-        # Because numbering references aren't links (yet?) then we can do everything associated with counters
-        # before we get started
-        if "numbering" in self.extras:
-            text = self._do_numbering(text)
 
         # Strip link definitions, store in hashes.
         if "footnotes" in self.extras:
@@ -1033,64 +1028,6 @@ class Markdown(object):
             self.titles[key] = title
         return ""
 
-    def _do_numbering(self, text):
-        ''' We handle the special extension for generic numbering for
-            tables, figures etc.
-        '''
-        # First pass to define all the references
-        self.regex_defns = re.compile(r'''
-            \[\#(\w+) # the counter.  Open square plus hash plus a word \1
-            ([^@]*)   # Some optional characters, that aren't an @. \2
-            @(\w+)       # the id.  Should this be normed? \3
-            ([^\]]*)\]   # The rest of the text up to the terminating ] \4
-            ''', re.VERBOSE)
-        self.regex_subs = re.compile(r"\[@(\w+)\s*\]")  # [@ref_id]
-        counters = {}
-        references = {}
-        replacements = []
-        definition_html = '<figcaption class="{}" id="counter-ref-{}">{}{}{}</figcaption>'
-        reference_html = '<a class="{}" href="#counter-ref-{}">{}</a>'
-        for match in self.regex_defns.finditer(text):
-            # We must have four match groups otherwise this isn't a numbering reference
-            if len(match.groups()) != 4:
-                continue
-            counter = match.group(1)
-            text_before = match.group(2).strip()
-            ref_id = match.group(3)
-            text_after = match.group(4)
-            number = counters.get(counter, 1)
-            references[ref_id] = (number, counter)
-            replacements.append((match.start(0),
-                                 definition_html.format(counter,
-                                                        ref_id,
-                                                        text_before,
-                                                        number,
-                                                        text_after),
-                                 match.end(0)))
-            counters[counter] = number + 1
-        for repl in reversed(replacements):
-            text = text[:repl[0]] + repl[1] + text[repl[2]:]
-
-        # Second pass to replace the references with the right
-        # value of the counter
-        # Fwiw, it's vaguely annoying to have to turn the iterator into
-        # a list and then reverse it but I can't think of a better thing to do.
-        for match in reversed(list(self.regex_subs.finditer(text))):
-            number, counter = references.get(match.group(1), (None, None))
-            if number is not None:
-                repl = reference_html.format(counter,
-                                             match.group(1),
-                                             number)
-            else:
-                repl = reference_html.format(match.group(1),
-                                             'countererror',
-                                             '?' + match.group(1) + '?')
-            if "smarty-pants" in self.extras:
-                repl = repl.replace('"', self._escape_table['"'])
-
-            text = text[:match.start()] + repl + text[match.end():]
-        return text
-
     def _extract_footnote_def_sub(self, match):
         id, text = match.groups()
         text = _dedent(text, skip_first_line=not text.startswith('\n')).strip()
@@ -1139,9 +1076,6 @@ class Markdown(object):
     def _run_block_gamut(self, text):
         # These are all the transformations that form block-level
         # tags like paragraphs, headers, and list items.
-
-        if 'wavedrom' in self.extras:
-            text = self._do_wavedrom_blocks(text)
 
         if "fenced-code-blocks" in self.extras:
             text = self._do_fenced_code_blocks(text)
@@ -2182,6 +2116,7 @@ class Markdown(object):
     def _fenced_code_block_sub(self, match):
         return self._code_block_sub(match, is_fenced_code_block=True)
 
+    @Stage.mark(Stage.CODE_BLOCKS)
     def _do_fenced_code_blocks(self, text):
         """Process ```-fenced unindented code blocks ('fenced-code-blocks' extra)."""
         return self._fenced_code_block_re.sub(self._fenced_code_block_sub, text)
@@ -2253,42 +2188,6 @@ class Markdown(object):
         hashed = _hash_text(text)
         self._code_table[text] = hashed
         return hashed
-
-    def _wavedrom_block_sub(self, match):
-        # if this isn't a wavedrom diagram block, exit now
-        if match.group(2) != 'wavedrom':
-            return match.string[match.start():match.end()]
-
-        # dedent the block for processing
-        lead_indent, waves = self._uniform_outdent(match.group(3))
-        # default tags to wrap the wavedrom block in
-        open_tag, close_tag = '<script type="WaveDrom">\n', '</script>'
-
-        # check if the user would prefer to have the SVG embedded directly
-        if not isinstance(self.extras['wavedrom'], dict):
-            embed_svg = True
-        else:
-            # default behaviour is to embed SVGs
-            embed_svg = self.extras['wavedrom'].get('prefer_embed_svg', True)
-
-        if embed_svg:
-            try:
-                import wavedrom
-                waves = wavedrom.render(waves).tostring()
-                open_tag, close_tag = '<div>', '\n</div>'
-            except ImportError:
-                pass
-
-        # hash SVG to prevent <> chars being messed with
-        self._escape_table[waves] = _hash_text(waves)
-
-        return self._uniform_indent(
-            '\n%s%s%s\n' % (open_tag, self._escape_table[waves], close_tag),
-            lead_indent, include_empty_lines=True
-        )
-
-    def _do_wavedrom_blocks(self, text):
-        return self._fenced_code_block_re.sub(self._wavedrom_block_sub, text)
 
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
     def _do_strike(self, text):
@@ -2737,7 +2636,7 @@ class Extra(ABC):
             cls._registry[s_inst.name] = s_inst
 
     @abstractmethod
-    def match(self, text: str) -> bool:
+    def match(self, md: Markdown, text: str) -> bool:
         ...
 
     @abstractmethod
@@ -2769,7 +2668,7 @@ class Admonitions(Extra):
         re.IGNORECASE | re.MULTILINE | re.VERBOSE
     )
 
-    def match(self, text):
+    def match(self, md, text):
         return self.admonitions_re.search(text) is not None
 
     def sub(self, md: Markdown, match):
@@ -2802,6 +2701,109 @@ class Admonitions(Extra):
 
     def run(self, md, text):
         return self.admonitions_re.sub(lambda *_: self.sub(md, *_), text)
+
+
+class Numbering(Extra):
+    name = 'numbering'
+    order = Stage.before(Stage.LINK_DEFS)
+
+    def match(self, md, text):
+        return True
+
+    def run(self, md: Markdown, text):
+        # First pass to define all the references
+        regex_defns = re.compile(r'''
+            \[\#(\w+) # the counter.  Open square plus hash plus a word \1
+            ([^@]*)   # Some optional characters, that aren't an @. \2
+            @(\w+)       # the id.  Should this be normed? \3
+            ([^\]]*)\]   # The rest of the text up to the terminating ] \4
+            ''', re.VERBOSE)
+        regex_subs = re.compile(r"\[@(\w+)\s*\]")  # [@ref_id]
+        counters = {}
+        references = {}
+        replacements = []
+        definition_html = '<figcaption class="{}" id="counter-ref-{}">{}{}{}</figcaption>'
+        reference_html = '<a class="{}" href="#counter-ref-{}">{}</a>'
+        for match in regex_defns.finditer(text):
+            # We must have four match groups otherwise this isn't a numbering reference
+            if len(match.groups()) != 4:
+                continue
+            counter = match.group(1)
+            text_before = match.group(2).strip()
+            ref_id = match.group(3)
+            text_after = match.group(4)
+            number = counters.get(counter, 1)
+            references[ref_id] = (number, counter)
+            replacements.append((match.start(0),
+                                 definition_html.format(counter,
+                                                        ref_id,
+                                                        text_before,
+                                                        number,
+                                                        text_after),
+                                 match.end(0)))
+            counters[counter] = number + 1
+        for repl in reversed(replacements):
+            text = text[:repl[0]] + repl[1] + text[repl[2]:]
+
+        # Second pass to replace the references with the right
+        # value of the counter
+        # Fwiw, it's vaguely annoying to have to turn the iterator into
+        # a list and then reverse it but I can't think of a better thing to do.
+        for match in reversed(list(regex_subs.finditer(text))):
+            number, counter = references.get(match.group(1), (None, None))
+            if number is not None:
+                repl = reference_html.format(counter,
+                                             match.group(1),
+                                             number)
+            else:
+                repl = reference_html.format(match.group(1),
+                                             'countererror',
+                                             '?' + match.group(1) + '?')
+            if "smarty-pants" in md.extras:
+                repl = repl.replace('"', md._escape_table['"'])
+
+            text = text[:match.start()] + repl + text[match.end():]
+        return text
+
+
+class Wavedrom(Extra):
+    name = 'wavedrom'
+    order = Stage.before(Stage.CODE_BLOCKS) + Stage.after(Stage.PREPROCESS)
+
+    def match(self, md, text):
+        match = Markdown._fenced_code_block_re.search(text)
+        return match is None or match.group(2) == 'wavedrom'
+
+    def sub(self, md: Markdown, match, **opts):
+        # dedent the block for processing
+        lead_indent, waves = md._uniform_outdent(match.group(3))
+        # default tags to wrap the wavedrom block in
+        open_tag, close_tag = '<script type="WaveDrom">\n', '</script>'
+
+        # check if the user would prefer to have the SVG embedded directly
+        embed_svg = opts.get('prefer_embed_svg', True)
+
+        if embed_svg:
+            try:
+                import wavedrom
+                waves = wavedrom.render(waves).tostring()
+                open_tag, close_tag = '<div>', '\n</div>'
+            except ImportError:
+                pass
+
+        # hash SVG to prevent <> chars being messed with
+        md._escape_table[waves] = _hash_text(waves)
+
+        return md._uniform_indent(
+            '\n%s%s%s\n' % (open_tag, md._escape_table[waves], close_tag),
+            lead_indent, include_empty_lines=True
+        )
+
+    def run(self, md: Markdown, text, **opts):
+        return Markdown._fenced_code_block_re.sub(
+            lambda *_: self.sub(md, *_, **opts), text
+        )
+
 
 # ----------------------------------------------------------
 
