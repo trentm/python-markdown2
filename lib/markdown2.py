@@ -103,14 +103,14 @@ __version_info__ = (2, 4, 9)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
-import sys
-import re
-import logging
-from hashlib import sha256
-import optparse
-from random import random, randint
+import argparse
 import codecs
+import logging
+import re
+import sys
 from collections import defaultdict
+from hashlib import sha256
+from random import randint, random
 
 # ---- globals
 
@@ -2241,7 +2241,7 @@ class Markdown(object):
     def _do_underline(self, text):
         text = self._underline_re.sub(r"<u>\1</u>", text)
         return text
-    
+
     _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
     def _do_tg_spoiler(self, text):
         text = self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
@@ -2961,8 +2961,8 @@ def _html_escape_url(attr, safe_mode=False):
 
 # ---- mainline
 
-class _NoReflowFormatter(optparse.IndentedHelpFormatter):
-    """An optparse formatter that does NOT reflow the description."""
+class _NoReflowFormatter(argparse.RawDescriptionHelpFormatter):
+    """An argparse formatter that does NOT reflow the description."""
     def format_description(self, description):
         return description or ""
 
@@ -2978,38 +2978,45 @@ def main(argv=None):
     if not logging.root.handlers:
         logging.basicConfig()
 
-    usage = "usage: %prog [PATHS...]"
-    version = "%prog "+__version__
-    parser = optparse.OptionParser(prog="markdown2", usage=usage,
-        version=version, description=cmdln_desc,
-        formatter=_NoReflowFormatter())
-    parser.add_option("-v", "--verbose", dest="log_level",
+    parser = argparse.ArgumentParser(
+        prog="markdown2", description=cmdln_desc, usage='%(prog)s [PATHS...]',
+        formatter_class=_NoReflowFormatter
+    )
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s {version}'.format(version=__version__))
+    parser.add_argument('paths', nargs='*',
+                        help=(
+                            'optional list of files to convert.'
+                            'If none are given, stdin will be used'
+                        ))
+    parser.add_argument("-v", "--verbose", dest="log_level",
                       action="store_const", const=logging.DEBUG,
                       help="more verbose output")
-    parser.add_option("--encoding",
+    parser.add_argument("--encoding",
                       help="specify encoding of text content")
-    parser.add_option("--html4tags", action="store_true", default=False,
+    parser.add_argument("--html4tags", action="store_true", default=False,
                       help="use HTML 4 style for empty element tags")
-    parser.add_option("-s", "--safe", metavar="MODE", dest="safe_mode",
+    parser.add_argument("-s", "--safe", metavar="MODE", dest="safe_mode",
                       help="sanitize literal HTML: 'escape' escapes "
                            "HTML meta chars, 'replace' replaces with an "
                            "[HTML_REMOVED] note")
-    parser.add_option("-x", "--extras", action="append",
+    parser.add_argument("-x", "--extras", action="append",
                       help="Turn on specific extra features (not part of "
                            "the core Markdown spec). See above.")
-    parser.add_option("--use-file-vars",
+    parser.add_argument("--use-file-vars",
                       help="Look for and use Emacs-style 'markdown-extras' "
                            "file var to turn on extras. See "
                            "<https://github.com/trentm/python-markdown2/wiki/Extras>")
-    parser.add_option("--link-patterns-file",
+    parser.add_argument("--link-patterns-file",
                       help="path to a link pattern file")
-    parser.add_option("--self-test", action="store_true",
+    parser.add_argument("--self-test", action="store_true",
                       help="run internal self-tests (some doctests)")
-    parser.add_option("--compare", action="store_true",
+    parser.add_argument("--compare", action="store_true",
                       help="run against Markdown.pl as well (for testing)")
     parser.set_defaults(log_level=logging.INFO, compare=False,
                         encoding="utf-8", safe_mode=None, use_file_vars=False)
-    opts, paths = parser.parse_args()
+    opts = parser.parse_args()
+    paths = opts.paths
     log.setLevel(opts.log_level)
 
     if opts.self_test:
@@ -3051,7 +3058,7 @@ def main(argv=None):
     else:
         link_patterns = None
 
-    from os.path import join, dirname, abspath, exists
+    from os.path import abspath, dirname, exists, join
     markdown_pl = join(dirname(dirname(abspath(__file__))), "test",
                        "Markdown.pl")
     if not paths:
@@ -3064,7 +3071,7 @@ def main(argv=None):
             text = fp.read()
             fp.close()
         if opts.compare:
-            from subprocess import Popen, PIPE
+            from subprocess import PIPE, Popen
             print("==== Markdown.pl ====")
             p = Popen('perl %s' % markdown_pl, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
             p.stdin.write(text.encode('utf-8'))
