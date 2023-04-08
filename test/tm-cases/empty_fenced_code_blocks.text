@@ -3,3 +3,18 @@
 
 ```
 ```
+
+Pygments removes the empty line whitespace from the next code block
+```shell
+
+
+
+
+```
+
+```
+
+
+
+
+```
