@@ -2610,6 +2610,10 @@ class Markdown(object):
             for line in text.splitlines()
         ]
 
+        # if no whitespace detected (ie: no lines in code block, issue #505)
+        if not whitespace:
+            return '', text
+
         # get minimum common whitespace
         outdent = min(i for i in whitespace if i is not None)
         # adjust min common ws to be within bounds
