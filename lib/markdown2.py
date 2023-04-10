@@ -2609,12 +2609,17 @@ class Markdown(object):
             re.findall(r'^[ \t]*', line)[0] if line else None
             for line in text.splitlines()
         ]
+        whitespace_not_empty = [i for i in whitespace if i is not None]
+
+        # if no whitespace detected (ie: no lines in code block, issue #505)
+        if not whitespace_not_empty:
+            return '', text
 
         # get minimum common whitespace
-        outdent = min(i for i in whitespace if i is not None)
+        outdent = min(whitespace_not_empty)
         # adjust min common ws to be within bounds
         if min_outdent is not None:
-            outdent = min([i for i in whitespace if i is not None and i >= min_outdent] or [min_outdent])
+            outdent = min([i for i in whitespace_not_empty if i >= min_outdent] or [min_outdent])
         if max_outdent is not None:
             outdent = min(outdent, max_outdent)
 
