@@ -4,6 +4,8 @@
 
 - [pull #500] Add `<thead>` tag to html-classes extra
 - [pull #501] Fix link patterns extra matching against internal hashes
+- [pull #502] Replace deprecated `optparse` with `argparse`
+- [pull #506] Fix `_uniform_outdent` failing with empty strings (issue #505)
 
 
 ## python-markdown2 2.4.8
