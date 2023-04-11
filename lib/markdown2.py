@@ -2533,6 +2533,9 @@ class Markdown(object):
         for regex, repl in self.link_patterns:
             replacements = []
             for match in regex.finditer(text):
+                if any(self._match_overlaps_substr(text, match, h) for h in link_from_hash):
+                    continue
+
                 if hasattr(repl, "__call__"):
                     href = repl(match)
                 else:
@@ -2641,6 +2644,19 @@ class Markdown(object):
             (indent + line if line.strip() or include_empty_lines else '')
             for line in text.splitlines(True)
         )
+
+    @staticmethod
+    def _match_overlaps_substr(text, match, substr):
+        '''
+        Checks if a regex match overlaps with a substring in the given text.
+        '''
+        for instance in re.finditer(re.escape(substr), text):
+            start, end = instance.span()
+            if start <= match.start() <= end:
+                return True
+            if start <= match.end() <= end:
+                return True
+        return False
 
 
 class MarkdownWithExtras(Markdown):
