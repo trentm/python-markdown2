@@ -890,7 +890,7 @@ class Markdown(object):
                     tag_count -= 1
                 else:
                     # if close tag is in same line
-                    if '</%s>' % is_markup.group(2) in chunk[is_markup.end():]:
+                    if self._tag_is_closed(is_markup.group(2), chunk):
                         # we must ignore these
                         is_markup = None
                     else:
@@ -907,6 +907,10 @@ class Markdown(object):
         result += block
 
         return result
+
+    def _tag_is_closed(self, tag_name, text):
+        # super basic check if number of open tags == number of closing tags
+        return len(re.findall('<%s(?:.*?)>' % tag_name, text)) == len(re.findall('</%s>' % tag_name, text))
 
     def _strip_link_definitions(self, text):
         # Strips link definitions from text, stores the URLs and titles in
