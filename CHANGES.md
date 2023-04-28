@@ -6,6 +6,7 @@
 - [pull #501] Fix link patterns extra matching against internal hashes
 - [pull #502] Replace deprecated `optparse` with `argparse`
 - [pull #506] Fix `_uniform_outdent` failing with empty strings (issue #505)
+- [pull #509] Fix HTML elements not unhashing correctly (issue 508)
 
 
 ## python-markdown2 2.4.8
