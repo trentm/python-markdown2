@@ -109,7 +109,7 @@ import logging
 import re
 import sys
 from collections import defaultdict
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 import functools
 from hashlib import sha256
 from random import randint, random
@@ -196,28 +196,27 @@ class Stage():
     __counts = {}
 
     @classmethod
-    def after(cls, *items: 'Stage') -> list:
+    def _order(cls, items, direction=5):
+        index = 0 if direction > 0 else 1
         ret = []
         counts = cls._Stage__counts
         for item in items:
-            if item in counts:
-                counts[item][1] += 5
+            if not isinstance(item, int) and issubclass(item, Extra):
+                ret.extend(o + direction for o in item.order)
             else:
-                counts[item] = [0, 5]
-            ret.append(item + counts[item][1])
+                if item not in counts:
+                    counts[item] = [0, 0]
+                counts[item][index] += direction
+                ret.append(item + counts[item][1])
         return ret
 
     @classmethod
+    def after(cls, *items: 'Stage') -> list:
+        return cls._order(items, 5)
+
+    @classmethod
     def before(cls, *items: 'Stage') -> list:
-        ret = []
-        counts = cls._Stage__counts
-        for item in items:
-            if item in counts:
-                counts[item][0] -= 5
-            else:
-                counts[item] = [-5, 0]
-            ret.append(item + counts[item][0])
-        return ret
+        return cls._order(items, -5)
 
     @staticmethod
     def mark(stage):
@@ -243,13 +242,13 @@ class Stage():
                 after.sort(key=lambda k: k[0])
 
                 for _, klass in before:
-                    if klass.match(self, text):
+                    if klass.test(self, text):
                         text = klass.run(self, text, **(self.extras[klass.name] or {}))
 
-                text =  func(self, text, *args, **kwargs)
+                text = func(self, text, *args, **kwargs)
 
                 for _, klass in after:
-                    if klass.match(self, text):
+                    if klass.test(self, text):
                         text = klass.run(self, text, **(self.extras[klass.name] or {}))
 
                 return text
@@ -440,8 +439,8 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
-        if "fenced-code-blocks" in self.extras and not self.safe_mode:
-            text = self._do_fenced_code_blocks(text)
+        # if "fenced-code-blocks" in self.extras and not self.safe_mode:
+        #     text = self._do_fenced_code_blocks(text)
 
         if self.safe_mode:
             text = self._hash_html_spans(text)
@@ -449,8 +448,8 @@ class Markdown(object):
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
 
-        if "fenced-code-blocks" in self.extras and self.safe_mode:
-            text = self._do_fenced_code_blocks(text)
+        # if "fenced-code-blocks" in self.extras and self.safe_mode:
+        #     text = self._do_fenced_code_blocks(text)
 
         # Strip link definitions, store in hashes.
         if "footnotes" in self.extras:
@@ -1077,8 +1076,8 @@ class Markdown(object):
         # These are all the transformations that form block-level
         # tags like paragraphs, headers, and list items.
 
-        if "fenced-code-blocks" in self.extras:
-            text = self._do_fenced_code_blocks(text)
+        # if "fenced-code-blocks" in self.extras:
+        #     text = self._do_fenced_code_blocks(text)
 
         text = self._do_headers(text)
 
@@ -1116,7 +1115,7 @@ class Markdown(object):
     def _pyshell_block_sub(self, match):
         if "fenced-code-blocks" in self.extras:
             dedented = _dedent(match.group(0))
-            return self._do_fenced_code_blocks("```pycon\n" + dedented + "```\n")
+            return Extra.get('fenced-code-blocks').run(self, "```pycon\n" + dedented + "```\n")
         lines = match.group(0).splitlines(0)
         _dedentlines(lines)
         indent = ' ' * self.tab_width
@@ -1996,80 +1995,20 @@ class Markdown(object):
         formatter = HtmlCodeFormatter(**formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
-    def _code_block_sub(self, match, is_fenced_code_block=False):
-        lexer_name = None
-        if is_fenced_code_block:
-            lexer_name = match.group(2)
-            codeblock = match.group(3)
-            codeblock = codeblock[:-1]  # drop one trailing newline
-        else:
-            codeblock = match.group(1)
-            codeblock = self._outdent(codeblock)
-            codeblock = self._detab(codeblock)
-            codeblock = codeblock.lstrip('\n')  # trim leading newlines
-            codeblock = codeblock.rstrip()      # trim trailing whitespace
-
-        # Use pygments only if not using the highlightjs-lang extra
-        if lexer_name and "highlightjs-lang" not in self.extras:
-            lexer = self._get_pygments_lexer(lexer_name)
-            if lexer:
-                leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
-                return self._code_block_with_lexer_sub(codeblock, leading_indent, lexer, is_fenced_code_block)
+    def _code_block_sub(self, match):
+        codeblock = match.group(1)
+        codeblock = self._outdent(codeblock)
+        codeblock = self._detab(codeblock)
+        codeblock = codeblock.lstrip('\n')  # trim leading newlines
+        codeblock = codeblock.rstrip()      # trim trailing whitespace
 
         pre_class_str = self._html_class_str_from_tag("pre")
+        code_class_str = self._html_class_str_from_tag("code")
 
-        if "highlightjs-lang" in self.extras and lexer_name:
-            code_class_str = ' class="%s language-%s"' % (lexer_name, lexer_name)
-        else:
-            code_class_str = self._html_class_str_from_tag("code")
+        codeblock = self._encode_code(codeblock)
 
-        if is_fenced_code_block:
-            # Fenced code blocks need to be outdented before encoding, and then reapplied
-            leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
-            if codeblock:
-                # only run the codeblock through the outdenter if not empty
-                leading_indent, codeblock = self._uniform_outdent(codeblock, max_outdent=leading_indent)
-
-            codeblock = self._encode_code(codeblock)
-
-            if lexer_name == 'mermaid' and 'mermaid' in self.extras:
-                return '\n%s<pre class="mermaid-pre"><div class="mermaid">%s\n</div></pre>\n' % (
-                    leading_indent, codeblock)
-
-            return "\n%s<pre%s><code%s>%s\n</code></pre>\n" % (
-                leading_indent, pre_class_str, code_class_str, codeblock)
-        else:
-            codeblock = self._encode_code(codeblock)
-
-            return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
-                pre_class_str, code_class_str, codeblock)
-
-    def _code_block_with_lexer_sub(self, codeblock, leading_indent, lexer, is_fenced_code_block):
-        if is_fenced_code_block:
-            formatter_opts = self.extras['fenced-code-blocks'] or {}
-        else:
-            formatter_opts = {}
-
-        def unhash_code(codeblock):
-            for key, sanitized in list(self.html_spans.items()):
-                codeblock = codeblock.replace(key, sanitized)
-            replacements = [
-                ("&amp;", "&"),
-                ("&lt;", "<"),
-                ("&gt;", ">")
-            ]
-            for old, new in replacements:
-                codeblock = codeblock.replace(old, new)
-            return codeblock
-        # remove leading indent from code block
-        _, codeblock = self._uniform_outdent(codeblock, max_outdent=leading_indent)
-
-        codeblock = unhash_code(codeblock)
-        colored = self._color_with_pygments(codeblock, lexer,
-                                            **formatter_opts)
-
-        # add back the indent to all lines
-        return "\n%s\n" % self._uniform_indent(colored, leading_indent, True)
+        return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
+            pre_class_str, code_class_str, codeblock)
 
     def _html_class_str_from_tag(self, tag):
         """Get the appropriate ' class="..."' string (note the leading
@@ -2105,21 +2044,6 @@ class Markdown(object):
             ''' % (self.tab_width, self.tab_width),
             re.M | re.X)
         return code_block_re.sub(self._code_block_sub, text)
-
-    _fenced_code_block_re = re.compile(r'''
-        (?:\n+|\A\n?|(?<=\n))
-        (^[ \t]*`{3,})\s{0,99}?([\w+-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
-        (.*?)                             # $3 = code block content
-        \1[ \t]*\n                      # closing fence
-        ''', re.M | re.X | re.S)
-
-    def _fenced_code_block_sub(self, match):
-        return self._code_block_sub(match, is_fenced_code_block=True)
-
-    @Stage.mark(Stage.CODE_BLOCKS)
-    def _do_fenced_code_blocks(self, text):
-        """Process ```-fenced unindented code blocks ('fenced-code-blocks' extra)."""
-        return self._fenced_code_block_re.sub(self._fenced_code_block_sub, text)
 
     # Rules for a code span:
     # - backslash escapes are not interpreted in a code span
@@ -2656,9 +2580,13 @@ class Extra(ABC):
             s_inst = s()
             cls._registry[s_inst.name] = s_inst
 
+    @classmethod
+    def get(cls, extra_name: str) -> 'Extra':
+        return cls._registry[extra_name]
+
     @abstractmethod
-    def match(self, md: Markdown, text: str) -> bool:
-        ...
+    def test(self, md: Markdown, text: str) -> bool:
+        return self.re.search(text) is not None
 
     @abstractmethod
     def run(self, md: Markdown, text: str, **opts) -> str:
@@ -2689,7 +2617,7 @@ class Admonitions(Extra):
         re.IGNORECASE | re.MULTILINE | re.VERBOSE
     )
 
-    def match(self, md, text):
+    def test(self, md, text):
         return self.admonitions_re.search(text) is not None
 
     def sub(self, md: Markdown, match):
@@ -2724,11 +2652,100 @@ class Admonitions(Extra):
         return self.admonitions_re.sub(lambda *_: self.sub(md, *_), text)
 
 
+class FencedCodeBlocks(Extra):
+    name = 'fenced-code-blocks'
+    order = Stage.before(Stage.LINK_DEFS, Stage.BLOCK_GAMUT) + Stage.after(Stage.PREPROCESS)
+
+    fenced_code_block_re = re.compile(r'''
+        (?:\n+|\A\n?|(?<=\n))
+        (^[ \t]*`{3,})\s{0,99}?([\w+-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
+        (.*?)                             # $3 = code block content
+        \1[ \t]*\n                      # closing fence
+        ''', re.M | re.X | re.S)
+
+    def test(self, md, text):
+        if md.stage == Stage.PREPROCESS and not md.safe_mode:
+            return True
+        if md.stage == Stage.LINK_DEFS and md.safe_mode:
+            return True
+        return md.stage == Stage.BLOCK_GAMUT
+
+    def _code_block_with_lexer_sub(self, md: Markdown, codeblock, leading_indent, lexer):
+        formatter_opts = md.extras['fenced-code-blocks'] or {}
+
+        def unhash_code(codeblock):
+            for key, sanitized in list(md.html_spans.items()):
+                codeblock = codeblock.replace(key, sanitized)
+            replacements = [
+                ("&amp;", "&"),
+                ("&lt;", "<"),
+                ("&gt;", ">")
+            ]
+            for old, new in replacements:
+                codeblock = codeblock.replace(old, new)
+            return codeblock
+        # remove leading indent from code block
+        _, codeblock = md._uniform_outdent(codeblock, max_outdent=leading_indent)
+
+        codeblock = unhash_code(codeblock)
+        colored = md._color_with_pygments(codeblock, lexer,
+                                            **formatter_opts)
+
+        # add back the indent to all lines
+        return "\n%s\n" % md._uniform_indent(colored, leading_indent, True)
+
+    def tags(self, md: Markdown, lexer_name):
+        pre_class = md._html_class_str_from_tag('pre')
+        if "highlightjs-lang" in md.extras and lexer_name:
+            code_class = ' class="%s language-%s"' % (lexer_name, lexer_name)
+        else:
+            code_class = md._html_class_str_from_tag('code')
+        return ('<pre%s><code%s>' % (pre_class, code_class), '</code></pre>')
+
+    def sub(self, match: re.Match, md: Markdown):
+        lexer_name = match.group(2)
+        codeblock = match.group(3)
+        codeblock = codeblock[:-1]  # drop one trailing newline
+
+        # Use pygments only if not using the highlightjs-lang extra
+        if lexer_name and "highlightjs-lang" not in md.extras:
+            lexer = md._get_pygments_lexer(lexer_name)
+            if lexer:
+                leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
+                return self._code_block_with_lexer_sub(md, codeblock, leading_indent, lexer)
+
+        # Fenced code blocks need to be outdented before encoding, and then reapplied
+        leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
+        if codeblock:
+            # only run the codeblock through the outdenter if not empty
+            leading_indent, codeblock = md._uniform_outdent(codeblock, max_outdent=leading_indent)
+
+        codeblock = md._encode_code(codeblock)
+
+        tags = self.tags(md, lexer_name)
+
+        return "\n%s%s%s\n%s\n" % (leading_indent, tags[0], codeblock, tags[1])
+
+    def run(self, md, text):
+        return self.fenced_code_block_re.sub(lambda m: self.sub(m, md), text)
+        # return self.fenced_code_block_re.sub(md._fenced_code_block_sub, text)
+
+
+class Mermaid(FencedCodeBlocks):
+    name = 'mermaid'
+    order = Stage.before(FencedCodeBlocks)
+
+    def tags(self, md: Markdown, lexer_name):
+        if lexer_name == 'mermaid':
+            return ('<pre class="mermaid-pre"><div class="mermaid">', '</div></pre>')
+        return super().tags(md, lexer_name)
+
+
 class Numbering(Extra):
     name = 'numbering'
     order = Stage.before(Stage.LINK_DEFS)
 
-    def match(self, md, text):
+    def test(self, md, text):
         return True
 
     def run(self, md: Markdown, text):
@@ -2791,8 +2808,8 @@ class Wavedrom(Extra):
     name = 'wavedrom'
     order = Stage.before(Stage.CODE_BLOCKS) + Stage.after(Stage.PREPROCESS)
 
-    def match(self, md, text):
-        match = Markdown._fenced_code_block_re.search(text)
+    def test(self, md, text):
+        match = FencedCodeBlocks.fenced_code_block_re.search(text)
         return match is None or match.group(2) == 'wavedrom'
 
     def sub(self, md: Markdown, match, **opts):
@@ -2821,7 +2838,7 @@ class Wavedrom(Extra):
         )
 
     def run(self, md: Markdown, text, **opts):
-        return Markdown._fenced_code_block_re.sub(
+        return FencedCodeBlocks.fenced_code_block_re.sub(
             lambda *_: self.sub(md, *_, **opts), text
         )
 
