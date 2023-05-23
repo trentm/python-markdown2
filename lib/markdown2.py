@@ -1082,11 +1082,6 @@ class Markdown(object):
 
         text = self._do_lists(text)
 
-        if "wiki-tables" in self.extras:
-            text = self._do_wiki_tables(text)
-        if "tables" in self.extras:
-            text = self._do_tables(text)
-
         text = self._do_code_blocks(text)
 
         text = self._do_block_quotes(text)
@@ -1100,135 +1095,6 @@ class Markdown(object):
         text = self._form_paragraphs(text)
 
         return text
-
-    def _table_sub(self, match):
-        trim_space_re = '^[ \t\n]+|[ \t\n]+$'
-        trim_bar_re = r'^\||\|$'
-        split_bar_re = r'^\||(?<![\`\\])\|'
-        escape_bar_re = r'\\\|'
-
-        head, underline, body = match.groups()
-
-        # Determine aligns for columns.
-        cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", underline)))]
-        align_from_col_idx = {}
-        for col_idx, col in enumerate(cols):
-            if col[0] == ':' and col[-1] == ':':
-                align_from_col_idx[col_idx] = ' style="text-align:center;"'
-            elif col[0] == ':':
-                align_from_col_idx[col_idx] = ' style="text-align:left;"'
-            elif col[-1] == ':':
-                align_from_col_idx[col_idx] = ' style="text-align:right;"'
-
-        # thead
-        hlines = ['<table%s>' % self._html_class_str_from_tag('table'), '<thead%s>' % self._html_class_str_from_tag('thead'), '<tr>']
-        cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", head)))]
-        for col_idx, col in enumerate(cols):
-            hlines.append('  <th%s>%s</th>' % (
-                align_from_col_idx.get(col_idx, ''),
-                self._run_span_gamut(col)
-            ))
-        hlines.append('</tr>')
-        hlines.append('</thead>')
-
-        # tbody
-        hlines.append('<tbody>')
-        for line in body.strip('\n').split('\n'):
-            hlines.append('<tr>')
-            cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", line)))]
-            for col_idx, col in enumerate(cols):
-                hlines.append('  <td%s>%s</td>' % (
-                    align_from_col_idx.get(col_idx, ''),
-                    self._run_span_gamut(col)
-                ))
-            hlines.append('</tr>')
-        hlines.append('</tbody>')
-        hlines.append('</table>')
-
-        return '\n'.join(hlines) + '\n'
-
-    def _do_tables(self, text):
-        """Copying PHP-Markdown and GFM table syntax. Some regex borrowed from
-        https://github.com/michelf/php-markdown/blob/lib/Michelf/Markdown.php#L2538
-        """
-        less_than_tab = self.tab_width - 1
-        table_re = re.compile(r'''
-                (?:(?<=\n\n)|\A\n?)             # leading blank line
-
-                ^[ ]{0,%d}                      # allowed whitespace
-                (.*[|].*)  \n                   # $1: header row (at least one pipe)
-
-                ^[ ]{0,%d}                      # allowed whitespace
-                (                               # $2: underline row
-                    # underline row with leading bar
-                    (?:  \|\ *:?-+:?\ *  )+  \|? \s? \n
-                    |
-                    # or, underline row without leading bar
-                    (?:  \ *:?-+:?\ *\|  )+  (?:  \ *:?-+:?\ *  )? \s? \n
-                )
-
-                (                               # $3: data rows
-                    (?:
-                        ^[ ]{0,%d}(?!\ )         # ensure line begins with 0 to less_than_tab spaces
-                        .*\|.*  \n
-                    )+
-                )
-            ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
-        return table_re.sub(self._table_sub, text)
-
-    def _wiki_table_sub(self, match):
-        ttext = match.group(0).strip()
-        # print('wiki table: %r' % match.group(0))
-        rows = []
-        for line in ttext.splitlines(0):
-            line = line.strip()[2:-2].strip()
-            row = [c.strip() for c in re.split(r'(?<!\\)\|\|', line)]
-            rows.append(row)
-        # from pprint import pprint
-        # pprint(rows)
-        hlines = []
-
-        def add_hline(line, indents=0):
-            hlines.append((self.tab * indents) + line)
-
-        def format_cell(text):
-            return self._run_span_gamut(re.sub(r"^\s*~", "", cell).strip(" "))
-
-        add_hline('<table%s>' % self._html_class_str_from_tag('table'))
-        # Check if first cell of first row is a header cell. If so, assume the whole row is a header row.
-        if rows and rows[0] and re.match(r"^\s*~", rows[0][0]):
-            add_hline('<thead%s>' % self._html_class_str_from_tag('thead'), 1)
-            add_hline('<tr>', 2)
-            for cell in rows[0]:
-                add_hline("<th>{}</th>".format(format_cell(cell)), 3)
-            add_hline('</tr>', 2)
-            add_hline('</thead>', 1)
-            # Only one header row allowed.
-            rows = rows[1:]
-        # If no more rows, don't create a tbody.
-        if rows:
-            add_hline('<tbody>', 1)
-            for row in rows:
-                add_hline('<tr>', 2)
-                for cell in row:
-                    add_hline('<td>{}</td>'.format(format_cell(cell)), 3)
-                add_hline('</tr>', 2)
-            add_hline('</tbody>', 1)
-        add_hline('</table>')
-        return '\n'.join(hlines) + '\n'
-
-    def _do_wiki_tables(self, text):
-        # Optimization.
-        if "||" not in text:
-            return text
-
-        less_than_tab = self.tab_width - 1
-        wiki_table_re = re.compile(r'''
-            (?:(?<=\n\n)|\A\n?)            # leading blank line
-            ^([ ]{0,%d})\|\|.+?\|\|[ ]*\n  # first line
-            (^\1\|\|.+?\|\|\n)*        # any number of subsequent lines
-            ''' % less_than_tab, re.M | re.X)
-        return wiki_table_re.sub(self._wiki_table_sub, text)
 
     @Stage.mark(Stage.SPAN_GAMUT)
     def _run_span_gamut(self, text):
@@ -2857,6 +2723,94 @@ class PyShell(Extra):
         return _pyshell_block_re.sub(self.sub, text)
 
 
+class Tables(Extra):
+    '''
+    Tables using the same format as GFM
+    <https://help.github.com/articles/github-flavored-markdown#tables> and
+    PHP-Markdown Extra <https://michelf.ca/projects/php-markdown/extra/#table>.
+    '''
+    name = 'tables'
+    order = Stage.after(Stage.LISTS)
+
+    def run(self, text: str):
+        """Copying PHP-Markdown and GFM table syntax. Some regex borrowed from
+        https://github.com/michelf/php-markdown/blob/lib/Michelf/Markdown.php#L2538
+        """
+        less_than_tab = self.md.tab_width - 1
+        table_re = re.compile(r'''
+            (?:(?<=\n\n)|\A\n?)             # leading blank line
+
+            ^[ ]{0,%d}                      # allowed whitespace
+            (.*[|].*)  \n                   # $1: header row (at least one pipe)
+
+            ^[ ]{0,%d}                      # allowed whitespace
+            (                               # $2: underline row
+                # underline row with leading bar
+                (?:  \|\ *:?-+:?\ *  )+  \|? \s? \n
+                |
+                # or, underline row without leading bar
+                (?:  \ *:?-+:?\ *\|  )+  (?:  \ *:?-+:?\ *  )? \s? \n
+            )
+
+            (                               # $3: data rows
+                (?:
+                    ^[ ]{0,%d}(?!\ )         # ensure line begins with 0 to less_than_tab spaces
+                    .*\|.*  \n
+                )+
+            )
+            ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
+        return table_re.sub(self.sub, text)
+
+    def sub(self, match: re.Match):
+        trim_space_re = '^[ \t\n]+|[ \t\n]+$'
+        trim_bar_re = r'^\||\|$'
+        split_bar_re = r'^\||(?<![\`\\])\|'
+        escape_bar_re = r'\\\|'
+
+        head, underline, body = match.groups()
+
+        # Determine aligns for columns.
+        cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", underline)))]
+        align_from_col_idx = {}
+        for col_idx, col in enumerate(cols):
+            if col[0] == ':' and col[-1] == ':':
+                align_from_col_idx[col_idx] = ' style="text-align:center;"'
+            elif col[0] == ':':
+                align_from_col_idx[col_idx] = ' style="text-align:left;"'
+            elif col[-1] == ':':
+                align_from_col_idx[col_idx] = ' style="text-align:right;"'
+
+        # thead
+        hlines = ['<table%s>' % self.md._html_class_str_from_tag('table'), '<thead%s>' % self.md._html_class_str_from_tag('thead'), '<tr>']
+        cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", head)))]
+        for col_idx, col in enumerate(cols):
+            hlines.append('  <th%s>%s</th>' % (
+                align_from_col_idx.get(col_idx, ''),
+                self.md._run_span_gamut(col)
+            ))
+        hlines.append('</tr>')
+        hlines.append('</thead>')
+
+        # tbody
+        hlines.append('<tbody>')
+        for line in body.strip('\n').split('\n'):
+            hlines.append('<tr>')
+            cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", line)))]
+            for col_idx, col in enumerate(cols):
+                hlines.append('  <td%s>%s</td>' % (
+                    align_from_col_idx.get(col_idx, ''),
+                    self.md._run_span_gamut(col)
+                ))
+            hlines.append('</tr>')
+        hlines.append('</tbody>')
+        hlines.append('</table>')
+
+        return '\n'.join(hlines) + '\n'
+
+    def test(self, text: str):
+        return True
+
+
 class Wavedrom(Extra):
     '''
     Support for generating Wavedrom digital timing diagrams
@@ -2895,6 +2849,66 @@ class Wavedrom(Extra):
 
     def run(self, text, **opts):
         return FencedCodeBlocks.fenced_code_block_re.sub(_curry(self.sub, **opts), text)
+
+
+class WikiTables(Extra):
+    '''
+    Google Code Wiki-style tables. See
+    <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
+    '''
+    name = 'wiki-tables'
+    order = Stage.before(Tables)
+
+    def run(self, text: str):
+        less_than_tab = self.md.tab_width - 1
+        wiki_table_re = re.compile(r'''
+            (?:(?<=\n\n)|\A\n?)            # leading blank line
+            ^([ ]{0,%d})\|\|.+?\|\|[ ]*\n  # first line
+            (^\1\|\|.+?\|\|\n)*        # any number of subsequent lines
+            ''' % less_than_tab, re.M | re.X)
+        return wiki_table_re.sub(self.sub, text)
+
+    def sub(self, match: re.Match):
+        ttext = match.group(0).strip()
+        rows = []
+        for line in ttext.splitlines(0):
+            line = line.strip()[2:-2].strip()
+            row = [c.strip() for c in re.split(r'(?<!\\)\|\|', line)]
+            rows.append(row)
+
+        hlines = []
+
+        def add_hline(line, indents=0):
+            hlines.append((self.md.tab * indents) + line)
+
+        def format_cell(text):
+            return self.md._run_span_gamut(re.sub(r"^\s*~", "", cell).strip(" "))
+
+        add_hline('<table%s>' % self.md._html_class_str_from_tag('table'))
+        # Check if first cell of first row is a header cell. If so, assume the whole row is a header row.
+        if rows and rows[0] and re.match(r"^\s*~", rows[0][0]):
+            add_hline('<thead%s>' % self.md._html_class_str_from_tag('thead'), 1)
+            add_hline('<tr>', 2)
+            for cell in rows[0]:
+                add_hline("<th>{}</th>".format(format_cell(cell)), 3)
+            add_hline('</tr>', 2)
+            add_hline('</thead>', 1)
+            # Only one header row allowed.
+            rows = rows[1:]
+        # If no more rows, don't create a tbody.
+        if rows:
+            add_hline('<tbody>', 1)
+            for row in rows:
+                add_hline('<tr>', 2)
+                for cell in row:
+                    add_hline('<td>{}</td>'.format(format_cell(cell)), 3)
+                add_hline('</tr>', 2)
+            add_hline('</tbody>', 1)
+        add_hline('</table>')
+        return '\n'.join(hlines) + '\n'
+
+    def test(self, text: str):
+        return '||' in text
 
 
 # ----------------------------------------------------------
