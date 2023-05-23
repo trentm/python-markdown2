@@ -242,14 +242,14 @@ class Stage():
                 after.sort(key=lambda k: k[0])
 
                 for _, klass in before:
-                    if klass.test(self, text):
-                        text = klass.run(self, text, **(self.extras[klass.name] or {}))
+                    if klass.test(text):
+                        text = klass.run(text, **(self.extras[klass.name] or {}))
 
                 text = func(self, text, *args, **kwargs)
 
                 for _, klass in after:
-                    if klass.test(self, text):
-                        text = klass.run(self, text, **(self.extras[klass.name] or {}))
+                    if klass.test(text):
+                        text = klass.run(text, **(self.extras[klass.name] or {}))
 
                 return text
 
@@ -361,7 +361,7 @@ class Markdown(object):
             self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
             self.metadata = {}
-        Extra.collect()
+        Extra.collect(self)
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
@@ -439,17 +439,11 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
-        # if "fenced-code-blocks" in self.extras and not self.safe_mode:
-        #     text = self._do_fenced_code_blocks(text)
-
         if self.safe_mode:
             text = self._hash_html_spans(text)
 
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
-
-        # if "fenced-code-blocks" in self.extras and self.safe_mode:
-        #     text = self._do_fenced_code_blocks(text)
 
         # Strip link definitions, store in hashes.
         if "footnotes" in self.extras:
@@ -1076,9 +1070,6 @@ class Markdown(object):
         # These are all the transformations that form block-level
         # tags like paragraphs, headers, and list items.
 
-        # if "fenced-code-blocks" in self.extras:
-        #     text = self._do_fenced_code_blocks(text)
-
         text = self._do_headers(text)
 
         # Do Horizontal Rules:
@@ -1091,8 +1082,6 @@ class Markdown(object):
 
         text = self._do_lists(text)
 
-        if "pyshell" in self.extras:
-            text = self._prepare_pyshell_blocks(text)
         if "wiki-tables" in self.extras:
             text = self._do_wiki_tables(text)
         if "tables" in self.extras:
@@ -1111,34 +1100,6 @@ class Markdown(object):
         text = self._form_paragraphs(text)
 
         return text
-
-    def _pyshell_block_sub(self, match):
-        if "fenced-code-blocks" in self.extras:
-            dedented = _dedent(match.group(0))
-            return Extra.get('fenced-code-blocks').run(self, "```pycon\n" + dedented + "```\n")
-        lines = match.group(0).splitlines(0)
-        _dedentlines(lines)
-        indent = ' ' * self.tab_width
-        s = ('\n'  # separate from possible cuddled paragraph
-             + indent + ('\n'+indent).join(lines)
-             + '\n')
-        return s
-
-    def _prepare_pyshell_blocks(self, text):
-        """Ensure that Python interactive shell sessions are put in
-        code blocks -- even if not properly indented.
-        """
-        if ">>>" not in text:
-            return text
-
-        less_than_tab = self.tab_width - 1
-        _pyshell_block_re = re.compile(r"""
-            ^([ ]{0,%d})>>>[ ].*\n  # first line
-            ^(\1[^\S\n]*\S.*\n)*    # any number of subsequent lines with at least one character
-            (?=^\1?\n|\Z)           # ends with a blank line or end of document
-            """ % less_than_tab, re.M | re.X)
-
-        return _pyshell_block_re.sub(self._pyshell_block_sub, text)
 
     def _table_sub(self, match):
         trim_space_re = '^[ \t\n]+|[ \t\n]+$'
@@ -2571,13 +2532,14 @@ class Extra(ABC):
     name: str
     order: list
 
-    def __init__(self):
+    def __init__(self, md: Markdown):
+        self.md = md
         self.register()
 
     @classmethod
-    def collect(cls):
+    def collect(cls, md: Markdown):
         for s in cls.__subclasses(cls):
-            s_inst = s()
+            s_inst = s(md)
             cls._registry[s_inst.name] = s_inst
 
     @classmethod
@@ -2585,11 +2547,11 @@ class Extra(ABC):
         return cls._registry[extra_name]
 
     @abstractmethod
-    def test(self, md: Markdown, text: str) -> bool:
+    def test(self, text: str) -> bool:
         return self.re.search(text) is not None
 
     @abstractmethod
-    def run(self, md: Markdown, text: str, **opts) -> str:
+    def run(self, text: str, **opts) -> str:
         ...
 
     def register(self):
@@ -2617,10 +2579,10 @@ class Admonitions(Extra):
         re.IGNORECASE | re.MULTILINE | re.VERBOSE
     )
 
-    def test(self, md, text):
+    def test(self, text):
         return self.admonitions_re.search(text) is not None
 
-    def sub(self, md: Markdown, match):
+    def sub(self, match):
         lead_indent, admonition_name, title, body = match.groups()
 
         admonition_type = '<strong>%s</strong>' % admonition_name
@@ -2636,20 +2598,20 @@ class Admonitions(Extra):
             title = '<em>%s</em>' % title
 
         # process the admonition body like regular markdown
-        body = md._run_block_gamut("\n%s\n" % md._uniform_outdent(body)[1])
+        body = self.md._run_block_gamut("\n%s\n" % self.md._uniform_outdent(body)[1])
 
         # indent the body before placing inside the aside block
-        admonition = md._uniform_indent(
+        admonition = self.md._uniform_indent(
             '%s\n%s\n\n%s\n' % (admonition_type, title, body),
-            md.tab, False
+            self.md.tab, False
         )
         # wrap it in an aside
         admonition = '<aside class="%s">\n%s</aside>' % (admonition_class, admonition)
         # now indent the whole admonition back to where it started
-        return md._uniform_indent(admonition, lead_indent, False)
+        return self.md._uniform_indent(admonition, lead_indent, False)
 
-    def run(self, md, text):
-        return self.admonitions_re.sub(lambda *_: self.sub(md, *_), text)
+    def run(self, text):
+        return self.admonitions_re.sub(self.sub, text)
 
 
 class FencedCodeBlocks(Extra):
@@ -2663,18 +2625,18 @@ class FencedCodeBlocks(Extra):
         \1[ \t]*\n                      # closing fence
         ''', re.M | re.X | re.S)
 
-    def test(self, md, text):
-        if md.stage == Stage.PREPROCESS and not md.safe_mode:
+    def test(self, text):
+        if self.md.stage == Stage.PREPROCESS and not self.md.safe_mode:
             return True
-        if md.stage == Stage.LINK_DEFS and md.safe_mode:
+        if self.md.stage == Stage.LINK_DEFS and self.md.safe_mode:
             return True
-        return md.stage == Stage.BLOCK_GAMUT
+        return self.md.stage == Stage.BLOCK_GAMUT
 
-    def _code_block_with_lexer_sub(self, md: Markdown, codeblock, leading_indent, lexer):
-        formatter_opts = md.extras['fenced-code-blocks'] or {}
+    def _code_block_with_lexer_sub(self, codeblock, leading_indent, lexer):
+        formatter_opts = self.md.extras['fenced-code-blocks'] or {}
 
         def unhash_code(codeblock):
-            for key, sanitized in list(md.html_spans.items()):
+            for key, sanitized in list(self.md.html_spans.items()):
                 codeblock = codeblock.replace(key, sanitized)
             replacements = [
                 ("&amp;", "&"),
@@ -2685,70 +2647,69 @@ class FencedCodeBlocks(Extra):
                 codeblock = codeblock.replace(old, new)
             return codeblock
         # remove leading indent from code block
-        _, codeblock = md._uniform_outdent(codeblock, max_outdent=leading_indent)
+        _, codeblock = self.md._uniform_outdent(codeblock, max_outdent=leading_indent)
 
         codeblock = unhash_code(codeblock)
-        colored = md._color_with_pygments(codeblock, lexer,
-                                            **formatter_opts)
+        colored = self.md._color_with_pygments(codeblock, lexer,
+                                               **formatter_opts)
 
         # add back the indent to all lines
-        return "\n%s\n" % md._uniform_indent(colored, leading_indent, True)
+        return "\n%s\n" % self.md._uniform_indent(colored, leading_indent, True)
 
-    def tags(self, md: Markdown, lexer_name):
-        pre_class = md._html_class_str_from_tag('pre')
-        if "highlightjs-lang" in md.extras and lexer_name:
+    def tags(self, lexer_name):
+        pre_class = self.md._html_class_str_from_tag('pre')
+        if "highlightjs-lang" in self.md.extras and lexer_name:
             code_class = ' class="%s language-%s"' % (lexer_name, lexer_name)
         else:
-            code_class = md._html_class_str_from_tag('code')
+            code_class = self.md._html_class_str_from_tag('code')
         return ('<pre%s><code%s>' % (pre_class, code_class), '</code></pre>')
 
-    def sub(self, match: re.Match, md: Markdown):
+    def sub(self, match: re.Match):
         lexer_name = match.group(2)
         codeblock = match.group(3)
         codeblock = codeblock[:-1]  # drop one trailing newline
 
         # Use pygments only if not using the highlightjs-lang extra
-        if lexer_name and "highlightjs-lang" not in md.extras:
-            lexer = md._get_pygments_lexer(lexer_name)
+        if lexer_name and "highlightjs-lang" not in self.md.extras:
+            lexer = self.md._get_pygments_lexer(lexer_name)
             if lexer:
                 leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
-                return self._code_block_with_lexer_sub(md, codeblock, leading_indent, lexer)
+                return self._code_block_with_lexer_sub(codeblock, leading_indent, lexer)
 
         # Fenced code blocks need to be outdented before encoding, and then reapplied
         leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
         if codeblock:
             # only run the codeblock through the outdenter if not empty
-            leading_indent, codeblock = md._uniform_outdent(codeblock, max_outdent=leading_indent)
+            leading_indent, codeblock = self.md._uniform_outdent(codeblock, max_outdent=leading_indent)
 
-        codeblock = md._encode_code(codeblock)
+        codeblock = self.md._encode_code(codeblock)
 
-        tags = self.tags(md, lexer_name)
+        tags = self.tags(lexer_name)
 
         return "\n%s%s%s\n%s\n" % (leading_indent, tags[0], codeblock, tags[1])
 
-    def run(self, md, text):
-        return self.fenced_code_block_re.sub(lambda m: self.sub(m, md), text)
-        # return self.fenced_code_block_re.sub(md._fenced_code_block_sub, text)
+    def run(self, text):
+        return self.fenced_code_block_re.sub(self.sub, text)
 
 
 class Mermaid(FencedCodeBlocks):
     name = 'mermaid'
     order = Stage.before(FencedCodeBlocks)
 
-    def tags(self, md: Markdown, lexer_name):
+    def tags(self, lexer_name):
         if lexer_name == 'mermaid':
             return ('<pre class="mermaid-pre"><div class="mermaid">', '</div></pre>')
-        return super().tags(md, lexer_name)
+        return super().tags(lexer_name)
 
 
 class Numbering(Extra):
     name = 'numbering'
     order = Stage.before(Stage.LINK_DEFS)
 
-    def test(self, md, text):
+    def test(self, text):
         return True
 
-    def run(self, md: Markdown, text):
+    def run(self, text):
         # First pass to define all the references
         regex_defns = re.compile(r'''
             \[\#(\w+) # the counter.  Open square plus hash plus a word \1
@@ -2797,24 +2758,55 @@ class Numbering(Extra):
                 repl = reference_html.format(match.group(1),
                                              'countererror',
                                              '?' + match.group(1) + '?')
-            if "smarty-pants" in md.extras:
-                repl = repl.replace('"', md._escape_table['"'])
+            if "smarty-pants" in self.md.extras:
+                repl = repl.replace('"', self.md._escape_table['"'])
 
             text = text[:match.start()] + repl + text[match.end():]
         return text
+
+
+class PyShell(Extra):
+    name = 'pyshell'
+    order = Stage.after(Stage.LISTS)
+
+    def test(self, text):
+        return ">>>" in text
+
+    def sub(self, match: re.Match):
+        if "fenced-code-blocks" in self.md.extras:
+            dedented = _dedent(match.group(0))
+            return Extra.get('fenced-code-blocks').run("```pycon\n" + dedented + "```\n")
+
+        lines = match.group(0).splitlines(0)
+        _dedentlines(lines)
+        indent = ' ' * self.md.tab_width
+        s = ('\n'  # separate from possible cuddled paragraph
+             + indent + ('\n'+indent).join(lines)
+             + '\n')
+        return s
+
+    def run(self, text):
+        less_than_tab = self.md.tab_width - 1
+        _pyshell_block_re = re.compile(r"""
+            ^([ ]{0,%d})>>>[ ].*\n  # first line
+            ^(\1[^\S\n]*\S.*\n)*    # any number of subsequent lines with at least one character
+            (?=^\1?\n|\Z)           # ends with a blank line or end of document
+            """ % less_than_tab, re.M | re.X)
+
+        return _pyshell_block_re.sub(self.sub, text)
 
 
 class Wavedrom(Extra):
     name = 'wavedrom'
     order = Stage.before(Stage.CODE_BLOCKS) + Stage.after(Stage.PREPROCESS)
 
-    def test(self, md, text):
+    def test(self, text):
         match = FencedCodeBlocks.fenced_code_block_re.search(text)
         return match is None or match.group(2) == 'wavedrom'
 
-    def sub(self, md: Markdown, match, **opts):
+    def sub(self, match, **opts):
         # dedent the block for processing
-        lead_indent, waves = md._uniform_outdent(match.group(3))
+        lead_indent, waves = self.md._uniform_outdent(match.group(3))
         # default tags to wrap the wavedrom block in
         open_tag, close_tag = '<script type="WaveDrom">\n', '</script>'
 
@@ -2830,17 +2822,15 @@ class Wavedrom(Extra):
                 pass
 
         # hash SVG to prevent <> chars being messed with
-        md._escape_table[waves] = _hash_text(waves)
+        self.md._escape_table[waves] = _hash_text(waves)
 
-        return md._uniform_indent(
-            '\n%s%s%s\n' % (open_tag, md._escape_table[waves], close_tag),
+        return self.md._uniform_indent(
+            '\n%s%s%s\n' % (open_tag, self.md._escape_table[waves], close_tag),
             lead_indent, include_empty_lines=True
         )
 
-    def run(self, md: Markdown, text, **opts):
-        return FencedCodeBlocks.fenced_code_block_re.sub(
-            lambda *_: self.sub(md, *_, **opts), text
-        )
+    def run(self, text, **opts):
+        return FencedCodeBlocks.fenced_code_block_re.sub(_curry(self.sub, **opts), text)
 
 
 # ----------------------------------------------------------
