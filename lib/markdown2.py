@@ -2530,7 +2530,15 @@ class Extra(ABC):
     _registry = {}
 
     name: str
+    '''
+    An identifiable name that users can use to invoke the extra
+    in the Markdown class
+    '''
     order: list
+    '''
+    A list of stages at which this extra should be invoked.
+    See `Stage`, `Stage.before` and `Stage.after`
+    '''
 
     def __init__(self, md: Markdown):
         self.md = md
@@ -2538,24 +2546,46 @@ class Extra(ABC):
 
     @classmethod
     def collect(cls, md: Markdown):
+        '''
+        Collects all subclasses of `Extra`, initialises and registers them
+        '''
         for s in cls.__subclasses(cls):
             s_inst = s(md)
             cls._registry[s_inst.name] = s_inst
 
     @classmethod
     def get(cls, extra_name: str) -> 'Extra':
+        '''
+        Get a registered extra by name.
+        For example, `Extra.get('fenced-code-blocks')` will return an instance
+        of the `FencedCodeBlocks` extra
+        '''
         return cls._registry[extra_name]
 
     @abstractmethod
-    def test(self, text: str) -> bool:
-        return self.re.search(text) is not None
-
-    @abstractmethod
     def run(self, text: str, **opts) -> str:
+        '''
+        Run the extra against the given text.
+
+        Args:
+            text: the text to process
+            **opts: any parameters supplied via `Markdown`'s extras dict
+        '''
         ...
 
     def register(self):
+        '''
+        Registers the class for use with `Markdown`. This function is
+        called during initialisation.
+        '''
         self.__class__._registry[self.name] = self
+
+    @abstractmethod
+    def test(self, text: str) -> bool:
+        '''
+        Check a section of markdown to see if this extra should be run upon it.
+        '''
+        ...
 
     @staticmethod
     def __subclasses(cls):
@@ -2565,6 +2595,10 @@ class Extra(ABC):
 
 
 class Admonitions(Extra):
+    '''
+    Enable parsing of RST admonitions
+    '''
+
     name = 'admonitions'
     order = Stage.before(Stage.BLOCK_GAMUT, Stage.LINK_DEFS)
 
@@ -2615,6 +2649,13 @@ class Admonitions(Extra):
 
 
 class FencedCodeBlocks(Extra):
+    '''
+    Allows a code block to not have to be indented
+    by fencing it with '```' on a line before and after. Based on
+    <http://github.github.com/github-flavored-markdown/> with support for
+    syntax highlighting.
+    '''
+
     name = 'fenced-code-blocks'
     order = Stage.before(Stage.LINK_DEFS, Stage.BLOCK_GAMUT) + Stage.after(Stage.PREPROCESS)
 
@@ -2656,7 +2697,17 @@ class FencedCodeBlocks(Extra):
         # add back the indent to all lines
         return "\n%s\n" % self.md._uniform_indent(colored, leading_indent, True)
 
-    def tags(self, lexer_name):
+    def tags(self, lexer_name) -> tuple:
+        '''
+        Returns the tags that the encoded code block will be wrapped in, based
+        upon the lexer name.
+
+        This function can be overridden by subclasses to piggy-back off of the
+        fenced code blocks syntax (see `Mermaid` extra).
+
+        Returns:
+            The opening and closing tags, as strings within a tuple
+        '''
         pre_class = self.md._html_class_str_from_tag('pre')
         if "highlightjs-lang" in self.md.extras and lexer_name:
             code_class = ' class="%s language-%s"' % (lexer_name, lexer_name)
@@ -2703,6 +2754,11 @@ class Mermaid(FencedCodeBlocks):
 
 
 class Numbering(Extra):
+    '''
+    Support of generic counters.  Non standard extension to
+    allow sequential numbering of figures, tables, equations, exhibits etc.
+    '''
+
     name = 'numbering'
     order = Stage.before(Stage.LINK_DEFS)
 
@@ -2766,6 +2822,11 @@ class Numbering(Extra):
 
 
 class PyShell(Extra):
+    '''
+    Treats unindented Python interactive shell sessions as <code>
+    blocks.
+    '''
+
     name = 'pyshell'
     order = Stage.after(Stage.LISTS)
 
@@ -2797,6 +2858,9 @@ class PyShell(Extra):
 
 
 class Wavedrom(Extra):
+    '''
+    Support for generating Wavedrom digital timing diagrams
+    '''
     name = 'wavedrom'
     order = Stage.before(Stage.CODE_BLOCKS) + Stage.after(Stage.PREPROCESS)
 
