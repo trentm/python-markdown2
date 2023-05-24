@@ -196,27 +196,27 @@ class Stage():
     __counts = {}
 
     @classmethod
-    def _order(cls, items, direction=5):
-        index = 0 if direction > 0 else 1
+    def _order(cls, items, step=5):
+        index = 0 if step > 0 else 1
         ret = []
         counts = cls._Stage__counts
         for item in items:
             if not isinstance(item, int) and issubclass(item, Extra):
-                ret.extend(o + direction for o in item.order)
+                ret.extend(o + step for o in item.order)
             else:
                 if item not in counts:
                     counts[item] = [0, 0]
-                counts[item][index] += direction
+                counts[item][index] += step
                 ret.append(item + counts[item][1])
         return ret
 
     @classmethod
-    def after(cls, *items: 'Stage') -> list:
-        return cls._order(items, 5)
+    def after(cls, *items: 'Stage', step=5) -> list:
+        return cls._order(items, step)
 
     @classmethod
-    def before(cls, *items: 'Stage') -> list:
-        return cls._order(items, -5)
+    def before(cls, *items: 'Stage', step=-5) -> list:
+        return cls._order(items, step)
 
     @staticmethod
     def mark(stage):
@@ -243,13 +243,13 @@ class Stage():
 
                 for _, klass in before:
                     if klass.test(text):
-                        text = klass.run(text, **(self.extras[klass.name] or {}))
+                        text = klass.run(text)
 
                 text = func(self, text, *args, **kwargs)
 
                 for _, klass in after:
                     if klass.test(text):
-                        text = klass.run(text, **(self.extras[klass.name] or {}))
+                        text = klass.run(text)
 
                 return text
 
@@ -361,7 +361,10 @@ class Markdown(object):
             self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
             self.metadata = {}
-        Extra.collect(self)
+
+        for extra in Extra.collect(self):
+            instance: Extra = extra(self, (self.extras.get(extra.name) or {}))
+            instance.register()
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
@@ -2406,18 +2409,16 @@ class Extra(ABC):
     See `Stage`, `Stage.before` and `Stage.after`
     '''
 
-    def __init__(self, md: Markdown):
+    def __init__(self, md: Markdown, options):
         self.md = md
-        self.register()
+        self.options = options
 
     @classmethod
-    def collect(cls, md: Markdown):
+    def collect(cls, md: Markdown) -> list:
         '''
-        Collects all subclasses of `Extra`, initialises and registers them
+        Returns all subclasses of `Extra`
         '''
-        for s in cls.__subclasses(cls):
-            s_inst = s(md)
-            cls._registry[s_inst.name] = s_inst
+        return list(cls.__subclasses(cls))
 
     @classmethod
     def get(cls, extra_name: str) -> 'Extra':
@@ -2429,7 +2430,7 @@ class Extra(ABC):
         return cls._registry[extra_name]
 
     @abstractmethod
-    def run(self, text: str, **opts) -> str:
+    def run(self, text: str) -> str:
         '''
         Run the extra against the given text.
 
@@ -2533,6 +2534,8 @@ class FencedCodeBlocks(Extra):
         ''', re.M | re.X | re.S)
 
     def test(self, text):
+        if '```' not in text:
+            return False
         if self.md.stage == Stage.PREPROCESS and not self.md.safe_mode:
             return True
         if self.md.stage == Stage.LINK_DEFS and self.md.safe_mode:
@@ -2822,14 +2825,14 @@ class Wavedrom(Extra):
         match = FencedCodeBlocks.fenced_code_block_re.search(text)
         return match is None or match.group(2) == 'wavedrom'
 
-    def sub(self, match, **opts):
+    def sub(self, match):
         # dedent the block for processing
         lead_indent, waves = self.md._uniform_outdent(match.group(3))
         # default tags to wrap the wavedrom block in
         open_tag, close_tag = '<script type="WaveDrom">\n', '</script>'
 
         # check if the user would prefer to have the SVG embedded directly
-        embed_svg = opts.get('prefer_embed_svg', True)
+        embed_svg = self.options.get('prefer_embed_svg', True)
 
         if embed_svg:
             try:
@@ -2847,8 +2850,8 @@ class Wavedrom(Extra):
             lead_indent, include_empty_lines=True
         )
 
-    def run(self, text, **opts):
-        return FencedCodeBlocks.fenced_code_block_re.sub(_curry(self.sub, **opts), text)
+    def run(self, text):
+        return FencedCodeBlocks.fenced_code_block_re.sub(self.sub, text)
 
 
 class WikiTables(Extra):
