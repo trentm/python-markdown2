@@ -1114,9 +1114,6 @@ class Markdown(object):
         text = self._escape_special_chars(text)
 
         # Process anchor and image tags.
-        if "link-patterns" in self.extras:
-            text = self._do_link_patterns(text)
-
         text = self._do_links(text)
 
         # Make links out of things like `<http://example.com/>`
@@ -1126,25 +1123,10 @@ class Markdown(object):
 
         text = self._encode_amps_and_angles(text)
 
-        if "strike" in self.extras:
-            text = self._do_strike(text)
-
-        if "underline" in self.extras:
-            text = self._do_underline(text)
-
         text = self._do_italics_and_bold(text)
 
-        if "tg-spoiler" in self.extras:
-            text = self._do_tg_spoiler(text)
-
-        if "smarty-pants" in self.extras:
-            text = self._do_smart_punctuation(text)
-
         # Do hard breaks:
-        if "break-on-newline" in self.extras:
-            text = re.sub(r" *\n(?!\<(?:\/?(ul|ol|li))\>)", "<br%s\n" % self.empty_element_suffix, text)
-        else:
-            text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
+        text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
 
         return text
 
@@ -1948,21 +1930,6 @@ class Markdown(object):
         self._code_table[text] = hashed
         return hashed
 
-    _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
-    def _do_strike(self, text):
-        text = self._strike_re.sub(r"<s>\1</s>", text)
-        return text
-
-    _underline_re = re.compile(r"(?<!<!)--(?!>)(?=\S)(.+?)(?<=\S)(?<!<!)--(?!>)", re.S)
-    def _do_underline(self, text):
-        text = self._underline_re.sub(r"<u>\1</u>", text)
-        return text
-
-    _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
-    def _do_tg_spoiler(self, text):
-        text = self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
-        return text
-
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
     _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
@@ -1977,59 +1944,6 @@ class Markdown(object):
         else:
             text = self._strong_re.sub(r"<strong>\2</strong>", text)
             text = self._em_re.sub(r"<em>\2</em>", text)
-        return text
-
-    # "smarty-pants" extra: Very liberal in interpreting a single prime as an
-    # apostrophe; e.g. ignores the fact that "round", "bout", "twer", and
-    # "twixt" can be written without an initial apostrophe. This is fine because
-    # using scare quotes (single quotation marks) is rare.
-    _apostrophe_year_re = re.compile(r"'(\d\d)(?=(\s|,|;|\.|\?|!|$))")
-    _contractions = ["tis", "twas", "twer", "neath", "o", "n",
-        "round", "bout", "twixt", "nuff", "fraid", "sup"]
-    def _do_smart_contractions(self, text):
-        text = self._apostrophe_year_re.sub(r"&#8217;\1", text)
-        for c in self._contractions:
-            text = text.replace("'%s" % c, "&#8217;%s" % c)
-            text = text.replace("'%s" % c.capitalize(),
-                "&#8217;%s" % c.capitalize())
-        return text
-
-    # Substitute double-quotes before single-quotes.
-    _opening_single_quote_re = re.compile(r"(?<!\S)'(?=\S)")
-    _opening_double_quote_re = re.compile(r'(?<!\S)"(?=\S)')
-    _closing_single_quote_re = re.compile(r"(?<=\S)'")
-    _closing_double_quote_re = re.compile(r'(?<=\S)"(?=(\s|,|;|\.|\?|!|$))')
-    def _do_smart_punctuation(self, text):
-        """Fancifies 'single quotes', "double quotes", and apostrophes.
-        Converts --, ---, and ... into en dashes, em dashes, and ellipses.
-
-        Inspiration is: <http://daringfireball.net/projects/smartypants/>
-        See "test/tm-cases/smarty_pants.text" for a full discussion of the
-        support here and
-        <http://code.google.com/p/python-markdown2/issues/detail?id=42> for a
-        discussion of some diversion from the original SmartyPants.
-        """
-        if "'" in text:  # guard for perf
-            text = self._do_smart_contractions(text)
-            text = self._opening_single_quote_re.sub("&#8216;", text)
-            text = self._closing_single_quote_re.sub("&#8217;", text)
-
-        if '"' in text:  # guard for perf
-            text = self._opening_double_quote_re.sub("&#8220;", text)
-            text = self._closing_double_quote_re.sub("&#8221;", text)
-
-        text = text.replace("---", "&#8212;")
-        text = text.replace("--", "&#8211;")
-        text = text.replace("...", "&#8230;")
-        text = text.replace(" . . . ", "&#8230;")
-        text = text.replace(". . .", "&#8230;")
-
-        # TODO: Temporary hack to fix https://github.com/trentm/python-markdown2/issues/150
-        if "footnotes" in self.extras and "footnote-ref" in text:
-            # Quotes in the footnote back ref get converted to "smart" quotes
-            # Change them back here to ensure they work.
-            text = text.replace('class="footnote-ref&#8221;', 'class="footnote-ref"')
-
         return text
 
     _block_quote_base = r'''
@@ -2247,64 +2161,6 @@ class Markdown(object):
                % (''.join(chars), ''.join(chars[7:]))
         return addr
 
-    _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
-    def _do_link_patterns(self, text):
-        link_from_hash = {}
-        for regex, repl in self.link_patterns:
-            replacements = []
-            for match in regex.finditer(text):
-                if any(self._match_overlaps_substr(text, match, h) for h in link_from_hash):
-                    continue
-
-                if hasattr(repl, "__call__"):
-                    href = repl(match)
-                else:
-                    href = match.expand(repl)
-                replacements.append((match.span(), href))
-            for (start, end), href in reversed(replacements):
-
-                # Do not match against links inside brackets.
-                if text[start - 1:start] == '[' and text[end:end + 1] == ']':
-                    continue
-
-                # Do not match against links in the standard markdown syntax.
-                if text[start - 2:start] == '](' or text[end:end + 2] == '")':
-                    continue
-
-                # Do not match against links which are escaped.
-                if text[start - 3:start] == '"""' and text[end:end + 3] == '"""':
-                    text = text[:start - 3] + text[start:end] + text[end + 3:]
-                    continue
-
-                # search the text for anything that looks like a link
-                is_inside_link = False
-                for link_re in (self._auto_link_re, self._basic_link_re):
-                    for match in link_re.finditer(text):
-                        if any((r[0] <= start and end <= r[1]) for r in match.regs):
-                            # if the link pattern start and end pos is within the bounds of
-                            # something that looks like a link, then don't process it
-                            is_inside_link = True
-                            break
-                    else:
-                        continue
-                    break
-
-                if is_inside_link:
-                    continue
-
-                escaped_href = (
-                    href.replace('"', '&quot;')  # b/c of attr quote
-                        # To avoid markdown <em> and <strong>:
-                        .replace('*', self._escape_table['*'])
-                        .replace('_', self._escape_table['_']))
-                link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
-                hash = _hash_text(link)
-                link_from_hash[hash] = link
-                text = text[:start] + hash + text[end:]
-        for hash, link in list(link_from_hash.items()):
-            text = text.replace(hash, link)
-        return text
-
     def _unescape_special_chars(self, text):
         # Swap back in all the special characters we've hidden.
         while True:
@@ -2520,6 +2376,17 @@ class Admonitions(Extra):
         return self.admonitions_re.sub(self.sub, text)
 
 
+class BreakOnNewline(Extra):
+    name = 'break-on-newline'
+    order = Stage.after(Stage.ITALIC_AND_BOLD)
+
+    def run(self, text: str):
+        return re.sub(r" *\n(?!\<(?:\/?(ul|ol|li))\>)", "<br%s\n" % self.md.empty_element_suffix, text)
+
+    def test(self, text: str):
+        return True
+
+
 class FencedCodeBlocks(Extra):
     '''
     Allows a code block to not have to be indented
@@ -2615,6 +2482,77 @@ class FencedCodeBlocks(Extra):
 
     def run(self, text):
         return self.fenced_code_block_re.sub(self.sub, text)
+
+
+class LinkPatterns(Extra):
+    '''
+    Auto-link given regex patterns in text (e.g. bug number
+    references, revision number references).
+    '''
+    name = 'link-patterns'
+    order = Stage.before(Stage.LINKS)
+
+    _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
+
+    def run(self, text: str):
+        link_from_hash = {}
+        for regex, repl in self.options:
+            replacements = []
+            for match in regex.finditer(text):
+                if any(self.md._match_overlaps_substr(text, match, h) for h in link_from_hash):
+                    continue
+
+                if hasattr(repl, "__call__"):
+                    href = repl(match)
+                else:
+                    href = match.expand(repl)
+                replacements.append((match.span(), href))
+            for (start, end), href in reversed(replacements):
+
+                # Do not match against links inside brackets.
+                if text[start - 1:start] == '[' and text[end:end + 1] == ']':
+                    continue
+
+                # Do not match against links in the standard markdown syntax.
+                if text[start - 2:start] == '](' or text[end:end + 2] == '")':
+                    continue
+
+                # Do not match against links which are escaped.
+                if text[start - 3:start] == '"""' and text[end:end + 3] == '"""':
+                    text = text[:start - 3] + text[start:end] + text[end + 3:]
+                    continue
+
+                # search the text for anything that looks like a link
+                is_inside_link = False
+                for link_re in (self.md._auto_link_re, self._basic_link_re):
+                    for match in link_re.finditer(text):
+                        if any((r[0] <= start and end <= r[1]) for r in match.regs):
+                            # if the link pattern start and end pos is within the bounds of
+                            # something that looks like a link, then don't process it
+                            is_inside_link = True
+                            break
+                    else:
+                        continue
+                    break
+
+                if is_inside_link:
+                    continue
+
+                escaped_href = (
+                    href.replace('"', '&quot;')  # b/c of attr quote
+                        # To avoid markdown <em> and <strong>:
+                        .replace('*', self.md._escape_table['*'])
+                        .replace('_', self.md._escape_table['_']))
+                link = '<a href="%s">%s</a>' % (escaped_href, text[start:end])
+                hash = _hash_text(link)
+                link_from_hash[hash] = link
+                text = text[:start] + hash + text[end:]
+        for hash, link in list(link_from_hash.items()):
+            text = text.replace(hash, link)
+        return text
+
+    def test(self, text: str):
+        return True
 
 
 class Mermaid(FencedCodeBlocks):
@@ -2731,6 +2669,89 @@ class PyShell(Extra):
         return _pyshell_block_re.sub(self.sub, text)
 
 
+class SmartyPants(Extra):
+    '''
+    Replaces ' and " with curly quotation marks or curly
+    apostrophes.  Replaces --, ---, ..., and . . . with en dashes, em dashes,
+    and ellipses.
+    '''
+    name = 'smarty-pants'
+    order = Stage.after(Stage.SPAN_GAMUT)
+
+    _opening_single_quote_re = re.compile(r"(?<!\S)'(?=\S)")
+    _opening_double_quote_re = re.compile(r'(?<!\S)"(?=\S)')
+    _closing_single_quote_re = re.compile(r"(?<=\S)'")
+    _closing_double_quote_re = re.compile(r'(?<=\S)"(?=(\s|,|;|\.|\?|!|$))')
+    # "smarty-pants" extra: Very liberal in interpreting a single prime as an
+    # apostrophe; e.g. ignores the fact that "round", "bout", "twer", and
+    # "twixt" can be written without an initial apostrophe. This is fine because
+    # using scare quotes (single quotation marks) is rare.
+    _apostrophe_year_re = re.compile(r"'(\d\d)(?=(\s|,|;|\.|\?|!|$))")
+    _contractions = ["tis", "twas", "twer", "neath", "o", "n",
+        "round", "bout", "twixt", "nuff", "fraid", "sup"]
+
+
+    def contractions(self, text: str) -> str:
+        text = self._apostrophe_year_re.sub(r"&#8217;\1", text)
+        for c in self._contractions:
+            text = text.replace("'%s" % c, "&#8217;%s" % c)
+            text = text.replace("'%s" % c.capitalize(),
+                "&#8217;%s" % c.capitalize())
+        return text
+
+    def run(self, text: str):
+        """Fancifies 'single quotes', "double quotes", and apostrophes.
+        Converts --, ---, and ... into en dashes, em dashes, and ellipses.
+
+        Inspiration is: <http://daringfireball.net/projects/smartypants/>
+        See "test/tm-cases/smarty_pants.text" for a full discussion of the
+        support here and
+        <http://code.google.com/p/python-markdown2/issues/detail?id=42> for a
+        discussion of some diversion from the original SmartyPants.
+        """
+        if "'" in text:  # guard for perf
+            text = self.contractions(text)
+            text = self._opening_single_quote_re.sub("&#8216;", text)
+            text = self._closing_single_quote_re.sub("&#8217;", text)
+
+        if '"' in text:  # guard for perf
+            text = self._opening_double_quote_re.sub("&#8220;", text)
+            text = self._closing_double_quote_re.sub("&#8221;", text)
+
+        text = text.replace("---", "&#8212;")
+        text = text.replace("--", "&#8211;")
+        text = text.replace("...", "&#8230;")
+        text = text.replace(" . . . ", "&#8230;")
+        text = text.replace(". . .", "&#8230;")
+
+        # TODO: Temporary hack to fix https://github.com/trentm/python-markdown2/issues/150
+        if "footnotes" in self.md.extras and "footnote-ref" in text:
+            # Quotes in the footnote back ref get converted to "smart" quotes
+            # Change them back here to ensure they work.
+            text = text.replace('class="footnote-ref&#8221;', 'class="footnote-ref"')
+
+        return text
+
+    def test(self, text: str):
+        return "'" in text or '"' in text
+
+
+class Strike(Extra):
+    '''
+    Text inside of double tilde is ~~strikethrough~~
+    '''
+    name = 'strike'
+    order = Stage.before(Stage.ITALIC_AND_BOLD)
+
+    _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
+
+    def run(self, text: str):
+        return self._strike_re.sub(r"<s>\1</s>", text)
+
+    def test(self, text: str):
+        return '~~' in text
+
+
 class Tables(Extra):
     '''
     Tables using the same format as GFM
@@ -2817,6 +2838,35 @@ class Tables(Extra):
 
     def test(self, text: str):
         return True
+
+
+class TelegramSpoiler(Extra):
+    name = 'tg-spoiler'
+    order = Stage.after(Stage.ITALIC_AND_BOLD)
+
+    _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
+
+    def run(self, text: str):
+        return self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
+
+    def test(self, text: str):
+        return '||' in text
+
+
+class Underline(Extra):
+    '''
+    Text inside of double dash is --underlined--.
+    '''
+    name = 'underline'
+    order = Stage.before(Stage.ITALIC_AND_BOLD)
+
+    _underline_re = re.compile(r"(?<!<!)--(?!>)(?=\S)(.+?)(?<=\S)(?<!<!)--(?!>)", re.S)
+
+    def run(self, text: str):
+        return self._underline_re.sub(r"<u>\1</u>", text)
+
+    def test(self, text: str):
+        return '--' in text
 
 
 class Wavedrom(Extra):
