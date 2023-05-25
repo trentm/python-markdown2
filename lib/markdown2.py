@@ -322,14 +322,19 @@ class Markdown(object):
                 self._toc_depth = 6
             else:
                 self._toc_depth = self.extras["toc"].get("depth", 6)
-        self._instance_extras = self.extras.copy()
 
         if 'link-patterns' in self.extras:
+            # allow link patterns via extras dict without kwarg explicitly set
+            link_patterns = link_patterns or extras['link-patterns']
             if link_patterns is None:
                 # if you have specified that the link-patterns extra SHOULD
                 # be used (via self.extras) but you haven't provided anything
                 # via the link_patterns argument then an error is raised
                 raise MarkdownError("If the 'link-patterns' extra is used, an argument for 'link_patterns' is required")
+            self.extras['link-patterns'] = link_patterns
+
+        self._instance_extras = self.extras.copy()
+
         self.link_patterns = link_patterns
         self.footnote_title = footnote_title
         self.footnote_return_symbol = footnote_return_symbol
