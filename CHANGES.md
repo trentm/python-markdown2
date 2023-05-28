@@ -8,6 +8,7 @@
 - [pull #506] Fix `_uniform_outdent` failing with empty strings (issue #505)
 - [pull #509] Fix HTML elements not unhashing correctly (issue 508)
 - [pull #511] Remove deprecated `imp` module (issue #510)
+- [pull #512] Allow link patterns to be passed via extras dict
 
 
 ## python-markdown2 2.4.8
