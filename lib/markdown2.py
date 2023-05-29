@@ -1488,7 +1488,7 @@ class Markdown(object):
     # Original Showdown code copyright (c) 2007 John Fraser
     # Modifications and bugfixes (c) 2009 Dana Robinson
     # Modifications and bugfixes (c) 2009-2014 Stack Exchange Inc.
-    _safe_href = re.compile(r'^((https?|ftp):\/\/|\/|\.|#)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)*[\]$]+$', re.I)
+    _safe_href = re.compile(r'^((https?|ftp):\/\/|\/|\.|#)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)*[\]$]*$', re.I)
 
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
