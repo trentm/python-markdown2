@@ -1887,7 +1887,8 @@ class Markdown(object):
         item = match.group(4)
         leading_line = match.group(1)
         if leading_line or "\n\n" in item or self._last_li_endswith_two_eols:
-            item = self._run_block_gamut(self._outdent(item))
+            item = self._uniform_outdent(item, min_outdent=' ', max_outdent=self.tab)[1]
+            item = self._run_block_gamut(item)
         else:
             # Recursion for sub-lists:
             item = self._do_lists(self._uniform_outdent(item, min_outdent=' ')[1])
