@@ -2196,7 +2196,7 @@ class Markdown(object):
 
         return self._uniform_indent(
             '\n%s%s%s\n' % (open_tag, self._escape_table[waves], close_tag),
-            lead_indent, include_empty_lines=True
+            lead_indent, indent_empty_lines=True
         )
 
     def _do_wavedrom_blocks(self, text):
@@ -2607,13 +2607,16 @@ class Markdown(object):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
-    def _uniform_outdent(self, text, min_outdent=None, max_outdent=None):
-        # Removes the smallest common leading indentation from each (non empty)
-        # line of `text` and returns said indent along with the outdented text.
-        # The `min_outdent` kwarg makes sure the smallest common whitespace
-        # must be at least this size
-        # The `max_outdent` sets the maximum amount a line can be
-        # outdented by
+    @staticmethod
+    def _uniform_outdent(text, min_outdent=None, max_outdent=None):
+        '''
+        Removes the smallest common leading indentation from each (non empty)
+        line of `text` and returns said indent along with the outdented text.
+
+        Args:
+            min_outdent: make sure the smallest common whitespace is at least this size
+            max_outdent: the maximum amount a line can be outdented by
+        '''
 
         # find the leading whitespace for every line
         whitespace = [
@@ -2647,11 +2650,26 @@ class Markdown(object):
 
         return outdent, ''.join(outdented)
 
-    def _uniform_indent(self, text, indent, include_empty_lines=False):
-        return ''.join(
-            (indent + line if line.strip() or include_empty_lines else '')
-            for line in text.splitlines(True)
-        )
+    @staticmethod
+    def _uniform_indent(text, indent, include_empty_lines=False, indent_empty_lines=False):
+        '''
+        Uniformly indent a block of text by a fixed amount
+
+        Args:
+            text: the text to indent
+            indent: a string containing the indent to apply
+            include_empty_lines: don't remove whitespace only lines
+            indent_empty_lines: indent whitespace only lines with the rest of the text
+        '''
+        blocks = []
+        for line in text.splitlines(True):
+            if line.strip() or indent_empty_lines:
+                blocks.append(indent + line)
+            elif include_empty_lines:
+                blocks.append(line)
+            else:
+                blocks.append('')
+        return ''.join(blocks)
 
     @staticmethod
     def _match_overlaps_substr(text, match, substr):
