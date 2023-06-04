@@ -363,6 +363,9 @@ class Markdown(object):
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
 
+        if 'markdown-in-html' in self.extras:
+            text = self._do_markdown_in_html(text)
+
         if "fenced-code-blocks" in self.extras and self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
@@ -878,27 +881,39 @@ class Markdown(object):
 
         return text
 
-    def _strict_tag_block_sub(self, text, html_tags_re, callback):
+    def _strict_tag_block_sub(self, text, html_tags_re, callback, allow_indent=False):
+        '''
+        Finds and substitutes HTML blocks within blocks of text
+
+        Args:
+            text: the text to search
+            html_tags_re: a regex pattern of HTML block tags to match against.
+                For example, `Markdown._block_tags_a`
+            callback: callback function that receives the found HTML text block
+            allow_indent: allow matching HTML blocks that are not completely outdented
+        '''
         tag_count = 0
         current_tag = html_tags_re
         block = ''
         result = ''
 
         for chunk in text.splitlines(True):
-            is_markup = re.match(r'^(?:</code>(?=</pre>))?(</?(%s)\b>?)' % current_tag, chunk)
+            is_markup = re.match(
+                r'^(\s{0,%s})(?:</code>(?=</pre>))?(</?(%s)\b>?)' % ('' if allow_indent else '0', current_tag), chunk
+            )
             block += chunk
 
             if is_markup:
-                if chunk.startswith('</'):
+                if chunk.startswith('%s</' % is_markup.group(1)):
                     tag_count -= 1
                 else:
                     # if close tag is in same line
-                    if self._tag_is_closed(is_markup.group(2), chunk):
+                    if self._tag_is_closed(is_markup.group(3), chunk):
                         # we must ignore these
                         is_markup = None
                     else:
                         tag_count += 1
-                        current_tag = is_markup.group(2)
+                        current_tag = is_markup.group(3)
 
             if tag_count == 0:
                 if is_markup:
@@ -914,6 +929,15 @@ class Markdown(object):
     def _tag_is_closed(self, tag_name, text):
         # super basic check if number of open tags == number of closing tags
         return len(re.findall('<%s(?:.*?)>' % tag_name, text)) == len(re.findall('</%s>' % tag_name, text))
+
+    def _do_markdown_in_html(self, text):
+        def callback(block):
+            indent, block = self._uniform_outdent(block)
+            block = self._hash_html_block_sub(block)
+            block = self._uniform_indent(block, indent, include_empty_lines=True, indent_empty_lines=False)
+            return block
+
+        return self._strict_tag_block_sub(text, self._block_tags_a, callback, True)
 
     def _strip_link_definitions(self, text):
         # Strips link definitions from text, stores the URLs and titles in
