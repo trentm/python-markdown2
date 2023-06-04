@@ -9,6 +9,7 @@
 - [pull #509] Fix HTML elements not unhashing correctly (issue 508)
 - [pull #511] Remove deprecated `imp` module (issue #510)
 - [pull #512] Allow link patterns to be passed via extras dict
+- [pull #513] Fix relative links not working in safe mode (issue #254)
 
 
 ## python-markdown2 2.4.8

@@ -1483,7 +1483,13 @@ class Markdown(object):
         self._escape_table[url] = key
         return key
 
-    _safe_protocols = re.compile(r'(https?|ftp):', re.I)
+    # _safe_href is copied from pagedown's Markdown.Sanitizer.js
+    # From: https://github.com/StackExchange/pagedown/blob/master/LICENSE.txt
+    # Original Showdown code copyright (c) 2007 John Fraser
+    # Modifications and bugfixes (c) 2009 Dana Robinson
+    # Modifications and bugfixes (c) 2009-2014 Stack Exchange Inc.
+    _safe_href = re.compile(r'^((https?|ftp):\/\/|\/|\.|#)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)*[\]$]*$', re.I)
+
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
 
@@ -1601,7 +1607,7 @@ class Markdown(object):
                         anchor_allowed_pos = start_idx + len(result)
                         text = text[:start_idx] + result + text[url_end_idx:]
                     elif start_idx >= anchor_allowed_pos:
-                        safe_link = self._safe_protocols.match(url) or url.startswith('#')
+                        safe_link = self._safe_href.match(url)
                         if self.safe_mode and not safe_link:
                             result_head = '<a href="#"%s>' % (title_str)
                         else:
@@ -1657,7 +1663,7 @@ class Markdown(object):
                             curr_pos = start_idx + len(result)
                             text = text[:start_idx] + result + text[match.end():]
                         elif start_idx >= anchor_allowed_pos:
-                            if self.safe_mode and not self._safe_protocols.match(url):
+                            if self.safe_mode and not self._safe_href.match(url):
                                 result_head = '<a href="#"%s>' % (title_str)
                             else:
                                 result_head = '<a href="%s"%s>' % (self._protect_url(url), title_str)
