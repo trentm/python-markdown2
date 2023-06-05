@@ -21,3 +21,13 @@ Slightly more nested list:
     + The
     + Code
 * Item 3 - yes! just a single item
+
+
+Other more different nested list:
+
+- Item 1
+  With some space after
+
+- Item 2
+  - Item 3
+    - Item 4
