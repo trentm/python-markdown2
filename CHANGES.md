@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.10 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.9
 
 - [pull #500] Add `<thead>` tag to html-classes extra
