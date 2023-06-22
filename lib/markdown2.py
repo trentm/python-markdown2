@@ -363,6 +363,9 @@ class Markdown(object):
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
 
+        if 'markdown-in-html' in self.extras:
+            text = self._do_markdown_in_html(text)
+
         if "fenced-code-blocks" in self.extras and self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
@@ -878,27 +881,39 @@ class Markdown(object):
 
         return text
 
-    def _strict_tag_block_sub(self, text, html_tags_re, callback):
+    def _strict_tag_block_sub(self, text, html_tags_re, callback, allow_indent=False):
+        '''
+        Finds and substitutes HTML blocks within blocks of text
+
+        Args:
+            text: the text to search
+            html_tags_re: a regex pattern of HTML block tags to match against.
+                For example, `Markdown._block_tags_a`
+            callback: callback function that receives the found HTML text block
+            allow_indent: allow matching HTML blocks that are not completely outdented
+        '''
         tag_count = 0
         current_tag = html_tags_re
         block = ''
         result = ''
 
         for chunk in text.splitlines(True):
-            is_markup = re.match(r'^(?:</code>(?=</pre>))?(</?(%s)\b>?)' % current_tag, chunk)
+            is_markup = re.match(
+                r'^(\s{0,%s})(?:</code>(?=</pre>))?(</?(%s)\b>?)' % ('' if allow_indent else '0', current_tag), chunk
+            )
             block += chunk
 
             if is_markup:
-                if chunk.startswith('</'):
+                if chunk.startswith('%s</' % is_markup.group(1)):
                     tag_count -= 1
                 else:
                     # if close tag is in same line
-                    if self._tag_is_closed(is_markup.group(2), chunk):
+                    if self._tag_is_closed(is_markup.group(3), chunk):
                         # we must ignore these
                         is_markup = None
                     else:
                         tag_count += 1
-                        current_tag = is_markup.group(2)
+                        current_tag = is_markup.group(3)
 
             if tag_count == 0:
                 if is_markup:
@@ -914,6 +929,15 @@ class Markdown(object):
     def _tag_is_closed(self, tag_name, text):
         # super basic check if number of open tags == number of closing tags
         return len(re.findall('<%s(?:.*?)>' % tag_name, text)) == len(re.findall('</%s>' % tag_name, text))
+
+    def _do_markdown_in_html(self, text):
+        def callback(block):
+            indent, block = self._uniform_outdent(block)
+            block = self._hash_html_block_sub(block)
+            block = self._uniform_indent(block, indent, include_empty_lines=True, indent_empty_lines=False)
+            return block
+
+        return self._strict_tag_block_sub(text, self._block_tags_a, callback, True)
 
     def _strip_link_definitions(self, text):
         # Strips link definitions from text, stores the URLs and titles in
@@ -1893,7 +1917,8 @@ class Markdown(object):
         item = match.group(4)
         leading_line = match.group(1)
         if leading_line or "\n\n" in item or self._last_li_endswith_two_eols:
-            item = self._run_block_gamut(self._outdent(item))
+            item = self._uniform_outdent(item, min_outdent=' ', max_outdent=self.tab)[1]
+            item = self._run_block_gamut(item)
         else:
             # Recursion for sub-lists:
             item = self._do_lists(self._uniform_outdent(item, min_outdent=' ')[1])
@@ -2201,7 +2226,7 @@ class Markdown(object):
 
         return self._uniform_indent(
             '\n%s%s%s\n' % (open_tag, self._escape_table[waves], close_tag),
-            lead_indent, include_empty_lines=True
+            lead_indent, indent_empty_lines=True
         )
 
     def _do_wavedrom_blocks(self, text):
@@ -2612,13 +2637,16 @@ class Markdown(object):
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
-    def _uniform_outdent(self, text, min_outdent=None, max_outdent=None):
-        # Removes the smallest common leading indentation from each (non empty)
-        # line of `text` and returns said indent along with the outdented text.
-        # The `min_outdent` kwarg makes sure the smallest common whitespace
-        # must be at least this size
-        # The `max_outdent` sets the maximum amount a line can be
-        # outdented by
+    @staticmethod
+    def _uniform_outdent(text, min_outdent=None, max_outdent=None):
+        '''
+        Removes the smallest common leading indentation from each (non empty)
+        line of `text` and returns said indent along with the outdented text.
+
+        Args:
+            min_outdent: make sure the smallest common whitespace is at least this size
+            max_outdent: the maximum amount a line can be outdented by
+        '''
 
         # find the leading whitespace for every line
         whitespace = [
@@ -2652,11 +2680,26 @@ class Markdown(object):
 
         return outdent, ''.join(outdented)
 
-    def _uniform_indent(self, text, indent, include_empty_lines=False):
-        return ''.join(
-            (indent + line if line.strip() or include_empty_lines else '')
-            for line in text.splitlines(True)
-        )
+    @staticmethod
+    def _uniform_indent(text, indent, include_empty_lines=False, indent_empty_lines=False):
+        '''
+        Uniformly indent a block of text by a fixed amount
+
+        Args:
+            text: the text to indent
+            indent: a string containing the indent to apply
+            include_empty_lines: don't remove whitespace only lines
+            indent_empty_lines: indent whitespace only lines with the rest of the text
+        '''
+        blocks = []
+        for line in text.splitlines(True):
+            if line.strip() or indent_empty_lines:
+                blocks.append(indent + line)
+            elif include_empty_lines:
+                blocks.append(line)
+            else:
+                blocks.append('')
+        return ''.join(blocks)
 
     @staticmethod
     def _match_overlaps_substr(text, match, substr):
