@@ -1,0 +1,6 @@
+[link1](https://www.hostname.com/absolute/path)
+[link2](https://www.hostname.com/absolute/path#anchor-on-another-page)
+[link3](#anchor-on-this-page)
+[link4](/)
+[link5](/absolute/path)
+[link6](../relative/path)

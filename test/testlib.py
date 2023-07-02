@@ -54,14 +54,14 @@ __version__ = '.'.join(map(str, __version_info__))
 
 
 import os
-from os.path import join, basename, dirname, abspath, splitext, \
+from os.path import join, basename, abspath, splitext, \
                     isfile, isdir, normpath, exists
 import sys
 import getopt
 import glob
 import time
 import unittest
-import imp
+import importlib
 import logging
 import textwrap
 import traceback
@@ -234,13 +234,12 @@ def testmods_from_testdir(testdir):
         testmod_name = splitext(basename(testmod_path))[0]
         log.debug("import test module '%s'", testmod_path)
         try:
-            iinfo = imp.find_module(testmod_name, [dirname(testmod_path)])
             testabsdir = abspath(testdir)
             sys.path.insert(0, testabsdir)
             old_dir = os.getcwd()
             os.chdir(testdir)
             try:
-                testmod = imp.load_module(testmod_name, *iinfo)
+                testmod = importlib.import_module(testmod_name)
             finally:
                 os.chdir(old_dir)
                 sys.path.remove(testabsdir)

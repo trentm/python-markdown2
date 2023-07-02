@@ -1,11 +1,20 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.4.9 (not yet released)
+## python-markdown2 2.4.10 (not yet released)
+
+(nothing yet)
+
+
+## python-markdown2 2.4.9
 
 - [pull #500] Add `<thead>` tag to html-classes extra
 - [pull #501] Fix link patterns extra matching against internal hashes
 - [pull #502] Replace deprecated `optparse` with `argparse`
 - [pull #506] Fix `_uniform_outdent` failing with empty strings (issue #505)
+- [pull #509] Fix HTML elements not unhashing correctly (issue 508)
+- [pull #511] Remove deprecated `imp` module (issue #510)
+- [pull #512] Allow link patterns to be passed via extras dict
+- [pull #513] Fix relative links not working in safe mode (issue #254)
 
 
 ## python-markdown2 2.4.8
