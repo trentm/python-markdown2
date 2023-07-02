@@ -2501,7 +2501,7 @@ class FencedCodeBlocks(Extra):
             code_class = self.md._html_class_str_from_tag('code')
         return ('<pre%s><code%s>' % (pre_class, code_class), '</code></pre>')
 
-    def sub(self, match: re.Match):
+    def sub(self, match):
         lexer_name = match.group(2)
         codeblock = match.group(3)
         codeblock = codeblock[:-1]  # drop one trailing newline
@@ -2713,7 +2713,7 @@ class PyShell(Extra):
     def test(self, text):
         return ">>>" in text
 
-    def sub(self, match: re.Match):
+    def sub(self, match):
         if "fenced-code-blocks" in self.md.extras:
             dedented = _dedent(match.group(0))
             return Extra.get('fenced-code-blocks').run("```pycon\n" + dedented + "```\n")
@@ -2858,7 +2858,7 @@ class Tables(Extra):
             ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
         return table_re.sub(self.sub, text)
 
-    def sub(self, match: re.Match):
+    def sub(self, match):
         trim_space_re = '^[ \t\n]+|[ \t\n]+$'
         trim_bar_re = r'^\||\|$'
         split_bar_re = r'^\||(?<![\`\\])\|'
@@ -2994,7 +2994,7 @@ class WikiTables(Extra):
             ''' % less_than_tab, re.M | re.X)
         return wiki_table_re.sub(self.sub, text)
 
-    def sub(self, match: re.Match):
+    def sub(self, match):
         ttext = match.group(0).strip()
         rows = []
         for line in ttext.splitlines(0):
