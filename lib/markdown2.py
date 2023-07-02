@@ -367,7 +367,7 @@ class Markdown(object):
         if "metadata" in self.extras:
             self.metadata = {}
 
-        for extra in Extra.collect(self):
+        for extra in Extra.collect():
             instance: Extra = extra(self, (self.extras.get(extra.name) or {}))
             instance.register()
 
@@ -452,9 +452,6 @@ class Markdown(object):
 
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
-
-        if 'markdown-in-html' in self.extras:
-            text = self._do_markdown_in_html(text)
 
         # Strip link definitions, store in hashes.
         if "footnotes" in self.extras:
@@ -1011,15 +1008,6 @@ class Markdown(object):
     def _tag_is_closed(self, tag_name, text):
         # super basic check if number of open tags == number of closing tags
         return len(re.findall('<%s(?:.*?)>' % tag_name, text)) == len(re.findall('</%s>' % tag_name, text))
-
-    def _do_markdown_in_html(self, text):
-        def callback(block):
-            indent, block = self._uniform_outdent(block)
-            block = self._hash_html_block_sub(block)
-            block = self._uniform_indent(block, indent, include_empty_lines=True, indent_empty_lines=False)
-            return block
-
-        return self._strict_tag_block_sub(text, self._block_tags_a, callback, True)
 
     @Stage.mark(Stage.LINK_DEFS)
     def _strip_link_definitions(self, text):
@@ -2321,12 +2309,12 @@ class Extra(ABC):
     See `Stage`, `Stage.before` and `Stage.after`
     '''
 
-    def __init__(self, md: Markdown, options):
+    def __init__(self, md: Markdown, options: dict):
         self.md = md
         self.options = options
 
     @classmethod
-    def collect(cls, md: Markdown) -> list:
+    def collect(cls) -> list:
         '''
         Returns all subclasses of `Extra`
         '''
@@ -2337,7 +2325,10 @@ class Extra(ABC):
         '''
         Get a registered extra by name.
         For example, `Extra.get('fenced-code-blocks')` will return an instance
-        of the `FencedCodeBlocks` extra
+        of the `FencedCodeBlocks` extra.
+
+        Raises:
+            KeyError: if no extra has been registered under the given name
         '''
         return cls._registry[extra_name]
 
@@ -2349,13 +2340,16 @@ class Extra(ABC):
         Args:
             text: the text to process
             **opts: any parameters supplied via `Markdown`'s extras dict
+
+        Returns:
+            The new text after being modified by the extra
         '''
         ...
 
     def register(self):
         '''
         Registers the class for use with `Markdown`. This function is
-        called during initialisation.
+        called during `Markdown._setup_extras`
         '''
         self.__class__._registry[self.name] = self
 
@@ -2603,6 +2597,29 @@ class LinkPatterns(Extra):
         return text
 
     def test(self, text: str):
+        return True
+
+
+class MarkdownInHTML(Extra):
+    '''
+    Allow the use of `markdown="1"` in a block HTML tag to
+    have markdown processing be done on its contents. Similar to
+    <http://michelf.com/projects/php-markdown/extra/#markdown-attr> but with
+    some limitations.
+    '''
+    name = 'markdown-in-html'
+    order = Stage.after(Stage.HASH_HTML)
+
+    def run(self, text: str) -> str:
+        def callback(block):
+            indent, block = self.md._uniform_outdent(block)
+            block = self.md._hash_html_block_sub(block)
+            block = self.md._uniform_indent(block, indent, include_empty_lines=True, indent_empty_lines=False)
+            return block
+
+        return self.md._strict_tag_block_sub(text, self.md._block_tags_a, callback, True)
+
+    def test(self, text: str) -> bool:
         return True
 
 
