@@ -2942,7 +2942,7 @@ class Wavedrom(Extra):
     Support for generating Wavedrom digital timing diagrams
     '''
     name = 'wavedrom'
-    order = Stage.before(Stage.CODE_BLOCKS) + Stage.after(Stage.PREPROCESS)
+    order = Stage.before(Stage.CODE_BLOCKS, FencedCodeBlocks) + Stage.after(Stage.PREPROCESS)
 
     def test(self, text):
         match = FencedCodeBlocks.fenced_code_block_re.search(text)
