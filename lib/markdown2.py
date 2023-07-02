@@ -1509,8 +1509,9 @@ class Markdown(object):
 
     _safe_protocols = r'(?:https?|ftp):\/\/|(?:mailto|tel):|\/|\.{,2}|#'
 
+    @classmethod
     @property
-    def _safe_href(self):
+    def _safe_href(cls):
         '''
         _safe_href is adapted from pagedown's Markdown.Sanitizer.js
         From: https://github.com/StackExchange/pagedown/blob/master/LICENSE.txt
@@ -1525,7 +1526,7 @@ class Markdown(object):
         domain = r'(?:[%s]+(?:\.[%s]+)*)(?::\d+/?)?(?![^:/]*:/*)' % (safe, safe)
         fragment = r'[%s]*' % (safe + less_safe)
 
-        return re.compile(r'^(%s)?(%s)(%s)$' % (self._safe_protocols, domain, fragment), re.I)
+        return re.compile(r'^(%s)?(%s)(%s)$' % (cls._safe_protocols, domain, fragment), re.I)
 
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
