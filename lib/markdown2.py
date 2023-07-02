@@ -228,9 +228,9 @@ class Stage():
                 after = []
 
                 for extra in self.extras:
-                    if extra not in Extra._registry:
+                    if extra not in self.extra_classes:
                         continue
-                    klass = Extra._registry[extra]
+                    klass = self.extra_classes[extra]
                     for order in klass.order:
                         if order // 100 == stage // 100:
                             if order < stage:
@@ -266,6 +266,8 @@ class Markdown(object):
     # This can be set via (a) subclassing and (b) the constructor
     # "extras" argument.
     extras = None
+    # dict of `Extra` names and associated class instances, populated during _setup_extras
+    extra_classes = None
 
     urls = None
     titles = None
@@ -367,9 +369,11 @@ class Markdown(object):
         if "metadata" in self.extras:
             self.metadata = {}
 
-        for extra in Extra.collect():
-            instance: Extra = extra(self, (self.extras.get(extra.name) or {}))
-            instance.register()
+        self.extra_classes = {}
+        for name, klass in Extra._registry.items():
+            if name not in self.extras:
+                continue
+            self.extra_classes[name] = klass(self, (self.extras.get(name) or {}))
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
@@ -2314,23 +2318,19 @@ class Extra(ABC):
         self.options = options
 
     @classmethod
-    def collect(cls) -> list:
+    def deregister(cls):
         '''
-        Returns all subclasses of `Extra`
+        Removes the class from the extras registry
         '''
-        return list(cls.__subclasses(cls))
+        if cls.name in cls._registry:
+            del cls._registry[cls.name]
 
     @classmethod
-    def get(cls, extra_name: str) -> 'Extra':
+    def register(cls):
         '''
-        Get a registered extra by name.
-        For example, `Extra.get('fenced-code-blocks')` will return an instance
-        of the `FencedCodeBlocks` extra.
-
-        Raises:
-            KeyError: if no extra has been registered under the given name
+        Registers the class for use with `Markdown`
         '''
-        return cls._registry[extra_name]
+        cls._registry[cls.name] = cls
 
     @abstractmethod
     def run(self, text: str) -> str:
@@ -2346,25 +2346,12 @@ class Extra(ABC):
         '''
         ...
 
-    def register(self):
-        '''
-        Registers the class for use with `Markdown`. This function is
-        called during `Markdown._setup_extras`
-        '''
-        self.__class__._registry[self.name] = self
-
     @abstractmethod
     def test(self, text: str) -> bool:
         '''
         Check a section of markdown to see if this extra should be run upon it.
         '''
         ...
-
-    @staticmethod
-    def __subclasses(cls):
-        return set(cls.__subclasses__()).union(
-            s for c in cls.__subclasses__() for s in cls.__subclasses(c)
-        )
 
 
 class Admonitions(Extra):
@@ -2716,7 +2703,7 @@ class PyShell(Extra):
     def sub(self, match):
         if "fenced-code-blocks" in self.md.extras:
             dedented = _dedent(match.group(0))
-            return Extra.get('fenced-code-blocks').run("```pycon\n" + dedented + "```\n")
+            return self.md.extra_classes['fenced-code-blocks'].run("```pycon\n" + dedented + "```\n")
 
         lines = match.group(0).splitlines(0)
         _dedentlines(lines)
@@ -3035,6 +3022,25 @@ class WikiTables(Extra):
 
     def test(self, text: str):
         return '||' in text
+
+
+# Register extras
+Admonitions.register()
+BreakOnNewline.register()
+FencedCodeBlocks.register()
+LinkPatterns.register()
+MarkdownInHTML.register()
+MarkdownInHTML.register()
+Mermaid.register()
+Numbering.register()
+PyShell.register()
+SmartyPants.register()
+Strike.register()
+Tables.register()
+TelegramSpoiler.register()
+Underline.register()
+Wavedrom.register()
+WikiTables.register()
 
 
 # ----------------------------------------------------------
