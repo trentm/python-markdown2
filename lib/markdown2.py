@@ -1507,7 +1507,7 @@ class Markdown(object):
         self._escape_table[url] = key
         return key
 
-    _safe_protocols = r'(?:https?|ftp):\/\/|(?:mailto|tel):|\/|\.{,2}|#'
+    _safe_protocols = r'(?:https?|ftp):\/\/|(?:mailto|tel):'
 
     @property
     def _safe_href(self):
@@ -1518,14 +1518,14 @@ class Markdown(object):
         Modifications and bugfixes (c) 2009 Dana Robinson
         Modifications and bugfixes (c) 2009-2014 Stack Exchange Inc.
         '''
-        safe = r'-\w/'
+        safe = r'-\w'
         # omitted ['"<>] for XSS reasons
-        less_safe = r'\.!#$%&\(\)\+,/:;=\?@\[\]^`\{\}\|~'
+        less_safe = r'#/\.!#$%&\(\)\+,/:;=\?@\[\]^`\{\}\|~'
         # dot seperated hostname, optional port number, not followed by protocol seperator
         domain = r'(?:[%s]+(?:\.[%s]+)*)(?::\d+/?)?(?![^:/]*:/*)' % (safe, safe)
         fragment = r'[%s]*' % (safe + less_safe)
 
-        return re.compile(r'^(%s)?(%s)(%s)$' % (self._safe_protocols, domain, fragment), re.I)
+        return re.compile(r'^(?:(%s)?(%s)(%s)|(#|\.{,2}/)(%s))$' % (self._safe_protocols, domain, fragment, fragment), re.I)
 
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
