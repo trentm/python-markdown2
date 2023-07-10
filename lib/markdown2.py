@@ -1522,7 +1522,7 @@ class Markdown(object):
         # omitted ['"<>] for XSS reasons
         less_safe = r'#/\.!#$%&\(\)\+,/:;=\?@\[\]^`\{\}\|~'
         # dot seperated hostname, optional port number, not followed by protocol seperator
-        domain = r'(?:[%s]+(?:\.[%s]+)*)(?::\d+/?)?(?![^:/]*:/*)' % (safe, safe)
+        domain = r'(?:[%s]+(?:\.[%s]+)*)(?:(?<!tel):\d+/?)?(?![^:/]*:/*)' % (safe, safe)
         fragment = r'[%s]*' % (safe + less_safe)
 
         return re.compile(r'^(?:(%s)?(%s)(%s)|(#|\.{,2}/)(%s))$' % (self._safe_protocols, domain, fragment, fragment), re.I)
