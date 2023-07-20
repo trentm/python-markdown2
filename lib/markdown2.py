@@ -1507,12 +1507,25 @@ class Markdown(object):
         self._escape_table[url] = key
         return key
 
-    # _safe_href is copied from pagedown's Markdown.Sanitizer.js
-    # From: https://github.com/StackExchange/pagedown/blob/master/LICENSE.txt
-    # Original Showdown code copyright (c) 2007 John Fraser
-    # Modifications and bugfixes (c) 2009 Dana Robinson
-    # Modifications and bugfixes (c) 2009-2014 Stack Exchange Inc.
-    _safe_href = re.compile(r'^((https?|ftp):\/\/|\/|\.|#)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)*[\]$]*$', re.I)
+    _safe_protocols = r'(?:https?|ftp):\/\/|(?:mailto|tel):'
+
+    @property
+    def _safe_href(self):
+        '''
+        _safe_href is adapted from pagedown's Markdown.Sanitizer.js
+        From: https://github.com/StackExchange/pagedown/blob/master/LICENSE.txt
+        Original Showdown code copyright (c) 2007 John Fraser
+        Modifications and bugfixes (c) 2009 Dana Robinson
+        Modifications and bugfixes (c) 2009-2014 Stack Exchange Inc.
+        '''
+        safe = r'-\w'
+        # omitted ['"<>] for XSS reasons
+        less_safe = r'#/\.!#$%&\(\)\+,/:;=\?@\[\]^`\{\}\|~'
+        # dot seperated hostname, optional port number, not followed by protocol seperator
+        domain = r'(?:[%s]+(?:\.[%s]+)*)(?:(?<!tel):\d+/?)?(?![^:/]*:/*)' % (safe, safe)
+        fragment = r'[%s]*' % (safe + less_safe)
+
+        return re.compile(r'^(?:(%s)?(%s)(%s)|(#|\.{,2}/)(%s))$' % (self._safe_protocols, domain, fragment, fragment), re.I)
 
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
