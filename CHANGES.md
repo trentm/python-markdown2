@@ -4,6 +4,7 @@
 
 - [pull #520] Allow more relative links in safe mode (issue #517)
 - [pull #521] Always restore hashed HTML blocks (issue #185)
+- [pull #522] Add `middle-word-em` extra
 
 
 ## python-markdown2 2.4.9

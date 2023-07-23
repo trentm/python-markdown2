@@ -1,0 +1,5 @@
+When middle word emphasis is disabled strings like 'self.this_long_attr' should not
+become `self.this<em>long</em>attr`.
+
+Emphasis will _only_ occur when the word is surrounded with whitespace.
+This should still work with _my_filename_.
