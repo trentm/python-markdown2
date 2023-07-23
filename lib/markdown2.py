@@ -2648,9 +2648,12 @@ class Markdown(object):
 
     def _unescape_special_chars(self, text):
         # Swap back in all the special characters we've hidden.
+        hashmap = tuple(self._escape_table.items()) + tuple(self._code_table.items())
+        # html_blocks table is in format {hash: item} compared to usual {item: hash}
+        hashmap += tuple(tuple(reversed(i)) for i in self.html_blocks.items())
         while True:
             orig_text = text
-            for ch, hash in list(self._escape_table.items()) + list(self._code_table.items()):
+            for ch, hash in hashmap:
                 text = text.replace(hash, ch)
             if text == orig_text:
                 break
