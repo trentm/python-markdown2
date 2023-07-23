@@ -1,0 +1,2 @@
+When middle word emphasis is disabled strings like 'self.this_long_attr' should not
+become `self.this<em>long</em>attr`.
