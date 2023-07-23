@@ -2307,8 +2307,8 @@ class Markdown(object):
     _code_friendly_em_re = r"\*(?=\S)(.+?)(?<=\S)\*"
     def _do_italics_and_bold(self, text):
         if self.extras.get('middle-word-em', True) is False:
-            code_friendly_em_re = r'(?<=\s)%s(?=\s)' % self._code_friendly_em_re
-            em_re = r'(?<=\s)%s(?=\s)' % self._em_re
+            code_friendly_em_re = r'(?<=\b)%s(?=\b)' % self._code_friendly_em_re
+            em_re = r'(?<=\b)%s(?=\b)' % self._em_re
         else:
             code_friendly_em_re = self._code_friendly_em_re
             em_re = self._em_re
