@@ -4,6 +4,9 @@
 
 - [pull #519] Add support for custom extras
 - [pull #519] Drop Python 3.5 support
+- [pull #520] Allow more relative links in safe mode (issue #517)
+- [pull #521] Always restore hashed HTML blocks (issue #185)
+- [pull #522] Add `middle-word-em` extra
 
 
 ## python-markdown2 2.4.9

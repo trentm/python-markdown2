@@ -66,6 +66,9 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   some limitations.
 * metadata: Extract metadata from a leading '---'-fenced block.
   See <https://github.com/trentm/python-markdown2/issues/77> for details.
+* middle-word-em: Allows or disallows emphasis syntax in the middle of words,
+  defaulting to allow. Disabling this means that `this_text_here` will not be
+  converted to `this<em>text</em>here`.
 * nofollow: Add `rel="nofollow"` to add `<a>` tags with an href. See
   <http://en.wikipedia.org/wiki/Nofollow>.
 * numbering: Support of generic counters.  Non standard extension to
@@ -1337,12 +1340,25 @@ class Markdown(object):
         self._escape_table[url] = key
         return key
 
-    # _safe_href is copied from pagedown's Markdown.Sanitizer.js
-    # From: https://github.com/StackExchange/pagedown/blob/master/LICENSE.txt
-    # Original Showdown code copyright (c) 2007 John Fraser
-    # Modifications and bugfixes (c) 2009 Dana Robinson
-    # Modifications and bugfixes (c) 2009-2014 Stack Exchange Inc.
-    _safe_href = re.compile(r'^((https?|ftp):\/\/|\/|\.|#)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)*[\]$]*$', re.I)
+    _safe_protocols = r'(?:https?|ftp):\/\/|(?:mailto|tel):'
+
+    @property
+    def _safe_href(self):
+        '''
+        _safe_href is adapted from pagedown's Markdown.Sanitizer.js
+        From: https://github.com/StackExchange/pagedown/blob/master/LICENSE.txt
+        Original Showdown code copyright (c) 2007 John Fraser
+        Modifications and bugfixes (c) 2009 Dana Robinson
+        Modifications and bugfixes (c) 2009-2014 Stack Exchange Inc.
+        '''
+        safe = r'-\w'
+        # omitted ['"<>] for XSS reasons
+        less_safe = r'#/\.!#$%&\(\)\+,/:;=\?@\[\]^`\{\}\|~'
+        # dot seperated hostname, optional port number, not followed by protocol seperator
+        domain = r'(?:[%s]+(?:\.[%s]+)*)(?:(?<!tel):\d+/?)?(?![^:/]*:/*)' % (safe, safe)
+        fragment = r'[%s]*' % (safe + less_safe)
+
+        return re.compile(r'^(?:(%s)?(%s)(%s)|(#|\.{,2}/)(%s))$' % (self._safe_protocols, domain, fragment, fragment), re.I)
 
     @Stage.mark(Stage.LINKS)
     def _do_links(self, text):
@@ -1958,19 +1974,26 @@ class Markdown(object):
         return hashed
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
-    _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
+    _em_re = r"(\*|_)(?=\S)(.+?)(?<=\S)\1"
     _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
-    _code_friendly_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
+    _code_friendly_em_re = r"\*(?=\S)(.+?)(?<=\S)\*"
 
     @Stage.mark(Stage.ITALIC_AND_BOLD)
     def _do_italics_and_bold(self, text):
+        if self.extras.get('middle-word-em', True) is False:
+            code_friendly_em_re = r'(?<=\b)%s(?=\b)' % self._code_friendly_em_re
+            em_re = r'(?<=\b)%s(?=\b)' % self._em_re
+        else:
+            code_friendly_em_re = self._code_friendly_em_re
+            em_re = self._em_re
+
         # <strong> must go first:
         if "code-friendly" in self.extras:
             text = self._code_friendly_strong_re.sub(r"<strong>\1</strong>", text)
-            text = self._code_friendly_em_re.sub(r"<em>\1</em>", text)
+            text = re.sub(code_friendly_em_re, r"<em>\1</em>", text, flags=re.S)
         else:
             text = self._strong_re.sub(r"<strong>\2</strong>", text)
-            text = self._em_re.sub(r"<em>\2</em>", text)
+            text = re.sub(em_re, r"<em>\2</em>", text, flags=re.S)
         return text
 
     _block_quote_base = r'''
@@ -2190,9 +2213,12 @@ class Markdown(object):
 
     def _unescape_special_chars(self, text):
         # Swap back in all the special characters we've hidden.
+        hashmap = tuple(self._escape_table.items()) + tuple(self._code_table.items())
+        # html_blocks table is in format {hash: item} compared to usual {item: hash}
+        hashmap += tuple(tuple(reversed(i)) for i in self.html_blocks.items())
         while True:
             orig_text = text
-            for ch, hash in list(self._escape_table.items()) + list(self._code_table.items()):
+            for ch, hash in hashmap:
                 text = text.replace(hash, ch)
             if text == orig_text:
                 break
