@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.11 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.10
 
 - [pull #520] Allow more relative links in safe mode (issue #517)
