@@ -715,7 +715,7 @@ class Markdown(object):
     # _block_tags_b.  This way html5 tags are easy to keep track of.
     _html5tags = '|article|aside|header|hgroup|footer|nav|section|figure|figcaption'
 
-    _block_tags_a = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math|ins|del'
+    _block_tags_a = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math|ins|del|style'
     _block_tags_a += _html5tags
 
     _strict_tag_block_re = re.compile(r"""
