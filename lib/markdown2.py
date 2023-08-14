@@ -210,7 +210,7 @@ class Stage():
                 if item not in counts:
                     counts[item] = [0, 0]
                 counts[item][index] += step
-                ret.append(item + counts[item][1])
+                ret.append(item + counts[item][index])
         return ret
 
     @classmethod
