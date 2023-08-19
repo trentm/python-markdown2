@@ -1979,26 +1979,13 @@ class Markdown(object):
         return hashed
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
-    _em_re = r"(\*|_)(?=\S)(.+?)(?<=\S)\1"
-    _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
-    _code_friendly_em_re = r"\*(?=\S)(.+?)(?<=\S)\*"
+    _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
 
     @Stage.mark(Stage.ITALIC_AND_BOLD)
     def _do_italics_and_bold(self, text):
-        if self.extras.get('middle-word-em', True) is False:
-            code_friendly_em_re = r'(?<=\b)%s(?=\b)' % self._code_friendly_em_re
-            em_re = r'(?<=\b)%s(?=\b)' % self._em_re
-        else:
-            code_friendly_em_re = self._code_friendly_em_re
-            em_re = self._em_re
-
         # <strong> must go first:
-        if "code-friendly" in self.extras:
-            text = self._code_friendly_strong_re.sub(r"<strong>\1</strong>", text)
-            text = re.sub(code_friendly_em_re, r"<em>\1</em>", text, flags=re.S)
-        else:
-            text = self._strong_re.sub(r"<strong>\2</strong>", text)
-            text = re.sub(em_re, r"<em>\2</em>", text, flags=re.S)
+        text = self._strong_re.sub(r"<strong>\2</strong>", text)
+        text = self._em_re.sub(r"<em>\2</em>", text)
         return text
 
     _block_quote_base = r'''
@@ -2330,6 +2317,9 @@ class MarkdownWithExtras(Markdown):
 # Extras
 # ----------------------------------------------------------
 
+# Base classes
+# ----------------------------------------------------------
+
 class Extra(ABC):
     _registry = {}
 
@@ -2386,6 +2376,55 @@ class Extra(ABC):
         '''
         return True
 
+
+class ItalicAndBoldProcessor(Extra):
+    '''
+    An ABC that provides hooks for dealing with italics and bold syntax.
+    This class is set to trigger both before AND after the italics and bold stage.
+    This allows any child classes to intercept instances of bold or italic syntax and
+    change the output or hash it to prevent it from being processed.
+
+    After the I&B stage any hashes in the `hash_tables` instance variable are replaced.
+    '''
+    name = 'italic-and-bold-processor'
+    order = Stage.before(Stage.ITALIC_AND_BOLD) + Stage.after(Stage.ITALIC_AND_BOLD)
+
+    strong_re = Markdown._strong_re
+    em_re = Markdown._em_re
+
+    def __init__(self, md: Markdown, options: dict):
+        super().__init__(md, options)
+        self.hash_table = {}
+
+    def run(self, text):
+        if self.md.order < Stage.ITALIC_AND_BOLD:
+            text = self.strong_re.sub(self.sub, text)
+            text = self.em_re.sub(self.sub, text)
+        else:
+            # put any hashed values back
+            for key, substr in self.hash_table.items():
+                text = text.replace(key, substr)
+        return text
+
+    @abstractmethod
+    def sub(self, match):
+        # do nothing. Let `Markdown._do_italics_and_bold` do its thing later
+        return match.string[match.start(): match.end()]
+
+
+    def sub_hash(self, match):
+        substr = match.string[match.start(): match.end()]
+        key = _hash_text(substr)
+        self.hash_table[key] = substr
+        return key
+
+    def test(self, text):
+        if self.md.order < Stage.ITALIC_AND_BOLD:
+            return '*' in text or '_' in text
+        return self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
+
+# User facing extras
+# ----------------------------------------------------------
 
 class Admonitions(Extra):
     '''
@@ -2450,6 +2489,22 @@ class BreakOnNewline(Extra):
 
     def test(self, text):
         return True
+
+
+class CodeFriendly(ItalicAndBoldProcessor):
+    '''
+    Disable _ and __ for em and strong.
+    '''
+    name = 'code-friendly'
+
+    def sub(self, match):
+        syntax = match.group(1)
+        if '_' not in syntax:
+            return super().sub(match)
+        text = match.string[match.start(): match.end()]
+        key = _hash_text(text)
+        self.hash_table[key] = text
+        return key
 
 
 class FencedCodeBlocks(Extra):
@@ -2651,6 +2706,56 @@ class Mermaid(FencedCodeBlocks):
         if lexer_name == 'mermaid':
             return ('<pre class="mermaid-pre"><div class="mermaid">', '</div></pre>')
         return super().tags(lexer_name)
+
+
+class MiddleWordEm(ItalicAndBoldProcessor):
+    '''
+    Allows or disallows emphasis syntax in the middle of words,
+    defaulting to allow. Disabling this means that `this_text_here` will not be
+    converted to `this<em>text</em>here`.
+    '''
+    name = 'middle-word-em'
+    order = Stage.before(CodeFriendly) + Stage.after(Stage.ITALIC_AND_BOLD)
+
+    def __init__(self, md: Markdown, options: Union[dict, bool]):
+        '''
+        Args:
+            md: the markdown instance
+            options: can be bool for backwards compatibility but will be converted to a dict
+                in the constructor. All options are:
+                - allowed (bool): whether to allow emphasis in the middle of a word.
+                    If `options` is a bool it will be placed under this key.
+        '''
+        if isinstance(options, bool):
+            options = {'allowed': options}
+        options.setdefault('allowed', True)
+        super().__init__(md, options)
+
+        self.liberal_em_re = self.em_re
+        if not options['allowed']:
+            self.em_re = re.compile(r'(?<=\b)%s(?=\b)' % self.liberal_em_re.pattern, self.liberal_em_re.flags)
+
+    def run(self, text):
+        # run strong and whatnot first
+        # this also will process all strict ems
+        text = super().run(text)
+        if self.md.order < self.md.stage:
+            # hash all non-valid ems
+            text = self.liberal_em_re.sub(self.sub_hash, text)
+        return text
+
+    def sub(self, match):
+        syntax = match.group(1)
+        if len(syntax) != 1:
+            # strong syntax
+            return super().sub(match)
+        return '<em>%s</em>' % match.group(2)
+
+    def sub_hash(self, match):
+        text = match.string[match.start(): match.end()]
+        key = _hash_text(text)
+        self.hash_table[key] = text
+        return key
 
 
 class Numbering(Extra):
@@ -3053,17 +3158,18 @@ class WikiTables(Extra):
         add_hline('</table>')
         return '\n'.join(hlines) + '\n'
 
-    def test(self, text: str):
+    def test(self, text):
         return '||' in text
 
 
 # Register extras
 Admonitions.register()
 BreakOnNewline.register()
+CodeFriendly.register()
 FencedCodeBlocks.register()
 LinkPatterns.register()
 MarkdownInHTML.register()
-MarkdownInHTML.register()
+MiddleWordEm.register()
 Mermaid.register()
 Numbering.register()
 PyShell.register()
