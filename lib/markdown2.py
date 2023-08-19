@@ -112,10 +112,11 @@ import logging
 import re
 import sys
 from collections import defaultdict
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
 from random import randint, random
+from typing import Optional, Union
 
 # ---- globals
 
@@ -380,7 +381,7 @@ class Markdown(object):
         for name, klass in Extra._registry.items():
             if name not in self.extras:
                 continue
-            self.extra_classes[name] = klass(self, (self.extras.get(name) or {}))
+            self.extra_classes[name] = klass(self, (self.extras.get(name, {})))
 
     # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
     # should only be used in <a> tags with an "href" attribute.
@@ -2343,9 +2344,14 @@ class Extra(ABC):
     See `Stage`, `Stage.before` and `Stage.after`
     '''
 
-    def __init__(self, md: Markdown, options: dict):
+    def __init__(self, md: Markdown, options: Optional[dict]):
+        '''
+        Args:
+            md: An instance of `Markdown`
+            options: a dict of settings to alter the extra's behaviour
+        '''
         self.md = md
-        self.options = options
+        self.options = options if options is not None else {}
 
     @classmethod
     def deregister(cls):
@@ -2367,21 +2373,18 @@ class Extra(ABC):
         '''
         Run the extra against the given text.
 
-        Args:
-            text: the text to process
-            **opts: any parameters supplied via `Markdown`'s extras dict
-
         Returns:
             The new text after being modified by the extra
         '''
         ...
 
-    @abstractmethod
     def test(self, text: str) -> bool:
         '''
         Check a section of markdown to see if this extra should be run upon it.
+        The default implementation will always return True but it's recommended to override
+        this behaviour to improve performance.
         '''
-        ...
+        return True
 
 
 class Admonitions(Extra):
@@ -2442,10 +2445,10 @@ class BreakOnNewline(Extra):
     name = 'break-on-newline'
     order = Stage.after(Stage.ITALIC_AND_BOLD)
 
-    def run(self, text: str):
+    def run(self, text):
         return re.sub(r" *\n(?!\<(?:\/?(ul|ol|li))\>)", "<br%s\n" % self.md.empty_element_suffix, text)
 
-    def test(self, text: str):
+    def test(self, text):
         return True
 
 
@@ -2556,7 +2559,7 @@ class LinkPatterns(Extra):
 
     _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
 
-    def run(self, text: str):
+    def run(self, text):
         link_from_hash = {}
         for regex, repl in self.options:
             replacements = []
@@ -2613,7 +2616,7 @@ class LinkPatterns(Extra):
             text = text.replace(hash, link)
         return text
 
-    def test(self, text: str):
+    def test(self, text):
         return True
 
 
@@ -2627,7 +2630,7 @@ class MarkdownInHTML(Extra):
     name = 'markdown-in-html'
     order = Stage.after(Stage.HASH_HTML)
 
-    def run(self, text: str) -> str:
+    def run(self, text):
         def callback(block):
             indent, block = self.md._uniform_outdent(block)
             block = self.md._hash_html_block_sub(block)
@@ -2636,7 +2639,7 @@ class MarkdownInHTML(Extra):
 
         return self.md._strict_tag_block_sub(text, self.md._block_tags_a, callback, True)
 
-    def test(self, text: str) -> bool:
+    def test(self, text):
         return True
 
 
@@ -2776,7 +2779,7 @@ class SmartyPants(Extra):
         "round", "bout", "twixt", "nuff", "fraid", "sup"]
 
 
-    def contractions(self, text: str) -> str:
+    def contractions(self, text):
         text = self._apostrophe_year_re.sub(r"&#8217;\1", text)
         for c in self._contractions:
             text = text.replace("'%s" % c, "&#8217;%s" % c)
@@ -2784,7 +2787,7 @@ class SmartyPants(Extra):
                 "&#8217;%s" % c.capitalize())
         return text
 
-    def run(self, text: str):
+    def run(self, text):
         """Fancifies 'single quotes', "double quotes", and apostrophes.
         Converts --, ---, and ... into en dashes, em dashes, and ellipses.
 
@@ -2817,7 +2820,7 @@ class SmartyPants(Extra):
 
         return text
 
-    def test(self, text: str):
+    def test(self, text):
         return "'" in text or '"' in text
 
 
@@ -2830,10 +2833,10 @@ class Strike(Extra):
 
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
 
-    def run(self, text: str):
+    def run(self, text):
         return self._strike_re.sub(r"<s>\1</s>", text)
 
-    def test(self, text: str):
+    def test(self, text):
         return '~~' in text
 
 
@@ -2846,7 +2849,7 @@ class Tables(Extra):
     name = 'tables'
     order = Stage.after(Stage.LISTS)
 
-    def run(self, text: str):
+    def run(self, text):
         """Copying PHP-Markdown and GFM table syntax. Some regex borrowed from
         https://github.com/michelf/php-markdown/blob/lib/Michelf/Markdown.php#L2538
         """
@@ -2921,7 +2924,7 @@ class Tables(Extra):
 
         return '\n'.join(hlines) + '\n'
 
-    def test(self, text: str):
+    def test(self, text):
         return True
 
 
@@ -2931,10 +2934,10 @@ class TelegramSpoiler(Extra):
 
     _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
 
-    def run(self, text: str):
+    def run(self, text):
         return self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
 
-    def test(self, text: str):
+    def test(self, text):
         return '||' in text
 
 
@@ -2947,10 +2950,10 @@ class Underline(Extra):
 
     _underline_re = re.compile(r"(?<!<!)--(?!>)(?=\S)(.+?)(?<=\S)(?<!<!)--(?!>)", re.S)
 
-    def run(self, text: str):
+    def run(self, text):
         return self._underline_re.sub(r"<u>\1</u>", text)
 
-    def test(self, text: str):
+    def test(self, text):
         return '--' in text
 
 
@@ -3002,7 +3005,7 @@ class WikiTables(Extra):
     name = 'wiki-tables'
     order = Stage.before(Tables)
 
-    def run(self, text: str):
+    def run(self, text):
         less_than_tab = self.md.tab_width - 1
         wiki_table_re = re.compile(r'''
             (?:(?<=\n\n)|\A\n?)            # leading blank line
