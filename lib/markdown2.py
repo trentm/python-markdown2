@@ -244,13 +244,16 @@ class Stage():
                 before.sort(key=lambda k: k[0])
                 after.sort(key=lambda k: k[0])
 
-                for _, klass in before:
+                for order, klass in before:
+                    self.order = order
                     if klass.test(text):
                         text = klass.run(text)
 
+                self.order = stage
                 text = func(self, text, *args, **kwargs)
 
-                for _, klass in after:
+                for order, klass in after:
+                    self.order = order
                     if klass.test(text):
                         text = klass.run(text)
 
@@ -285,7 +288,8 @@ class Markdown(object):
     # (see _ProcessListItems() for details):
     list_level = 0
 
-    stage: Stage = None
+    stage: Stage
+    order: int
 
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
