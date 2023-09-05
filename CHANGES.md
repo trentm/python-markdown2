@@ -3,7 +3,7 @@
 ## python-markdown2 2.4.11 (not yet released)
 
 - [pull #524] Fix angles being escaped in style blocks (issue #523)
-
+- [pull #529] Add `breaks` extra with ability to hard break on backslashes (issue #525)
 
 ## python-markdown2 2.4.10
 
