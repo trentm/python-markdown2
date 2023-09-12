@@ -1499,13 +1499,30 @@ class Markdown(object):
             url = self._strip_anglebrackets.sub(r'\1', url)
         return url, title, end_idx
 
+    # https://developer.mozilla.org/en-US/docs/web/http/basics_of_http/data_urls
+    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+    _data_url_re = re.compile(r'''
+        data:
+        # in format type/subtype;parameter=optional
+        (?P<mime>\w+/[\w+\.-]+(?:;\w+=[\w+\.-]+)?)?
+        # optional base64 token
+        (?P<token>;base64)?
+        ,(?P<data>.*)
+    ''', re.X)
+
     def _protect_url(self, url):
         '''
         Function that passes a URL through `_html_escape_url` to remove any nasty characters,
         and then hashes the now "safe" URL to prevent other safety mechanisms from tampering
         with it (eg: escaping "&" in URL parameters)
         '''
-        url = _html_escape_url(url, safe_mode=self.safe_mode)
+        data_url = self._data_url_re.match(url)
+        charset = None
+        if data_url is not None:
+            mime = data_url.group('mime') or ''
+            if mime.startswith('image/') and data_url.group('token') == ';base64':
+                charset='base64'
+        url = _html_escape_url(url, safe_mode=self.safe_mode, charset=charset)
         key = _hash_text(url)
         self._escape_table[url] = key
         return key
@@ -3045,14 +3062,21 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % ord(ch)
 
 
-def _html_escape_url(attr, safe_mode=False):
-    """Replace special characters that are potentially malicious in url string."""
+def _html_escape_url(attr, safe_mode=False, charset=None):
+    """
+    Replace special characters that are potentially malicious in url string.
+
+    Args:
+        charset: don't escape characters from this charset. Currently the only
+            exception is for '+' when charset=='base64'
+    """
     escaped = (attr
         .replace('"', '&quot;')
         .replace('<', '&lt;')
         .replace('>', '&gt;'))
     if safe_mode:
-        escaped = escaped.replace('+', ' ')
+        if charset != 'base64':
+            escaped = escaped.replace('+', ' ')
         escaped = escaped.replace("'", "&#39;")
     return escaped
 
