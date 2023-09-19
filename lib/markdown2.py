@@ -41,7 +41,11 @@ Supported extra syntax options (see -x|--extras option below and
 see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 
 * admonitions: Enable parsing of RST admonitions.
-* break-on-newline: Replace single new line characters with <br> when True
+* breaks: Control where hard breaks are inserted in the markdown.
+  Options include:
+  - on_newline: Replace single new line characters with <br> when True
+  - on_backslash: Replace backslashes at the end of a line with <br>
+* break-on-newline: Alias for the on_newline option in the breaks extra.
 * code-friendly: Disable _ and __ for em and strong.
 * cuddled-lists: Allow lists to be cuddled to the preceding paragraph.
 * fenced-code-blocks: Allows a code block to not have to be indented
@@ -235,6 +239,11 @@ class Markdown(object):
                 self._toc_depth = 6
             else:
                 self._toc_depth = self.extras["toc"].get("depth", 6)
+
+        if 'break-on-newline' in self.extras:
+            self.extras.setdefault('breaks', {})
+            self.extras['breaks']['on_newline'] = True
+
         self._instance_extras = self.extras.copy()
 
         if 'link-patterns' in self.extras:
@@ -1318,8 +1327,13 @@ class Markdown(object):
             text = self._do_smart_punctuation(text)
 
         # Do hard breaks:
-        if "break-on-newline" in self.extras:
-            text = re.sub(r" *\n(?!\<(?:\/?(ul|ol|li))\>)", "<br%s\n" % self.empty_element_suffix, text)
+        if 'breaks' in self.extras:
+            break_tag = "<br%s\n" % self.empty_element_suffix
+            # do backslashes first because on_newline inserts the break before the newline
+            if self.extras['breaks'].get('on_backslash', False):
+                text = re.sub(r' *\\\n', break_tag, text)
+            if self.extras['breaks'].get('on_newline', False):
+                text = re.sub(r" *\n(?!\<(?:\/?(ul|ol|li))\>)", break_tag, text)
         else:
             text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
 
