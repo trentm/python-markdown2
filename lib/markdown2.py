@@ -105,7 +105,6 @@ __author__ = "Trent Mick"
 
 import sys
 import re
-import re2
 import logging
 from hashlib import sha256
 import optparse
@@ -2241,68 +2240,23 @@ class Markdown(object):
     def _do_underline(self, text):
         text = self._underline_re.sub(r"<u>\1</u>", text)
         return text
-    
+
     _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
     def _do_tg_spoiler(self, text):
         text = self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
         return text
 
-    #_strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
-    _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
-    #_code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
+    _strong_re = re.compile(r"(\*\*|__)(?=\S)(.*\S)\1", re.S)
+    _em_re = re.compile(r"(\*|_)(?=\S)(.*?\S)\1", re.S)
+    _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
     _code_friendly_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
-
-    def _safe_strong_re_sub(self,text):
-        import re2
-        #(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1
-        _code_friendly_strong_re = re2.compile(r"(?s)(\*\*|__)(.+?[*_]*)(\*\*|__)")
-        m = _code_friendly_strong_re.search(text)
-        tmpText = ""
-        while True:
-            if m == None:
-                tmpText += text
-                return tmpText
-            else:
-                group2Text = m.group(2)
-                # lookaround‘s constraints
-                if re2.match("\S.*", group2Text) and re2.match(".*\S", group2Text) and m.group(1) == m.group(3):
-                    tmpText += text[0:m.span()[0]] + "<strong>" + group2Text + "</strong>"
-                    text = text[m.span()[1]:]
-                    m = _code_friendly_strong_re.search(text)
-                else:
-                    return tmpText + text
-
-    def _safe_code_friendly_strong_re_sub(self,text):
-        # **abc**v**edf **
-        #\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*
-        _code_friendly_strong_re = re2.compile(r"(?s)\*\*(.+?[*_]*)\*\*")
-        m = _code_friendly_strong_re.search(text)
-        tmpText = ""
-        while True:
-            if m == None:
-                tmpText += text
-                return tmpText
-            else:
-                group1Text = m.group(1)
-                # lookaround‘s constraints
-                if re2.match("\S.*",group1Text) and re2.match(".*\S",group1Text):
-                    tmpText += text[0:m.span()[0]] + "<strong>" + group1Text + "</strong>"
-                    text = text[m.span()[1]:]
-                    m = _code_friendly_strong_re.search(text)
-                else:
-                    return tmpText + text
-
-
-
     def _do_italics_and_bold(self, text):
         # <strong> must go first:
         if "code-friendly" in self.extras:
-            #text =self._code_friendly_strong_re(r"<strong>\1</strong>",text)
-            text = self._safe_code_friendly_strong_re_sub(text)
+            text = self._code_friendly_strong_re.sub(r"<strong>\1</strong>", text)
             text = self._code_friendly_em_re.sub(r"<em>\1</em>", text)
         else:
-            #text = self._strong_re.sub(r"<strong>\2</strong>", text)
-            text = self._safe_strong_re_sub(text)
+            text = self._strong_re.sub(r"<strong>\2</strong>", text)
             text = self._em_re.sub(r"<em>\2</em>", text)
         return text
 
