@@ -1,6 +1,36 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.4.7 (not yet released)
+## python-markdown2 2.4.11 (not yet released)
+
+- [pull #524] Fix angles being escaped in style blocks (issue #523)
+- [pull #527] Fix base64 images being corrupted in safe mode (issue #526)
+- [pull #529] Add `breaks` extra with ability to hard break on backslashes (issue #525)
+
+## python-markdown2 2.4.10
+
+- [pull #520] Allow more relative links in safe mode (issue #517)
+- [pull #521] Always restore hashed HTML blocks (issue #185)
+- [pull #522] Add `middle-word-em` extra
+
+
+## python-markdown2 2.4.9
+
+- [pull #500] Add `<thead>` tag to html-classes extra
+- [pull #501] Fix link patterns extra matching against internal hashes
+- [pull #502] Replace deprecated `optparse` with `argparse`
+- [pull #506] Fix `_uniform_outdent` failing with empty strings (issue #505)
+- [pull #509] Fix HTML elements not unhashing correctly (issue 508)
+- [pull #511] Remove deprecated `imp` module (issue #510)
+- [pull #512] Allow link patterns to be passed via extras dict
+- [pull #513] Fix relative links not working in safe mode (issue #254)
+
+
+## python-markdown2 2.4.8
+
+- [pull #499] Fix images not being procesed correctly (#498)
+
+
+## python-markdown2 2.4.7
 
 - [pull #483] Fix hashing nested HTML blocks
 - [pull #486] Fix backslash being unable to escape raw HTML tags

@@ -37,13 +37,27 @@ if __name__ == "__main__":
 
     setup()
     default_tags = []
+    warnings = []
     for extra_lib in ('pygments', 'wavedrom'):
         try:
-            importlib.import_module(extra_lib)
+            mod = importlib.import_module(extra_lib)
         except ImportError:
-            log.warning("skipping %s tests ('%s' module not found)" % (extra_lib, extra_lib))
+            warnings.append("skipping %s tests ('%s' module not found)" % (extra_lib, extra_lib))
             default_tags.append("-%s" % extra_lib)
+        else:
+            if extra_lib == 'pygments':
+                version = tuple(int(i) for i in mod.__version__.split('.')[:3])
+                if version >= (2, 14, 0):
+                    tag = "pygments<2.14"
+                else:
+                    tag = "pygments>=2.14"
+                warnings.append("skipping %s tests (pygments %s found)" % (tag, mod.__version__))
+                default_tags.append("-%s" % tag)
 
     retval = testlib.harness(testdir_from_ns=testdir_from_ns,
                              default_tags=default_tags)
+
+    for warning in warnings:
+        log.warning(warning)
+
     sys.exit(retval)

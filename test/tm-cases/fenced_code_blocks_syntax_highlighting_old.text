@@ -1,0 +1,14 @@
+```python
+if True:
+    print "hi"
+```
+
+That's using the *fenced-code-blocks* extra with Python
+syntax coloring, if `pygments` is installed. See
+<http://github.github.com/github-flavored-markdown/>.
+
+```ruby
+def foo
+    puts "hi"
+end
+```

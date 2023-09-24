@@ -1,11 +1,47 @@
+<h1>Normal links</h1>
+
 <p><a href="https://www.example.com">Safe link 1</a></p>
 
 <p><a href="http://www.example.com">Safe link 2</a></p>
 
 <p><a href="ftp://www.example.com">Safe link 3</a></p>
 
-<p><a href="#anchor">Safe link 4</a></p>
+<p><a href="mailto:emailaddress@server.com">Safe link 4</a></p>
+
+<p><a href="tel:0123456789">Safe link 5</a></p>
+
+<p><a href="#anchor">Safe link 6</a></p>
+
+<h1>Bad protocols</h1>
 
 <p><a href="#">Unsafe link 1</a></p>
 
 <p><a href="#">Unsafe link 2</a></p>
+
+<h1>Relative links</h1>
+
+<p><a href="example">Safe link 1</a></p>
+
+<p><a href="./example">Safe link 2</a></p>
+
+<p><a href="../../example">Safe link 3</a></p>
+
+<p><a href="/example">Safe link 4</a></p>
+
+<p><a href="#">Unsafe link 1</a></p>
+
+<h1>Edge cases</h1>
+
+<p><a href="www.example.com/abc:def">Safe link 1</a></p>
+
+<p><a href="www.example.com/abc:/def">Safe link 2</a></p>
+
+<p><a href="https://www.example.com:4200">Safe link 3</a></p>
+
+<p><a href="https://www.example.com:4200/abcdef">Safe link 4</a></p>
+
+<p><a href="#">Unsafe link 1</a></p>
+
+<p><a href="#">Unsafe link 2</a></p>
+
+<p><a href="#">Unsafe link 3</a></p>

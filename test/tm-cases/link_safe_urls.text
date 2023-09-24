@@ -1,11 +1,47 @@
+# Normal links
+
 [Safe link 1](https://www.example.com)
 
 [Safe link 2](http://www.example.com)
 
 [Safe link 3](ftp://www.example.com)
 
-[Safe link 4](#anchor)
+[Safe link 4](mailto:emailaddress@server.com)
+
+[Safe link 5](tel:0123456789)
+
+[Safe link 6](#anchor)
+
+# Bad protocols
 
 [Unsafe link 1](unknown://www.example.com)
 
-[Unsafe link 2](example)
+[Unsafe link 2](mailfrom:www.example.com)
+
+# Relative links
+
+[Safe link 1](example)
+
+[Safe link 2](./example)
+
+[Safe link 3](../../example)
+
+[Safe link 4](/example)
+
+[Unsafe link 1](.../www.example.com)
+
+# Edge cases
+
+[Safe link 1](www.example.com/abc:def)
+
+[Safe link 2](www.example.com/abc:/def)
+
+[Safe link 3](https://www.example.com:4200)
+
+[Safe link 4](https://www.example.com:4200/abcdef)
+
+[Unsafe link 1](unknown://www.example.com://abc)
+
+[Unsafe link 2](C:/Windows/System32)
+
+[Unsafe link 3](C:\Windows\System32)

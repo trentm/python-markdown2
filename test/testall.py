@@ -2,14 +2,11 @@
 #
 # Run the test suite against all the Python versions we can find.
 #
-
-
-
-import sys
 import os
-from os.path import dirname, abspath, join
 import re
-
+import subprocess
+import sys
+from os.path import abspath, dirname, join
 
 TOP = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, join(TOP, "tools"))
@@ -43,6 +40,7 @@ def _gen_pythons():
         yield ver, python
 
 def testall():
+    all_warnings = []
     for ver, python in _gen_pythons():
         if ver < (3, 5):
             # Don't support Python < 3.5
@@ -50,8 +48,26 @@ def testall():
         ver_str = "%s.%s" % ver
         print("-- test with Python %s (%s)" % (ver_str, python))
         assert ' ' not in python
-        rv = os.system("MACOSX_DEPLOYMENT_TARGET= %s test.py -- -knownfailure" % python)
-        if rv:
-            sys.exit(os.WEXITSTATUS(rv))
+
+        proc = subprocess.Popen(
+            # pass "-u" option to force unbuffered output
+            "MACOSX_DEPLOYMENT_TARGET= %s -u test.py -- -knownfailure" % python,
+            shell=True, stderr=subprocess.PIPE
+        )
+
+        while proc.poll() is None:
+            # capture and re-print stderr while process is running
+            line = proc.stderr.readline().decode().strip()
+            print(line, file=sys.stderr)
+            if 'WARNING:test:' in line:
+                # if stderr contains a warning, save this for later
+                all_warnings.append((python, ver_str, line))
+
+        if proc.returncode:
+            sys.exit(os.WEXITSTATUS(proc.returncode))
+
+    for python, ver_str, warning in all_warnings:
+        # now re-print all warnings to make sure they are seen
+        print('-- warning raised by Python %s (%s) -- %s' % (ver_str, python, warning))
 
 testall()
