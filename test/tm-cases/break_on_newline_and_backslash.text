@@ -1,0 +1,3 @@
+The breaks extra allows you to insert a hard break on newlines.
+You can also insert hard breaks after backslashes \
+although this will result in a double break when both are enabled.

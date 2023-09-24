@@ -1,0 +1,13 @@
+<script>
+    if (1 > 2) {
+        console.log('<p>abcdef</p>');
+    }
+</script>
+
+<style>
+    pre > code {
+        font-family: 'Comic Sans MS';
+    }
+</style>
+
+Some other text
