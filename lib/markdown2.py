@@ -2332,10 +2332,10 @@ class Markdown(object):
         text = self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
         return text
 
-    _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
-    _em_re = r"(\*|_)(?=\S)(.+?)(?<=\S)\1"
-    _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
-    _code_friendly_em_re = r"\*(?=\S)(.+?)(?<=\S)\*"
+    _strong_re = re.compile(r"(\*\*|__)(?=\S)(.*\S)\1", re.S)
+    _em_re = r"(\*|_)(?=\S)(.*?\S)\1"
+    _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)\*\*", re.S)
+    _code_friendly_em_re = r"\*(?=\S)(.+?)\*"
     def _do_italics_and_bold(self, text):
         if self.extras.get('middle-word-em', True) is False:
             code_friendly_em_re = r'(?<=\b)%s(?=\b)' % self._code_friendly_em_re
