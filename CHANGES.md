@@ -5,6 +5,7 @@
 - [pull #524] Fix angles being escaped in style blocks (issue #523)
 - [pull #527] Fix base64 images being corrupted in safe mode (issue #526)
 - [pull #529] Add `breaks` extra with ability to hard break on backslashes (issue #525)
+- [pull #532] Fix #493 persisting when `code-friendly` extra enabled
 
 ## python-markdown2 2.4.10
 
