@@ -2002,8 +2002,8 @@ class Markdown(object):
         self._code_table[text] = hashed
         return hashed
 
-    _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
-    _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
+    _strong_re = re.compile(r"(\*\*|__)(?=\S)(.*\S)\1", re.S)
+    _em_re = re.compile(r"(\*|_)(?=\S)(.*?\S)\1", re.S)
 
     @Stage.mark(Stage.ITALIC_AND_BOLD)
     def _do_italics_and_bold(self, text):
@@ -2434,7 +2434,6 @@ class ItalicAndBoldProcessor(Extra):
     def sub(self, match):
         # do nothing. Let `Markdown._do_italics_and_bold` do its thing later
         return match.string[match.start(): match.end()]
-
 
     def sub_hash(self, match):
         substr = match.string[match.start(): match.end()]

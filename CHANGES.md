@@ -5,11 +5,12 @@
 - [pull #524] Fix angles being escaped in style blocks (issue #523)
 - [pull #527] Fix base64 images being corrupted in safe mode (issue #526)
 - [pull #529] Add `breaks` extra with ability to hard break on backslashes (issue #525)
+- [pull #532] Fix #493 persisting when `code-friendly` extra enabled
+- [pull #519] Add support for custom extras
+- [pull #519] Drop Python 3.5 support
 
 ## python-markdown2 2.4.10
 
-- [pull #519] Add support for custom extras
-- [pull #519] Drop Python 3.5 support
 - [pull #520] Allow more relative links in safe mode (issue #517)
 - [pull #521] Always restore hashed HTML blocks (issue #185)
 - [pull #522] Add `middle-word-em` extra
