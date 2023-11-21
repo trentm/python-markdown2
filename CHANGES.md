@@ -7,6 +7,7 @@
 - [pull #529] Add `breaks` extra with ability to hard break on backslashes (issue #525)
 - [pull #532] Fix #493 persisting when `code-friendly` extra enabled
 - [pull #535] Update `_slugify` to use utf-8 encoding (issue #534)
+- [pull #536] Maintain order of appearance in footnotes
 
 ## python-markdown2 2.4.10
 
