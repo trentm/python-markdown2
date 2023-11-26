@@ -431,15 +431,17 @@ class Markdown(object):
             text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow"\2', text)
 
         if "toc" in self.extras and self._toc:
-            def toc_sort(entry):
-                '''Sort the TOC by order of appearance in text'''
-                return re.search(
-                    # header tag, any attrs, the ID, any attrs, the text, close tag
-                    r'^<(h%d).*?id=(["\'])%s\2.*>%s</\1>$' % (entry[0], entry[1], re.escape(entry[2])),
-                    text, re.M
-                ).start()
+            if self.extras['header-ids'].get('mixed'):
+                # TOC will only be out of order if mixed headers is enabled
+                def toc_sort(entry):
+                    '''Sort the TOC by order of appearance in text'''
+                    return re.search(
+                        # header tag, any attrs, the ID, any attrs, the text, close tag
+                        r'^<(h%d).*?id=(["\'])%s\2.*>%s</\1>$' % (entry[0], entry[1], re.escape(entry[2])),
+                        text, re.M
+                    ).start()
 
-            self._toc.sort(key=toc_sort)
+                self._toc.sort(key=toc_sort)
             self._toc_html = calculate_toc_html(self._toc)
 
             # Prepend toc html to output
