@@ -8,6 +8,7 @@
 - [pull #532] Fix #493 persisting when `code-friendly` extra enabled
 - [pull #535] Update `_slugify` to use utf-8 encoding (issue #534)
 - [pull #536] Maintain order of appearance in footnotes
+- [pull #538] Include HTML headers in TOC
 
 ## python-markdown2 2.4.10
 
