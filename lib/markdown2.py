@@ -240,6 +240,13 @@ class Markdown(object):
             else:
                 self._toc_depth = self.extras["toc"].get("depth", 6)
 
+        if 'header-ids' in self.extras:
+            if not isinstance(self.extras['header-ids'], dict):
+                self.extras['header-ids'] = {
+                    'mixed': False,
+                    'prefix': self.extras['header-ids']
+                }
+
         if 'break-on-newline' in self.extras:
             self.extras.setdefault('breaks', {})
             self.extras['breaks']['on_newline'] = True
@@ -783,6 +790,8 @@ class Markdown(object):
                 return ''.join(["\n\n", f_key,
                     "\n\n", middle, "\n\n",
                     l_key, "\n\n"])
+        elif self.extras.get('header-ids', {}).get('mixed') and self._h_tag_re.match(html):
+            html = self._h_tag_re.sub(self._h_tag_sub, html)
         key = _hash_text(html)
         self.html_blocks[key] = html
         return "\n\n" + key + "\n\n"
@@ -1810,6 +1819,7 @@ class Markdown(object):
     _h_re_tag_friendly = re.compile(_h_re_base % '+', re.X | re.M)
 
     def _h_sub(self, match):
+        '''Handles processing markdown headers'''
         if match.group(1) is not None and match.group(3) == "-":
             return match.group(1)
         elif match.group(1) is not None:
@@ -1827,13 +1837,31 @@ class Markdown(object):
         header_id_attr = ""
         if "header-ids" in self.extras:
             header_id = self.header_id_from_text(header_group,
-                self.extras["header-ids"], n)
+                self.extras["header-ids"].get('prefix'), n)
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
         html = self._run_span_gamut(header_group)
         if "toc" in self.extras and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
+
+    _h_tag_re = re.compile(r'''
+        ^<h([1-6])(.*)>  # \1 tag num, \2 any attributes
+        (.*)  # \3 text
+        </h\1>
+    ''', re.X | re.M)
+
+    def _h_tag_sub(self, match):
+        '''Different to `_h_sub` in that this function handles existing HTML headers'''
+        text = match.string[match.start(): match.end()]
+        attrs = match.group(2)
+        if 'id=' in attrs:
+            return text
+        header_id = self.header_id_from_text(match.group(3), self.extras['header-ids'].get('prefix'), match.group(1))
+        if header_id:
+            # '<h[digit]' + new ID + '...'
+            return text[:3] + f' id="{header_id}"' + text[3:]
+        return text
 
     def _do_headers(self, text):
         # Setext-style headers:
