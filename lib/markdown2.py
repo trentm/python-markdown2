@@ -1891,7 +1891,7 @@ class Markdown(object):
             self._toc_add_entry(h_level, header_id, h_text)
         if header_id and not id_attr:
             # '<h[digit]' + new ID + '...'
-            return text[:3] + f' id="{header_id}"' + text[3:]
+            return text[:3] + ' id="%s"' % header_id + text[3:]
         return text
 
     def _do_headers(self, text):
