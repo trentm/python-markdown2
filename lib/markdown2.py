@@ -1795,6 +1795,13 @@ class Markdown(object):
 
         return header_id
 
+    def _header_id_exists(self, text):
+        header_id = _slugify(text)
+        prefix = self.extras['header-ids'].get('prefix')
+        if prefix and isinstance(prefix, str):
+            header_id = prefix + '-' + header_id
+        return header_id in self._count_from_header_id
+
     def _toc_add_entry(self, level, id, name):
         if level > self._toc_depth:
             return
@@ -1846,7 +1853,7 @@ class Markdown(object):
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
 
     _h_tag_re = re.compile(r'''
-        ^<h([1-6])(.*)>  # \1 tag num, \2 any attributes
+        ^<h([1-6])(.*)>  # \1 tag num, \2 attrs
         (.*)  # \3 text
         </h\1>
     ''', re.X | re.M)
@@ -1854,11 +1861,24 @@ class Markdown(object):
     def _h_tag_sub(self, match):
         '''Different to `_h_sub` in that this function handles existing HTML headers'''
         text = match.string[match.start(): match.end()]
-        attrs = match.group(2)
-        if 'id=' in attrs:
+        h_level = int(match.group(1))
+        # extract id= attr from tag, trying to account for regex "misses"
+        id_attr = (re.match(r'.*?id=(\S+)?.*', match.group(2) or '') or '')
+        if id_attr:
+            # if id attr exists, extract that
+            id_attr = id_attr.group(1) or ''
+        id_attr = id_attr.strip('\'" ')
+        h_text = match.group(3)
+
+        # check if header was already processed (ie: was a markdown header rather than HTML)
+        if id_attr and self._header_id_exists(id_attr):
             return text
-        header_id = self.header_id_from_text(match.group(3), self.extras['header-ids'].get('prefix'), match.group(1))
-        if header_id:
+
+        # generate new header id if none existed
+        header_id = id_attr or self.header_id_from_text(h_text, self.extras['header-ids'].get('prefix'), h_level)
+        if "toc" in self.extras:
+            self._toc_add_entry(h_level, header_id, h_text)
+        if header_id and not id_attr:
             # '<h[digit]' + new ID + '...'
             return text[:3] + f' id="{header_id}"' + text[3:]
         return text
