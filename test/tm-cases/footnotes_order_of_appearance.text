@@ -1,0 +1,15 @@
+---
+title: testing the footnotes bug
+---
+Lorem ipsum dolor sit amet. Aliqua cillum, eu velit.[^note1] Velit deserunt adipiscing adipiscing ullamco exercitation.
+
+- this is a list item
+- this is a list item[^note2]
+- this is a list item[^note3]
+
+Lorem ipsum dolor sit amet. Adipiscing[^note4] adipiscing ullamco, exercitation sint. Exercitation sint, fugiat exercitation voluptate amet.
+
+[^note1]: this should be the first note
+[^note2]: this should be the second note
+[^note3]: this should be the third note
+[^note4]: this should be the fourth note

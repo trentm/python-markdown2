@@ -115,7 +115,7 @@ import codecs
 import logging
 import re
 import sys
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
@@ -377,7 +377,9 @@ class Markdown(object):
 
     def _setup_extras(self):
         if "footnotes" in self.extras:
-            self.footnotes = {}
+            # order of insertion matters for footnotes. Use ordered dict for Python < 3.7
+            # https://docs.python.org/3/whatsnew/3.7.html#summary-release-highlights
+            self.footnotes = OrderedDict()
             self.footnote_ids = []
         if "header-ids" in self.extras:
             self._count_from_header_id = defaultdict(int)
@@ -2116,6 +2118,10 @@ class Markdown(object):
             if not self.footnote_return_symbol:
                 self.footnote_return_symbol = "&#8617;"
 
+            # self.footnotes is generated in _strip_footnote_definitions, which runs re.sub on the whole
+            # text. This means that the dict keys are inserted in order of appearance. Use the dict to
+            # sort footnote ids by that same order
+            self.footnote_ids.sort(key=lambda a: list(self.footnotes.keys()).index(a))
             for i, id in enumerate(self.footnote_ids):
                 if i != 0:
                     footer.append('')
@@ -3268,7 +3274,7 @@ def _slugify(value):
     From Django's "django/template/defaultfilters.py".
     """
     import unicodedata
-    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode()
+    value = unicodedata.normalize('NFKD', value).encode('utf-8', 'ignore').decode()
     value = _slugify_strip_re.sub('', value).strip().lower()
     return _slugify_hyphenate_re.sub('-', value)
 ## end of http://code.activestate.com/recipes/577257/ }}}
