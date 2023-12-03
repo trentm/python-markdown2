@@ -244,7 +244,8 @@ class Markdown(object):
             if not isinstance(self.extras['header-ids'], dict):
                 self.extras['header-ids'] = {
                     'mixed': False,
-                    'prefix': self.extras['header-ids']
+                    'prefix': self.extras['header-ids'],
+                    'reset-count': True
                 }
 
         if 'break-on-newline' in self.extras:
@@ -292,7 +293,8 @@ class Markdown(object):
             self.footnotes = OrderedDict()
             self.footnote_ids = []
         if "header-ids" in self.extras:
-            self._count_from_header_id = defaultdict(int)
+            if not hasattr(self, '_count_from_header_id') or self.extras['header-ids'].get('reset-count', False):
+                self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
             self.metadata = {}
 
