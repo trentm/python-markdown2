@@ -9,6 +9,7 @@
 - [pull #535] Update `_slugify` to use utf-8 encoding (issue #534)
 - [pull #536] Maintain order of appearance in footnotes
 - [pull #538] Include HTML headers in TOC
+- [pull #540] Add mechanism to prevent header ID counter resetting (issue #530)
 
 ## python-markdown2 2.4.10
 
