@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.12 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.11
 
 - [pull #524] Fix angles being escaped in style blocks (issue #523)
