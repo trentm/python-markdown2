@@ -1811,7 +1811,7 @@ class Markdown(object):
         prefix = self.extras['header-ids'].get('prefix')
         if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
-        return header_id in self._count_from_header_id
+        return header_id in self._count_from_header_id or header_id in map(lambda x: x[1], self._toc)
 
     def _toc_add_entry(self, level, id, name):
         if level > self._toc_depth:
