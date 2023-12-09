@@ -783,8 +783,15 @@ class Markdown(object):
     def _hash_html_block_sub(self, match, raw=False):
         if isinstance(match, str):
             html = match
+            tag = None
         else:
             html = match.group(1)
+            try:
+                tag = match.group(2)
+            except IndexError:
+                tag = None
+
+        tag = tag or re.match(r'^<(\S).*?>', html).group(1)
 
         if raw and self.safe_mode:
             html = self._sanitize_html(html)
@@ -793,6 +800,10 @@ class Markdown(object):
             m = self._html_markdown_attr_re.search(first_line)
             if m:
                 lines = html.split('\n')
+                if len(lines) < 3:  # if MD is on same line as HTML
+                    lines = re.split(r'(<%s.*markdown=.*?>)' % tag, lines[0])[1:] + lines[1:]
+                    first_line = lines[0]
+                    lines = lines[:-1] + re.split(r'(</%s>.*?$)' % tag, lines[-1])[:-1]
                 middle = '\n'.join(lines[1:-1])
                 last_line = lines[-1]
                 first_line = first_line[:m.start()] + first_line[m.end():]
