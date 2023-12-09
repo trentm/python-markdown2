@@ -23,6 +23,9 @@ def _python_ver_from_python(python):
 
 def _gen_python_names():
     yield "python"
+    if sys.platform == "win32":
+        return
+
     # generate version numbers from python 3.5 to 3.20
     for ver in [(3, i) for i in range(5, 20)]:
         yield "python%d.%d" % ver
@@ -33,6 +36,10 @@ def _gen_pythons():
     python_from_ver = {}
     for name in _gen_python_names():
         for python in which.whichall(name):
+            if sys.platform == "win32" and re.search(r"\\WindowsApps\\[^\\]+$", python, flags=re.IGNORECASE):
+                # skip Python stubs from the Windows Store.
+                continue
+
             ver = _python_ver_from_python(python)
             if ver not in python_from_ver:
                 python_from_ver[ver] = python
@@ -49,9 +56,11 @@ def testall():
         print("-- test with Python %s (%s)" % (ver_str, python))
         assert ' ' not in python
 
+        env_args = 'MACOSX_DEPLOYMENT_TARGET= ' if sys.platform == 'darwin' else ''
+
         proc = subprocess.Popen(
             # pass "-u" option to force unbuffered output
-            "MACOSX_DEPLOYMENT_TARGET= %s -u test.py -- -knownfailure" % python,
+            "%s%s -u test.py -- -knownfailure" % (env_args, python),
             shell=True, stderr=subprocess.PIPE
         )
 
@@ -64,7 +73,7 @@ def testall():
                 all_warnings.append((python, ver_str, line))
 
         if proc.returncode:
-            sys.exit(os.WEXITSTATUS(proc.returncode))
+            sys.exit(proc.returncode)
 
     for python, ver_str, warning in all_warnings:
         # now re-print all warnings to make sure they are seen
