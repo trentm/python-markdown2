@@ -1362,15 +1362,20 @@ class Markdown(object):
             text = self._do_smart_punctuation(text)
 
         # Do hard breaks:
-        if 'breaks' in self.extras:
-            break_tag = "<br%s\n" % self.empty_element_suffix
-            # do backslashes first because on_newline inserts the break before the newline
-            if self.extras['breaks'].get('on_backslash', False):
-                text = re.sub(r' *\\\n', break_tag, text)
-            if self.extras['breaks'].get('on_newline', False):
-                text = re.sub(r" *\n(?!\<(?:\/?(ul|ol|li))\>)", break_tag, text)
+        on_backslash = self.extras.get('breaks', {}).get('on_backslash', False)
+        on_newline = self.extras.get('breaks', {}).get('on_newline', False)
+
+        if on_backslash and on_newline:
+            pattern = r' *\\?'
+        elif on_backslash:
+            pattern = r'(?: *\\| {2,})'
+        elif on_newline:
+            pattern = r' *'
         else:
-            text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
+            pattern = r' {2,}'
+
+        break_tag = "<br%s\n" % self.empty_element_suffix
+        text = re.sub(pattern + r"\n(?!\<(?:\/?(ul|ol|li))\>)", break_tag, text)
 
         return text
 
