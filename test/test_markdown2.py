@@ -345,8 +345,7 @@ def norm_html_from_html(html):
         html = html.decode('utf-8')
     html = _markdown_email_link_re.sub(
         _markdown_email_link_sub, html)
-    if sys.platform == "win32":
-        html = html.replace('\r\n', '\n')
+    html = html.replace('\r\n', '\n')
     return html
 
 
