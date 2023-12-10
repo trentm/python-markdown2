@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.4.12 (not yet released)
 
-(nothing yet)
+- [pull #550] Fix tables with trailing whitespace not being recognized (#549)
 
 
 ## python-markdown2 2.4.11
