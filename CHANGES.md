@@ -5,6 +5,7 @@
 - [pull #547] Update `markdown-in-html` extra to handle markdown on same line as HTML (#546)
 - [pull #550] Fix tables with trailing whitespace not being recognized (#549)
 - [pull #545] Fix multiple instances of strong emphasis (`**`) in one line (#541)
+- [pull #556] Fix incorrect parsing of links after square brackets (#552)
 
 ## python-markdown2 2.4.11
 
