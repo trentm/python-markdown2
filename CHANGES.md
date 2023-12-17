@@ -1,6 +1,14 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.4.11 (not yet released)
+## python-markdown2 2.4.12 (not yet released)
+
+- [pull #547] Update `markdown-in-html` extra to handle markdown on same line as HTML (#546)
+- [pull #550] Fix tables with trailing whitespace not being recognized (#549)
+- [pull #545] Fix multiple instances of strong emphasis (`**`) in one line (#541)
+- [pull #519] Add support for custom extras
+- [pull #519] Drop Python 3.5 support
+
+## python-markdown2 2.4.11
 
 - [pull #524] Fix angles being escaped in style blocks (issue #523)
 - [pull #527] Fix base64 images being corrupted in safe mode (issue #526)
@@ -8,8 +16,8 @@
 - [pull #532] Fix #493 persisting when `code-friendly` extra enabled
 - [pull #535] Update `_slugify` to use utf-8 encoding (issue #534)
 - [pull #536] Maintain order of appearance in footnotes
-- [pull #519] Add support for custom extras
-- [pull #519] Drop Python 3.5 support
+- [pull #538] Include HTML headers in TOC
+- [pull #540] Add mechanism to prevent header ID counter resetting (issue #530)
 
 ## python-markdown2 2.4.10
 

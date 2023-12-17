@@ -1,0 +1,14 @@
+<ul>
+  <li><a href="#header-1">Header 1</a>
+  <ul>
+    <li><a href="#header-2">Header 2</a></li>
+  </ul></li>
+  <li><a href="#header-3">Header 3</a>
+  <ul>
+    <li><a href="#header-4">Header 4</a></li>
+  </ul></li>
+  <li><a href="#header-5">Header 5</a>
+  <ul>
+    <li><a href="#my-important-id">Header 6</a></li>
+  </ul></li>
+</ul>
