@@ -1786,7 +1786,8 @@ class Markdown(object):
                             curr_pos = start_idx + 1
                     else:
                         # This id isn't defined, leave the markup alone.
-                        curr_pos = match.end()
+                        # set current pos to end of link title and continue from there
+                        curr_pos = p
                     continue
 
             # Otherwise, it isn't markup.
