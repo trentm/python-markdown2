@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.13 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.12
 
 - [pull #547] Update `markdown-in-html` extra to handle markdown on same line as HTML (#546)
