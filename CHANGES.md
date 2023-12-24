@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.4.13 (not yet released)
 
-(nothing yet)
+- [pull #560] Fix `markdown-in-html` not always splitting HTML tags into separate lines (#558)
 
 
 ## python-markdown2 2.4.12
