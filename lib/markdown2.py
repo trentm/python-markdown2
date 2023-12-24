@@ -1249,7 +1249,7 @@ class Markdown(object):
         """
         less_than_tab = self.tab_width - 1
         table_re = re.compile(r'''
-                (?:(?<=\n\n)|\A\n?)             # leading blank line
+                (?:(?<=\n)|\A\n?)             # leading blank line
 
                 ^[ ]{0,%d}                      # allowed whitespace
                 (.*[|].*)[ ]*\n                   # $1: header row (at least one pipe)
