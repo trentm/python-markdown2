@@ -130,13 +130,28 @@
 
 <p><em>Note:</em> This passes GFM, but fails in PHP-Markdown.</p>
 
-<h1>FAIL: table with cuddled leading content</h1>
+<h1>table with cuddled leading content</h1>
 
-<p>before
-| Header 1 | Header 2 |
-| -------- | -------- |
-| Cell 1 | Cell 2 |
-| Cell 3 | Cell 4 |</p>
+<p>This would have failed in &lt;=2.4.13</p>
+
+<table>
+<thead>
+<tr>
+  <th>Header 1</th>
+  <th>Header 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell 1</td>
+  <td>Cell 2</td>
+</tr>
+<tr>
+  <td>Cell 3</td>
+  <td>Cell 4</td>
+</tr>
+</tbody>
+</table>
 
 <h1>single column single leading bar</h1>
 
