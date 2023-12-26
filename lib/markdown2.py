@@ -800,13 +800,17 @@ class Markdown(object):
             m = self._html_markdown_attr_re.search(first_line)
             if m:
                 lines = html.split('\n')
-                if len(lines) < 3:  # if MD is on same line as HTML
-                    lines = re.split(r'(<%s.*markdown=.*?>)' % tag, lines[0])[1:] + lines[1:]
-                    first_line = lines[0]
-                    lines = lines[:-1] + re.split(r'(</%s>.*?$)' % tag, lines[-1])[:-1]
+                # if MD is on same line as opening tag then split across two lines
+                lines = list(filter(None, (re.split(r'(<%s.*markdown=.*?>)' % tag, lines[0])))) + lines[1:]
+                # if MD on same line as closing tag, split across two lines
+                lines = lines[:-1] + list(filter(None, re.split(r'(</%s>.*?$)' % tag, lines[-1])))
+                # extract key sections of the match
+                first_line = lines[0]
                 middle = '\n'.join(lines[1:-1])
                 last_line = lines[-1]
+                # remove `markdown="1"` attr from tag
                 first_line = first_line[:m.start()] + first_line[m.end():]
+                # hash the HTML segments to protect them
                 f_key = _hash_text(first_line)
                 self.html_blocks[f_key] = first_line
                 l_key = _hash_text(last_line)

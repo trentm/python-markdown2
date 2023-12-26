@@ -3,6 +3,7 @@
 ## python-markdown2 2.4.13 (not yet released)
 
 - [pull #559] Allow cuddled tables (#557)
+- [pull #560] Fix `markdown-in-html` not always splitting HTML tags into separate lines (#558)
 
 
 ## python-markdown2 2.4.12
