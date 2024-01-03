@@ -106,7 +106,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (2, 4, 12)
+__version_info__ = (2, 4, 13)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -885,13 +885,17 @@ class Markdown(object):
             m = self._html_markdown_attr_re.search(first_line)
             if m:
                 lines = html.split('\n')
-                if len(lines) < 3:  # if MD is on same line as HTML
-                    lines = re.split(r'(<%s.*markdown=.*?>)' % tag, lines[0])[1:] + lines[1:]
-                    first_line = lines[0]
-                    lines = lines[:-1] + re.split(r'(</%s>.*?$)' % tag, lines[-1])[:-1]
+                # if MD is on same line as opening tag then split across two lines
+                lines = list(filter(None, (re.split(r'(<%s.*markdown=.*?>)' % tag, lines[0])))) + lines[1:]
+                # if MD on same line as closing tag, split across two lines
+                lines = lines[:-1] + list(filter(None, re.split(r'(</%s>.*?$)' % tag, lines[-1])))
+                # extract key sections of the match
+                first_line = lines[0]
                 middle = '\n'.join(lines[1:-1])
                 last_line = lines[-1]
+                # remove `markdown="1"` attr from tag
                 first_line = first_line[:m.start()] + first_line[m.end():]
+                # hash the HTML segments to protect them
                 f_key = _hash_text(first_line)
                 self.html_blocks[f_key] = first_line
                 l_key = _hash_text(last_line)
@@ -1615,7 +1619,8 @@ class Markdown(object):
                             curr_pos = start_idx + 1
                     else:
                         # This id isn't defined, leave the markup alone.
-                        curr_pos = match.end()
+                        # set current pos to end of link title and continue from there
+                        curr_pos = p
                     continue
 
             # Otherwise, it isn't markup.
@@ -3065,26 +3070,26 @@ class Tables(Extra):
         """
         less_than_tab = self.md.tab_width - 1
         table_re = re.compile(r'''
-            (?:(?<=\n\n)|\A\n?)             # leading blank line
+                (?:(?<=\n)|\A\n?)             # leading blank line
 
-            ^[ ]{0,%d}                      # allowed whitespace
-            (.*[|].*)[ ]*\n                   # $1: header row (at least one pipe)
+                ^[ ]{0,%d}                      # allowed whitespace
+                (.*[|].*)[ ]*\n                   # $1: header row (at least one pipe)
 
-            ^[ ]{0,%d}                      # allowed whitespace
-            (                               # $2: underline row
-                # underline row with leading bar
-                (?:  \|\ *:?-+:?\ *  )+  \|? \s?[ ]*\n
-                |
-                # or, underline row without leading bar
-                (?:  \ *:?-+:?\ *\|  )+  (?:  \ *:?-+:?\ *  )? \s?[ ]*\n
-            )
+                ^[ ]{0,%d}                      # allowed whitespace
+                (                               # $2: underline row
+                    # underline row with leading bar
+                    (?:  \|\ *:?-+:?\ *  )+  \|? \s?[ ]*\n
+                    |
+                    # or, underline row without leading bar
+                    (?:  \ *:?-+:?\ *\|  )+  (?:  \ *:?-+:?\ *  )? \s?[ ]*\n
+                )
 
-            (                               # $3: data rows
-                (?:
-                    ^[ ]{0,%d}(?!\ )         # ensure line begins with 0 to less_than_tab spaces
-                    .*\|.*[ ]*\n
-                )+
-            )
+                (                               # $3: data rows
+                    (?:
+                        ^[ ]{0,%d}(?!\ )         # ensure line begins with 0 to less_than_tab spaces
+                        .*\|.*[ ]*\n
+                    )+
+                )
             ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
         return table_re.sub(self.sub, text)
 

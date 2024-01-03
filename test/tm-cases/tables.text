@@ -50,9 +50,9 @@ after
 *Note:* This passes GFM, but fails in PHP-Markdown.
 
 
-# FAIL: table with cuddled leading content
+# table with cuddled leading content
 
-before
+This would have failed in <=2.4.13
 | Header 1 | Header 2 |
 | -------- | -------- |
 | Cell 1 | Cell 2 |
