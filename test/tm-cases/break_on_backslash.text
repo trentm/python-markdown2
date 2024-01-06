@@ -2,4 +2,5 @@ Github flavoured markdown allows \
 you to insert a backslash with or
 without a space, which results in\
 a hard line break, unless it has \\
-been escaped.
+been escaped. It's still possible to  
+end the line with two spaces for a line break.

@@ -4,8 +4,10 @@
 
 - [pull #559] Allow cuddled tables (#557)
 - [pull #560] Fix `markdown-in-html` not always splitting HTML tags into separate lines (#558)
+- [pull #564] Fix incomplete comments in safe mode not being escaped (#563)
 - [pull #519] Add support for custom extras
 - [pull #519] Drop Python 3.5 support
+
 
 ## python-markdown2 2.4.12
 

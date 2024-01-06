@@ -1199,8 +1199,8 @@ class Markdown(object):
 
         text = self._do_italics_and_bold(text)
 
-        # Do hard breaks:
-        text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
+        # Do hard breaks
+        text = re.sub(r" {2,}\n(?!\<(?:\/?(ul|ol|li))\>)", "<br%s\n" % self.empty_element_suffix, text)
 
         return text
 
@@ -2247,7 +2247,7 @@ class Markdown(object):
         text = self._naked_gt_re.sub('&gt;', text)
         return text
 
-    _incomplete_tags_re = re.compile(r"<(/?\w+?(?!\w)\s*?.+?[\s/]+?)")
+    _incomplete_tags_re = re.compile(r"<(!--|/?\w+?(?!\w)\s*?.+?[\s/]+?)")
 
     def _encode_incomplete_tags(self, text):
         if self.safe_mode not in ("replace", "escape"):
@@ -2592,12 +2592,21 @@ class Breaks(Extra):
     order = Stage.after(Stage.ITALIC_AND_BOLD)
 
     def run(self, text):
+        on_backslash = self.options.get('on_backslash', False)
+        on_newline = self.options.get('on_newline', False)
+
+        if on_backslash and on_newline:
+            pattern = r' *\\?'
+        elif on_backslash:
+            pattern = r'(?: *\\| {2,})'
+        elif on_newline:
+            pattern = r' *'
+        else:
+            pattern = r' {2,}'
+
         break_tag = "<br%s\n" % self.md.empty_element_suffix
-        # do backslashes first because on_newline inserts the break before the newline
-        if self.options.get('on_backslash', False):
-            text = re.sub(r' *\\\n', break_tag, text)
-        if self.options.get('on_newline', False):
-            text = re.sub(r" *\n(?!\<(?:\/?(ul|ol|li))\>)", break_tag, text)
+        text = re.sub(pattern + r"\n(?!\<(?:\/?(ul|ol|li))\>)", break_tag, text)
+
         return text
 
 
