@@ -5,6 +5,7 @@
 - [pull #559] Allow cuddled tables (#557)
 - [pull #560] Fix `markdown-in-html` not always splitting HTML tags into separate lines (#558)
 - [pull #564] Fix incomplete comments in safe mode not being escaped (#563)
+- [pull #566] Fix crash in `markdown-in-html` extra (#565)
 
 
 ## python-markdown2 2.4.12
