@@ -791,7 +791,7 @@ class Markdown(object):
             except IndexError:
                 tag = None
 
-        tag = tag or re.match(r'^<(\S).*?>', html).group(1)
+        tag = tag or re.match(r'.*?<(\S).*?>', html).group(1)
 
         if raw and self.safe_mode:
             html = self._sanitize_html(html)
@@ -801,9 +801,9 @@ class Markdown(object):
             if m:
                 lines = html.split('\n')
                 # if MD is on same line as opening tag then split across two lines
-                lines = list(filter(None, (re.split(r'(<%s.*markdown=.*?>)' % tag, lines[0])))) + lines[1:]
+                lines = list(filter(None, (re.split(r'(.*?<%s.*markdown=.*?>)' % tag, lines[0])))) + lines[1:]
                 # if MD on same line as closing tag, split across two lines
-                lines = lines[:-1] + list(filter(None, re.split(r'(</%s>.*?$)' % tag, lines[-1])))
+                lines = lines[:-1] + list(filter(None, re.split(r'(.*?</%s>.*?$)' % tag, lines[-1])))
                 # extract key sections of the match
                 first_line = lines[0]
                 middle = '\n'.join(lines[1:-1])
