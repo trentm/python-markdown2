@@ -120,8 +120,13 @@ from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
 from random import randint, random
-from typing import Iterable, Optional, Tuple, Union
-from enum import Enum, auto
+from typing import Dict, List, Optional, Tuple, Union
+from enum import IntEnum, auto
+
+if sys.version_info[1] < 9:
+    from typing import Iterable
+else:
+    from collections.abc import Iterable
 
 # ---- globals
 
@@ -181,89 +186,64 @@ def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
                     use_file_vars=use_file_vars, cli=cli).convert(text)
 
 
-class Stage:
-    PREPROCESS = 1
-    HASH_HTML = 2
-    LINK_DEFS = 3
+class Stage(IntEnum):
+    PREPROCESS = auto()
+    HASH_HTML = auto()
+    LINK_DEFS = auto()
 
-    BLOCK_GAMUT = 4
-    HEADERS = 5
-    LISTS = 6
-    CODE_BLOCKS = 7
-    BLOCK_QUOTES = 8
-    PARAGRAPHS = 9
+    BLOCK_GAMUT = auto()
+    HEADERS = auto()
+    LISTS = auto()
+    CODE_BLOCKS = auto()
+    BLOCK_QUOTES = auto()
+    PARAGRAPHS = auto()
 
-    SPAN_GAMUT = 10
-    CODE_SPANS = 11
-    ESCAPE_SPECIAL = 12
-    LINKS = 13  # and auto links
-    ITALIC_AND_BOLD = 14
+    SPAN_GAMUT = auto()
+    CODE_SPANS = auto()
+    ESCAPE_SPECIAL = auto()
+    LINKS = auto()  # and auto links
+    ITALIC_AND_BOLD = auto()
 
-    POSTPROCESS = 15
-    UNHASH_HTML = 16
+    POSTPROCESS = auto()
+    UNHASH_HTML = auto()
 
-    _exec_order = {}
 
-    @classmethod
-    def _order(cls, extra: 'Extra', order: Optional[Tuple[list, list]] = None):
-        order = order or extra.order
+def mark_stage(stage: Stage):
+    '''
+    Decorator that handles executing relevant `Extra`s before and after this `Stage` executes.
+    '''
+    def wrapper(func):
+        @functools.wraps(func)
+        def inner(md: 'Markdown', text, *args, **kwargs):
+            md.stage = stage
+            # set "order" prop so extras can tell if they're being invoked before/after the stage
+            md.order = stage - 0.5
 
-        for index, item in enumerate((*order[0], *order[1])):
-            before = index < len(order[0])
-            if not isinstance(item, int) and issubclass(item, Extra):
-                # eg: FencedCodeBlocks
-                for extras in cls._exec_order.values():
-                    # insert this extra everywhere the other one is mentioned
-                    for section in extras:
-                        if item in section:
-                            to_index = section.index(item)
-                            if not before:
-                                to_index += 1
-                            section.insert(to_index, extra)
-            else:
-                # eg: Stage.PREPROCESS
-                cls._exec_order.setdefault(item, ([], []))
-                if extra in cls._exec_order[item][0 if before else 1]:
-                    # extra is already runnig after this stage. Don't duplicate that effort
-                    continue
-                if before:
-                    cls._exec_order[item][0].insert(0, extra)
-                else:
-                    cls._exec_order[item][1].append(extra)
+            if stage in Extra._exec_order:
+                for klass in Extra._exec_order[stage][0]:
+                    if klass.name not in md.extra_classes:
+                        continue
+                    extra = md.extra_classes[klass.name]
+                    if extra.test(text):
+                        text = extra.run(text)
 
-    @classmethod
-    def mark(cls, stage: 'Stage'):
-        def wrapper(func):
-            @functools.wraps(func)
-            def inner(md: 'Markdown', text, *args, **kwargs):
-                md.stage = stage
-                md.order = stage - 0.5
+            md.order = stage
+            text = func(md, text, *args, **kwargs)
+            md.order = stage + 0.5
 
-                if stage in cls._exec_order:
-                    for klass in cls._exec_order[stage][0]:
-                        if klass.name not in md.extra_classes:
-                            continue
-                        extra = md.extra_classes[klass.name]
-                        if extra.test(text):
-                            text = extra.run(text)
+            if stage in Extra._exec_order:
+                for klass in Extra._exec_order[stage][1]:
+                    if klass.name not in md.extra_classes:
+                        continue
+                    extra = md.extra_classes[klass.name]
+                    if extra.test(text):
+                        text = extra.run(text)
 
-                md.order = stage
-                text = func(md, text, *args, **kwargs)
-                md.order = stage + 0.5
+            return text
 
-                if stage in cls._exec_order:
-                    for klass in cls._exec_order[stage][1]:
-                        if klass.name not in md.extra_classes:
-                            continue
-                        extra = md.extra_classes[klass.name]
-                        if extra.test(text):
-                            text = extra.run(text)
+        return inner
 
-                return text
-
-            return inner
-
-        return wrapper
+    return wrapper
 
 
 class Markdown(object):
@@ -291,7 +271,13 @@ class Markdown(object):
     list_level = 0
 
     stage: Stage
+    '''Current "stage" of markdown conversion taking place'''
     order: int
+    '''
+    Same as `Stage` but will be +/- 0.5 of the value of `Stage`.
+    This allows extras to check if they are running before or after a particular stage
+    with `if md.order < md.stage`.
+    '''
 
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
@@ -542,7 +528,7 @@ class Markdown(object):
             rv.metadata = self.metadata
         return rv
 
-    @Stage.mark(Stage.POSTPROCESS)
+    @mark_stage(Stage.POSTPROCESS)
     def postprocess(self, text):
         """A hook for subclasses to do some postprocessing of the html, if
         desired. This is called before unescaping of special chars and
@@ -550,7 +536,7 @@ class Markdown(object):
         """
         return text
 
-    @Stage.mark(Stage.PREPROCESS)
+    @mark_stage(Stage.PREPROCESS)
     def preprocess(self, text):
         """A hook for subclasses to do some preprocessing of the Markdown, if
         desired. This is called after basic formatting of the text, but prior
@@ -906,7 +892,7 @@ class Markdown(object):
         self.html_blocks[key] = html
         return "\n\n" + key + "\n\n"
 
-    @Stage.mark(Stage.HASH_HTML)
+    @mark_stage(Stage.HASH_HTML)
     def _hash_html_blocks(self, text, raw=False):
         """Hashify HTML blocks
 
@@ -1064,7 +1050,7 @@ class Markdown(object):
         # super basic check if number of open tags == number of closing tags
         return len(re.findall('<%s(?:.*?)>' % tag_name, text)) == len(re.findall('</%s>' % tag_name, text))
 
-    @Stage.mark(Stage.LINK_DEFS)
+    @mark_stage(Stage.LINK_DEFS)
     def _strip_link_definitions(self, text):
         # Strips link definitions from text, stores the URLs and titles in
         # hash references.
@@ -1144,7 +1130,7 @@ class Markdown(object):
 
     _hr_re = re.compile(r'^[ ]{0,3}([-_*])[ ]{0,2}(\1[ ]{0,2}){2,}$', re.M)
 
-    @Stage.mark(Stage.BLOCK_GAMUT)
+    @mark_stage(Stage.BLOCK_GAMUT)
     def _run_block_gamut(self, text):
         # These are all the transformations that form block-level
         # tags like paragraphs, headers, and list items.
@@ -1175,7 +1161,7 @@ class Markdown(object):
 
         return text
 
-    @Stage.mark(Stage.SPAN_GAMUT)
+    @mark_stage(Stage.SPAN_GAMUT)
     def _run_span_gamut(self, text):
         # These are all the transformations that occur *within* block-level
         # tags like paragraphs, headers, and list items.
@@ -1222,7 +1208,7 @@ class Markdown(object):
         )
         """, re.X)
 
-    @Stage.mark(Stage.ESCAPE_SPECIAL)
+    @mark_stage(Stage.ESCAPE_SPECIAL)
     def _escape_special_chars(self, text):
         # Python markdown note: the HTML tokenization here differs from
         # that in Markdown.pl, hence the behaviour for subtle cases can
@@ -1254,7 +1240,7 @@ class Markdown(object):
             is_html_markup = not is_html_markup
         return ''.join(escaped)
 
-    @Stage.mark(Stage.HASH_HTML)
+    @mark_stage(Stage.HASH_HTML)
     def _hash_html_spans(self, text):
         # Used for safe_mode.
 
@@ -1425,7 +1411,7 @@ class Markdown(object):
 
         return re.compile(r'^(?:(%s)?(%s)(%s)|(#|\.{,2}/)(%s))$' % (self._safe_protocols, domain, fragment, fragment), re.I)
 
-    @Stage.mark(Stage.LINKS)
+    @mark_stage(Stage.LINKS)
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
 
@@ -1738,7 +1724,7 @@ class Markdown(object):
             return text[:3] + ' id="%s"' % header_id + text[3:]
         return text
 
-    @Stage.mark(Stage.HEADERS)
+    @mark_stage(Stage.HEADERS)
     def _do_headers(self, text):
         # Setext-style headers:
         #     Header 1
@@ -1781,7 +1767,7 @@ class Markdown(object):
         else:
             return "<%s%s>\n%s</%s>\n\n" % (lst_type, lst_opts, result, lst_type)
 
-    @Stage.mark(Stage.LISTS)
+    @mark_stage(Stage.LISTS)
     def _do_lists(self, text):
         # Form HTML ordered (numbered) and unordered (bulleted) lists.
 
@@ -1991,7 +1977,7 @@ class Markdown(object):
                     return ' class="%s"' % html_classes_from_tag[tag]
         return ""
 
-    @Stage.mark(Stage.CODE_BLOCKS)
+    @mark_stage(Stage.CODE_BLOCKS)
     def _do_code_blocks(self, text):
         """Process Markdown `<pre><code>` blocks."""
         code_block_re = re.compile(r'''
@@ -2033,7 +2019,7 @@ class Markdown(object):
         c = self._encode_code(c)
         return "<code%s>%s</code>" % (self._html_class_str_from_tag("code"), c)
 
-    @Stage.mark(Stage.CODE_SPANS)
+    @mark_stage(Stage.CODE_SPANS)
     def _do_code_spans(self, text):
         #   *   Backtick quotes are used for <code></code> spans.
         #
@@ -2081,7 +2067,7 @@ class Markdown(object):
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]?)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.*?\S)\1", re.S)
 
-    @Stage.mark(Stage.ITALIC_AND_BOLD)
+    @mark_stage(Stage.ITALIC_AND_BOLD)
     def _do_italics_and_bold(self, text):
         # <strong> must go first:
         text = self._strong_re.sub(r"<strong>\2</strong>", text)
@@ -2127,7 +2113,7 @@ class Markdown(object):
         else:
             return '<blockquote>\n%s\n</blockquote>\n\n' % bq
 
-    @Stage.mark(Stage.BLOCK_QUOTES)
+    @mark_stage(Stage.BLOCK_QUOTES)
     def _do_block_quotes(self, text):
         if '>' not in text:
             return text
@@ -2136,7 +2122,7 @@ class Markdown(object):
         else:
             return self._block_quote_re.sub(self._block_quote_sub, text)
 
-    @Stage.mark(Stage.PARAGRAPHS)
+    @mark_stage(Stage.PARAGRAPHS)
     def _form_paragraphs(self, text):
         # Strip leading and trailing lines:
         text = text.strip('\n')
@@ -2426,16 +2412,17 @@ class MarkdownWithExtras(Markdown):
 
 class Extra(ABC):
     _registry = {}
+    _exec_order: Dict[Stage, Tuple[List['Extra'], List['Extra']]] = {}
 
     name: str
     '''
     An identifiable name that users can use to invoke the extra
     in the Markdown class
     '''
-    order: Tuple[list, list]
+    order: Tuple[Iterable[Union[Stage, 'Extra']], Iterable[Union[Stage, 'Extra']]]
     '''
-    A tuple containing all the stages this extra runs before and after, respectively.
-    See `Stage`, `Stage.before` and `Stage.after`
+    Tuple of two iterables containing the stages/extras this extra will run before and
+    after, respectively
     '''
 
     def __init__(self, md: Markdown, options: Optional[dict]):
@@ -2450,18 +2437,47 @@ class Extra(ABC):
     @classmethod
     def deregister(cls):
         '''
-        Removes the class from the extras registry
+        Removes the class from the extras registry and unsets its execution order.
         '''
         if cls.name in cls._registry:
             del cls._registry[cls.name]
 
+        for exec_order in Extra._exec_order.values():
+            # find everywhere this extra is mentioned and remove it
+            for section in exec_order:
+                while cls in section:
+                    section.remove(cls)
+
     @classmethod
     def register(cls):
         '''
-        Registers the class for use with `Markdown`
+        Registers the class for use with `Markdown` and calculates its execution order based on
+        the `order` class attribute.
         '''
         cls._registry[cls.name] = cls
-        Stage._order(cls)
+
+        for index, item in enumerate((*cls.order[0], *cls.order[1])):
+            before = index < len(cls.order[0])
+            if not isinstance(item, Stage) and issubclass(item, Extra):
+                # eg: FencedCodeBlocks
+                for exec_orders in Extra._exec_order.values():
+                    # insert this extra everywhere the other one is mentioned
+                    for section in exec_orders:
+                        if item in section:
+                            to_index = section.index(item)
+                            if not before:
+                                to_index += 1
+                            section.insert(to_index, cls)
+            else:
+                # eg: Stage.PREPROCESS
+                Extra._exec_order.setdefault(item, ([], []))
+                if cls in Extra._exec_order[item][0 if before else 1]:
+                    # extra is already runnig after this stage. Don't duplicate that effort
+                    continue
+                if before:
+                    Extra._exec_order[item][0].insert(0, cls)
+                else:
+                    Extra._exec_order[item][1].append(cls)
 
     @abstractmethod
     def run(self, text: str) -> str:
