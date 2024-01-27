@@ -120,7 +120,8 @@ from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
 from random import randint, random
-from typing import Optional, Union
+from typing import Iterable, Optional, Tuple, Union
+from enum import Enum, auto
 
 # ---- globals
 
@@ -180,87 +181,83 @@ def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
                     use_file_vars=use_file_vars, cli=cli).convert(text)
 
 
-class Stage():
-    PREPROCESS = 50
-    HASH_HTML = 150
-    LINK_DEFS = 250
+class Stage:
+    PREPROCESS = 1
+    HASH_HTML = 2
+    LINK_DEFS = 3
 
-    BLOCK_GAMUT = 350
-    HEADERS = 450
-    LISTS = 550
-    CODE_BLOCKS = 650
-    BLOCK_QUOTES = 750
-    PARAGRAPHS = 850
+    BLOCK_GAMUT = 4
+    HEADERS = 5
+    LISTS = 6
+    CODE_BLOCKS = 7
+    BLOCK_QUOTES = 8
+    PARAGRAPHS = 9
 
-    SPAN_GAMUT = 950
-    CODE_SPANS = 1050
-    ESCAPE_SPECIAL = 1150
-    LINKS = 1250  # and auto links
-    ITALIC_AND_BOLD = 1350
+    SPAN_GAMUT = 10
+    CODE_SPANS = 11
+    ESCAPE_SPECIAL = 12
+    LINKS = 13  # and auto links
+    ITALIC_AND_BOLD = 14
 
-    POSTPROCESS = 1450
-    UNHASH_HTML = 1550
+    POSTPROCESS = 15
+    UNHASH_HTML = 16
 
-    __counts = {}
+    _exec_order = {}
 
     @classmethod
-    def _order(cls, items, step=5):
-        index = 0 if step > 0 else 1
-        ret = []
-        counts = cls._Stage__counts
-        for item in items:
+    def _order(cls, extra: 'Extra', order: Optional[Tuple[list, list]] = None):
+        order = order or extra.order
+
+        for index, item in enumerate((*order[0], *order[1])):
+            before = index < len(order[0])
             if not isinstance(item, int) and issubclass(item, Extra):
-                ret.extend(o + step for o in item.order)
+                # eg: FencedCodeBlocks
+                for extras in cls._exec_order.values():
+                    # insert this extra everywhere the other one is mentioned
+                    for section in extras:
+                        if item in section:
+                            to_index = section.index(item)
+                            if not before:
+                                to_index += 1
+                            section.insert(to_index, extra)
             else:
-                if item not in counts:
-                    counts[item] = [0, 0]
-                counts[item][index] += step
-                ret.append(item + counts[item][index])
-        return ret
+                # eg: Stage.PREPROCESS
+                cls._exec_order.setdefault(item, ([], []))
+                if extra in cls._exec_order[item][0 if before else 1]:
+                    # extra is already runnig after this stage. Don't duplicate that effort
+                    continue
+                if before:
+                    cls._exec_order[item][0].insert(0, extra)
+                else:
+                    cls._exec_order[item][1].append(extra)
 
     @classmethod
-    def after(cls, *items: 'Stage', step=5) -> list:
-        return cls._order(items, step)
-
-    @classmethod
-    def before(cls, *items: 'Stage', step=-5) -> list:
-        return cls._order(items, step)
-
-    @staticmethod
-    def mark(stage):
+    def mark(cls, stage: 'Stage'):
         def wrapper(func):
             @functools.wraps(func)
-            def inner(self: 'Markdown', text, *args, **kwargs):
-                self.stage = stage
-                before = []
-                after = []
+            def inner(md: 'Markdown', text, *args, **kwargs):
+                md.stage = stage
+                md.order = stage - 0.5
 
-                for extra in self.extras:
-                    if extra not in self.extra_classes:
-                        continue
-                    klass = self.extra_classes[extra]
-                    for order in klass.order:
-                        if order // 100 == stage // 100:
-                            if order < stage:
-                                before.append((order, klass))
-                            else:
-                                after.append((order, klass))
+                if stage in cls._exec_order:
+                    for klass in cls._exec_order[stage][0]:
+                        if klass.name not in md.extra_classes:
+                            continue
+                        extra = md.extra_classes[klass.name]
+                        if extra.test(text):
+                            text = extra.run(text)
 
-                before.sort(key=lambda k: k[0])
-                after.sort(key=lambda k: k[0])
+                md.order = stage
+                text = func(md, text, *args, **kwargs)
+                md.order = stage + 0.5
 
-                for order, klass in before:
-                    self.order = order
-                    if klass.test(text):
-                        text = klass.run(text)
-
-                self.order = stage
-                text = func(self, text, *args, **kwargs)
-
-                for order, klass in after:
-                    self.order = order
-                    if klass.test(text):
-                        text = klass.run(text)
+                if stage in cls._exec_order:
+                    for klass in cls._exec_order[stage][1]:
+                        if klass.name not in md.extra_classes:
+                            continue
+                        extra = md.extra_classes[klass.name]
+                        if extra.test(text):
+                            text = extra.run(text)
 
                 return text
 
@@ -2435,9 +2432,9 @@ class Extra(ABC):
     An identifiable name that users can use to invoke the extra
     in the Markdown class
     '''
-    order: list
+    order: Tuple[list, list]
     '''
-    A list of stages at which this extra should be invoked.
+    A tuple containing all the stages this extra runs before and after, respectively.
     See `Stage`, `Stage.before` and `Stage.after`
     '''
 
@@ -2464,6 +2461,7 @@ class Extra(ABC):
         Registers the class for use with `Markdown`
         '''
         cls._registry[cls.name] = cls
+        Stage._order(cls)
 
     @abstractmethod
     def run(self, text: str) -> str:
@@ -2494,7 +2492,7 @@ class ItalicAndBoldProcessor(Extra):
     After the I&B stage any hashes in the `hash_tables` instance variable are replaced.
     '''
     name = 'italic-and-bold-processor'
-    order = Stage.before(Stage.ITALIC_AND_BOLD) + Stage.after(Stage.ITALIC_AND_BOLD)
+    order = (Stage.ITALIC_AND_BOLD,), (Stage.ITALIC_AND_BOLD,)
 
     strong_re = Markdown._strong_re
     em_re = Markdown._em_re
@@ -2539,7 +2537,7 @@ class Admonitions(Extra):
     '''
 
     name = 'admonitions'
-    order = Stage.before(Stage.BLOCK_GAMUT, Stage.LINK_DEFS)
+    order = (Stage.BLOCK_GAMUT, Stage.LINK_DEFS), ()
 
     admonitions = r'admonition|attention|caution|danger|error|hint|important|note|tip|warning'
 
@@ -2589,7 +2587,7 @@ class Admonitions(Extra):
 
 class Breaks(Extra):
     name = 'breaks'
-    order = Stage.after(Stage.ITALIC_AND_BOLD)
+    order = (), (Stage.ITALIC_AND_BOLD,)
 
     def run(self, text):
         on_backslash = self.options.get('on_backslash', False)
@@ -2635,7 +2633,7 @@ class FencedCodeBlocks(Extra):
     '''
 
     name = 'fenced-code-blocks'
-    order = Stage.before(Stage.LINK_DEFS, Stage.BLOCK_GAMUT) + Stage.after(Stage.PREPROCESS)
+    order = (Stage.LINK_DEFS, Stage.BLOCK_GAMUT), (Stage.PREPROCESS,)
 
     fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?|(?<=\n))
@@ -2729,7 +2727,7 @@ class LinkPatterns(Extra):
     references, revision number references).
     '''
     name = 'link-patterns'
-    order = Stage.before(Stage.LINKS)
+    order = (Stage.LINKS,), ()
 
     _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
 
@@ -2802,7 +2800,7 @@ class MarkdownInHTML(Extra):
     some limitations.
     '''
     name = 'markdown-in-html'
-    order = Stage.after(Stage.HASH_HTML)
+    order = (), (Stage.HASH_HTML,)
 
     def run(self, text):
         def callback(block):
@@ -2819,7 +2817,7 @@ class MarkdownInHTML(Extra):
 
 class Mermaid(FencedCodeBlocks):
     name = 'mermaid'
-    order = Stage.before(FencedCodeBlocks)
+    order = (FencedCodeBlocks,), ()
 
     def tags(self, lexer_name):
         if lexer_name == 'mermaid':
@@ -2834,7 +2832,7 @@ class MiddleWordEm(ItalicAndBoldProcessor):
     converted to `this<em>text</em>here`.
     '''
     name = 'middle-word-em'
-    order = Stage.before(CodeFriendly) + Stage.after(Stage.ITALIC_AND_BOLD)
+    order = (CodeFriendly,), (Stage.ITALIC_AND_BOLD,)
 
     def __init__(self, md: Markdown, options: Union[dict, bool]):
         '''
@@ -2884,7 +2882,7 @@ class Numbering(Extra):
     '''
 
     name = 'numbering'
-    order = Stage.before(Stage.LINK_DEFS)
+    order = (Stage.LINK_DEFS,), ()
 
     def test(self, text):
         return True
@@ -2952,7 +2950,7 @@ class PyShell(Extra):
     '''
 
     name = 'pyshell'
-    order = Stage.after(Stage.LISTS)
+    order = (), (Stage.LISTS,)
 
     def test(self, text):
         return ">>>" in text
@@ -2988,7 +2986,7 @@ class SmartyPants(Extra):
     and ellipses.
     '''
     name = 'smarty-pants'
-    order = Stage.after(Stage.SPAN_GAMUT)
+    order = (), (Stage.SPAN_GAMUT,)
 
     _opening_single_quote_re = re.compile(r"(?<!\S)'(?=\S)")
     _opening_double_quote_re = re.compile(r'(?<!\S)"(?=\S)')
@@ -3053,7 +3051,7 @@ class Strike(Extra):
     Text inside of double tilde is ~~strikethrough~~
     '''
     name = 'strike'
-    order = Stage.before(Stage.ITALIC_AND_BOLD)
+    order = (Stage.ITALIC_AND_BOLD,), ()
 
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
 
@@ -3071,7 +3069,7 @@ class Tables(Extra):
     PHP-Markdown Extra <https://michelf.ca/projects/php-markdown/extra/#table>.
     '''
     name = 'tables'
-    order = Stage.after(Stage.LISTS)
+    order = (), (Stage.LISTS,)
 
     def run(self, text):
         """Copying PHP-Markdown and GFM table syntax. Some regex borrowed from
@@ -3154,7 +3152,7 @@ class Tables(Extra):
 
 class TelegramSpoiler(Extra):
     name = 'tg-spoiler'
-    order = Stage.after(Stage.ITALIC_AND_BOLD)
+    order = (), (Stage.ITALIC_AND_BOLD,)
 
     _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
 
@@ -3170,7 +3168,7 @@ class Underline(Extra):
     Text inside of double dash is --underlined--.
     '''
     name = 'underline'
-    order = Stage.before(Stage.ITALIC_AND_BOLD)
+    order = (Stage.ITALIC_AND_BOLD,), ()
 
     _underline_re = re.compile(r"(?<!<!)--(?!>)(?=\S)(.+?)(?<=\S)(?<!<!)--(?!>)", re.S)
 
@@ -3186,7 +3184,7 @@ class Wavedrom(Extra):
     Support for generating Wavedrom digital timing diagrams
     '''
     name = 'wavedrom'
-    order = Stage.before(Stage.CODE_BLOCKS, FencedCodeBlocks) + Stage.after(Stage.PREPROCESS)
+    order = (Stage.CODE_BLOCKS, FencedCodeBlocks), ()
 
     def test(self, text):
         match = FencedCodeBlocks.fenced_code_block_re.search(text)
@@ -3227,7 +3225,7 @@ class WikiTables(Extra):
     <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
     '''
     name = 'wiki-tables'
-    order = Stage.before(Tables)
+    order = (Tables,), ()
 
     def run(self, text):
         less_than_tab = self.md.tab_width - 1
