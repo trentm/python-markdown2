@@ -15,3 +15,14 @@
     ###### Block three
     Some text
     </div>
+
+
+
+- one two
+   <p markdown="1">
+  *NOTE:* opening tag is slightly indented
+  </p>
+- three four
+   <p markdown="1">
+  *NOTE:* both tags are slightly indented
+   </p>
