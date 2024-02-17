@@ -513,7 +513,7 @@ class Markdown(object):
             self._toc_html = calculate_toc_html(self._toc)
 
             # Prepend toc html to output
-            if self.cli:
+            if self.cli or (self.extras['toc'] is not None and self.extras['toc'].get('prepend', False)):
                 text = '{}\n{}'.format(self._toc_html, text)
 
         text += "\n"
