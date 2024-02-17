@@ -1,7 +1,6 @@
 {"extras": ["link-patterns"],
  "link_patterns": [
-    (re.compile("Blah\s+(\d+)", re.I), r"http://foo.com/blah_blah_blah/\1"),
+    (re.compile(r"Blah\s+(\d+)", re.I), r"http://foo.com/blah_blah_blah/\1"),
     (re.compile("#([1-9][0-9]*)"), r"http://localhost/issue/\1"),
  ],
 }
-
