@@ -4,6 +4,7 @@
 
 - [pull #519] Add support for custom extras
 - [pull #519] Drop Python 3.5 support
+- [pull #570] Fix syntax warnings in test suite
 
 
 ## python-markdown2 2.4.13
