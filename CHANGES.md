@@ -2,7 +2,8 @@
 
 ## python-markdown2 2.5.0 (not yet released)
 
-(nothing yet)
+- [pull #519] Add support for custom extras
+- [pull #519] Drop Python 3.5 support
 
 
 ## python-markdown2 2.4.13
@@ -11,8 +12,6 @@
 - [pull #560] Fix `markdown-in-html` not always splitting HTML tags into separate lines (#558)
 - [pull #564] Fix incomplete comments in safe mode not being escaped (#563)
 - [pull #566] Fix crash in `markdown-in-html` extra (#565)
-- [pull #519] Add support for custom extras
-- [pull #519] Drop Python 3.5 support
 
 
 ## python-markdown2 2.4.12
