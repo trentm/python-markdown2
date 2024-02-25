@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.4.14 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.4.13
 
 - [pull #559] Allow cuddled tables (#557)
