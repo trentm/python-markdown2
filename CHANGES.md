@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.4.14 (not yet released)
+## python-markdown2 2.5.0 (not yet released)
 
 (nothing yet)
 
