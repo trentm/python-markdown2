@@ -14,6 +14,7 @@ import codecs
 import difflib
 import doctest
 from json import loads as json_loads
+import warnings
 
 sys.path.insert(0, join(dirname(dirname(abspath(__file__)))))
 try:
@@ -150,11 +151,14 @@ class _MarkdownTestCase(unittest.TestCase):
             opts_path = splitext(text_path)[0] + ".opts"
             if exists(opts_path):
                 try:
-                    opts = eval(open(opts_path, 'r').read())
+                    with warnings.catch_warnings(record=True) as caught_warnings:
+                        opts = eval(open(opts_path, 'r').read())
+                    for warning in caught_warnings:
+                        print("WARNING: loading %s generated warning: %s - lineno %d" % (opts_path, warning.message, warning.lineno), file=sys.stderr)
                 except Exception:
                     _, ex, _ = sys.exc_info()
                     print("WARNING: couldn't load `%s' opts file: %s" \
-                          % (opts_path, ex))
+                          % (opts_path, ex), file=sys.stderr)
 
             toc_html_path = splitext(text_path)[0] + ".toc_html"
             if not exists(toc_html_path):
