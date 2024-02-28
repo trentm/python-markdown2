@@ -4,6 +4,7 @@
 
 - [pull #519] Add support for custom extras
 - [pull #519] Drop Python 3.5 support
+- [pull #568] Add `prepend` arg to toc extra (#397)
 - [pull #570] Fix syntax warnings in test suite
 
 
