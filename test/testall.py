@@ -68,7 +68,7 @@ def testall():
             # capture and re-print stderr while process is running
             line = proc.stderr.readline().decode().strip()
             print(line, file=sys.stderr)
-            if 'WARNING:test:' in line:
+            if 'WARNING:' in line:
                 # if stderr contains a warning, save this for later
                 all_warnings.append((python, ver_str, line))
 
