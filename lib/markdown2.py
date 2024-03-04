@@ -1264,15 +1264,30 @@ class Markdown(object):
 
             return re.match(r'<code>md5-[A-Fa-f0-9]{32}</code>', ''.join(peek_tokens))
 
+        def _is_comment(token):
+            if self.safe_mode == 'replace':
+                # don't bother processing each section of comment in replace mode. Just do the whole thing
+                return
+            return re.match(r'(<!--)(.*)(-->)', token)
+
+        def _hash(token):
+            key = _hash_text(token)
+            self.html_spans[key] = token
+            return key
+
         tokens = []
         split_tokens = self._sorta_html_tokenize_re.split(text)
         is_html_markup = False
         for index, token in enumerate(split_tokens):
             if is_html_markup and not _is_auto_link(token) and not _is_code_span(index, token):
-                sanitized = self._sanitize_html(token)
-                key = _hash_text(sanitized)
-                self.html_spans[key] = sanitized
-                tokens.append(key)
+                is_comment = _is_comment(token)
+                if is_comment:
+                    tokens.append(_hash(self._sanitize_html(is_comment.group(1))))
+                    # sanitise but leave comment body intact for further markdown processing
+                    tokens.append(self._sanitize_html(is_comment.group(2)))
+                    tokens.append(_hash(self._sanitize_html(is_comment.group(3))))
+                else:
+                    tokens.append(_hash(self._sanitize_html(token)))
             else:
                 tokens.append(self._encode_incomplete_tags(token))
             is_html_markup = not is_html_markup
