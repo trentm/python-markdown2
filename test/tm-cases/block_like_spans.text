@@ -1,0 +1,7 @@
+<a href="www.google.com">
+
+<img src="image.jpg" width="300px" height="auto" alt="Sample image"/>
+
+Some **markdown** text as well, but _no_ block level elements, since we're still [inside a span](https://google.com)
+
+</a>

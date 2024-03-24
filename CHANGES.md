@@ -7,6 +7,7 @@
 - [pull #568] Add `prepend` arg to toc extra (#397)
 - [pull #569] Process HTML comments as markdown in 'escape' safe mode
 - [pull #570] Fix syntax warnings in test suite
+- [pull #572] Process inline tags as HTML blocks when they span multiple lines (#571)
 
 
 ## python-markdown2 2.4.13

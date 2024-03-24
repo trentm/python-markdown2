@@ -833,6 +833,11 @@ class Markdown(object):
     _block_tags_b = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math'
     _block_tags_b += _html5tags
 
+    _span_tags = (
+        'a|abbr|acronym|b|bdo|big|br|button|cite|code|dfn|em|i|img|input|kbd|label|map|object|output|q'
+        '|samp|script|select|small|span|strong|sub|sup|textarea|time|tt|var'
+    )
+
     _liberal_tag_block_re = re.compile(r"""
         (                       # save in \1
             ^                   # start of line  (with re.M)
@@ -926,6 +931,14 @@ class Markdown(object):
 
         # Now match more liberally, simply from `\n<tag>` to `</tag>\n`
         text = self._liberal_tag_block_re.sub(hash_html_block_sub, text)
+
+        # now do the same for spans that are acting like blocks
+        # eg: an anchor split over multiple lines for readability
+        text = self._strict_tag_block_sub(
+            text, self._span_tags,
+            # inline elements can't contain block level elements, so only span gamut is required
+            lambda t: hash_html_block_sub(self._run_span_gamut(t))
+        )
 
         # Special case just for <hr />. It was easier to make a special
         # case than to make the other regex more complicated.
