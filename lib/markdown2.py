@@ -2777,6 +2777,7 @@ class Latex(Extra):
     _pre_code_block_re = re.compile(r"<pre>(.*?)</pre>", re.DOTALL)
 
     converter = None
+    code_blocks = {}
 
     def _convert_single_match(self, match):
         return self.converter.convert(match.group(1))
@@ -2785,8 +2786,8 @@ class Latex(Extra):
         return self.converter.convert(match.group(1).replace(r"\n", ''), display="block")
 
     def code_placeholder(self, match):
-        placeholder = f"<!--CODE_BLOCK_{len(code_blocks)}-->"
-        code_blocks[placeholder] = match.group(0)
+        placeholder = f"<!--CODE_BLOCK_{len(self.code_blocks)}-->"
+        self.code_blocks[placeholder] = match.group(0)
         return placeholder
 
     def run(self, text):
@@ -2796,8 +2797,6 @@ class Latex(Extra):
         except ImportError:
             raise ImportError('The "latex" extra requires the "latex2mathml" package to be installed.')
 
-        code_blocks = {}
-
         # Replace code blocks with placeholder tag
         text = self._pre_code_block_re.sub(self.code_placeholder, text)
 
@@ -2805,7 +2804,7 @@ class Latex(Extra):
         text = self._double_dollar_re.sub(self._convert_double_match, text)
 
         # Convert placeholder tag back to original code
-        for placeholder, code_block in code_blocks.items():
+        for placeholder, code_block in self.code_blocks.items():
             text = text.replace(placeholder, code_block)
 
         return text
