@@ -34,7 +34,7 @@ Topic :: Text Processing :: Markup :: HTML
 extras_require = {
     "code_syntax_highlighting": ["pygments>=2.7.3"],
     "wavedrom": ["wavedrom; python_version>='3.7'"],
-    "latex": ["python_version>='3.8.1'; latex2mathml"]
+    "latex": ['latex2mathml; python_version>="3.8.1"'],
 }
 # nested listcomp to combine all optional extras into convenient "all" option
 extras_require["all"] = [i for v in tuple(extras_require.values()) for i in v]
