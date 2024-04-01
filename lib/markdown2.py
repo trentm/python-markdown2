@@ -2765,6 +2765,19 @@ class FencedCodeBlocks(Extra):
         return self.fenced_code_block_re.sub(self.sub, text)
 
 
+class LemmySpoiler(Extra):
+    name = 'lemmy-spoiler'
+    order = (), (Stage.ITALIC_AND_BOLD,)
+
+    _lemmy_spoiler_re = re.compile(r":{3} spoiler\s+?(\S.+?\n)(.+?)\n:{3}", re.S)
+
+    def run(self, text):
+        return self._lemmy_spoiler_re.sub(r"<details><summary>\1</summary>\2</details>", text)
+
+    def test(self, text):
+        return '::: spoiler' in text
+
+
 class LinkPatterns(Extra):
     '''
     Auto-link given regex patterns in text (e.g. bug number
@@ -3328,6 +3341,7 @@ Admonitions.register()
 Breaks.register()
 CodeFriendly.register()
 FencedCodeBlocks.register()
+LemmySpoiler.register()
 LinkPatterns.register()
 MarkdownInHTML.register()
 MiddleWordEm.register()

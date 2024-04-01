@@ -1,0 +1,8 @@
+::: spoiler this part is visible
+but this part will be hidden
+:::
+
+::: spoiler this part is visible
+but this part
+and this part are hidden
+:::
