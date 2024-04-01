@@ -1,0 +1,10 @@
+## Simple Test
+Inline Equations can be written as $y=mx+b$.
+Block equations are wrapped using
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+This code will render everywhere
+```
+some random code, describing $a and $b will be rendered, $y=mx$ 
+```
