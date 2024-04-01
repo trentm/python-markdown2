@@ -2769,12 +2769,15 @@ class Latex(Extra):
     Convert $ and $$ to <math> and </math> tags for inline and block math.
     '''
     name = 'latex'
-    order = (), ()
+    order = (Stage.CODE_BLOCKS, FencedCodeBlocks), ()
 
     _single_dollar_re = re.compile(r'(?<!\$)\$(?!\$)(.*?)\$')
     _double_dollar_re = re.compile(r'\$\$(.*?)\$\$', re.DOTALL)
-    # Used to disable conversion inside code blocks
-    _pre_code_block_re = re.compile(r"<pre>(.*?)</pre>", re.DOTALL)
+    
+    # Ways to escape
+    _pre_code_block_re = re.compile(r"<pre>(.*?)</pre>", re.DOTALL) # Wraped in <pre>
+    _triple_re = re.compile(r'```(.*?)```', re.DOTALL) # Wrapped in a code block ```
+    _single_re = re.compile(r'(?<!`)(`)(.*?)(?<!`)\1(?!`)') # Wrapped in a single `
 
     converter = None
     code_blocks = {}
@@ -2797,8 +2800,10 @@ class Latex(Extra):
         except ImportError:
             raise ImportError('The "latex" extra requires the "latex2mathml" package to be installed.')
 
-        # Replace code blocks with placeholder tag
+        # Escape by replacing with a code block
         text = self._pre_code_block_re.sub(self.code_placeholder, text)
+        text = self._single_re.sub(self.code_placeholder, text)
+        text = self._triple_re.sub(self.code_placeholder, text)
 
         text = self._single_dollar_re.sub(self._convert_single_match, text)
         text = self._double_dollar_re.sub(self._convert_double_match, text)
