@@ -4,7 +4,14 @@ Block equations are wrapped using
 $$
 x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
 $$
-This code will render everywhere
+This code block will not have the math rendered.
 ```
-some random code, describing $a and $b will be rendered, $y=mx$ 
+some random code, describing $a and $b will not be rendered, $y=mx$ 
+```
+This will not work either `$\sqrt{2}` or
+
+```
+$$
+f = 12
+$$
 ```
