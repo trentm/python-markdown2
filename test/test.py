@@ -38,7 +38,7 @@ if __name__ == "__main__":
     setup()
     default_tags = []
     warnings = []
-    for extra_lib in ('pygments', 'wavedrom'):
+    for extra_lib in ('pygments', 'wavedrom', 'latex2mathml'):
         try:
             mod = importlib.import_module(extra_lib)
         except ImportError:

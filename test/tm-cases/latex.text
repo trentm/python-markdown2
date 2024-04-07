@@ -1,0 +1,17 @@
+## Simple Test
+Inline Equations can be written as $y=mx+b$.
+Block equations are wrapped using
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+This code block will not have the math rendered.
+```
+some random code, describing $a and $b will not be rendered, $y=mx$ 
+```
+This will not work either `$\sqrt{2}` or
+
+```
+$$
+f = 12
+$$
+```
