@@ -9,6 +9,7 @@
 - [pull #570] Fix syntax warnings in test suite
 - [pull #572] Process inline tags as HTML blocks when they span multiple lines (#571)
 - [pull #573] Add new LaTeX Extra
+- [pull #576] Fix `html`, `head` and `body` tags being wrapped in `<p>` tags (#575)
 
 
 ## python-markdown2 2.4.13
