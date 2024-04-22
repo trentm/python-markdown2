@@ -1,0 +1,23 @@
+<html>
+
+<!-- Comment please ignore -->
+
+<!-- Multi
+line Comment
+please ignore -->
+
+
+<body>
+content here
+
+ <img src="some_img.jpg" alt="there is supposed to be an image here" width="500" height="600">
+
+Now some bullets:
+
+  * one
+  * two
+
+</body>
+
+
+</html>
