@@ -2181,8 +2181,13 @@ class Markdown(object):
                     ):
                         start = li.start()
                         cuddled_list = self._do_lists(graf[start:]).rstrip("\n")
-                        assert re.match(r'^<(?:ul|ol).*?>', cuddled_list)
-                        graf = graf[:start]
+                        if re.match(r'^<(?:ul|ol).*?>', cuddled_list):
+                            graf = graf[:start]
+                        else:
+                            # Not quite a cuddled list. (See not_quite_a_list_cuddled_lists test case)
+                            # Store as a simple paragraph.
+                            graf = cuddled_list
+                            cuddled_list = None
 
                 # Wrap <p> tags.
                 graf = self._run_span_gamut(graf)
