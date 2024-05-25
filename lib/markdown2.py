@@ -120,7 +120,7 @@ from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
 from random import randint, random
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Sized, Tuple, Type, Union
 from enum import IntEnum, auto
 
 if sys.version_info[1] < 9:
@@ -284,6 +284,7 @@ class Markdown(object):
     html_spans: Dict[str, str]
     html_removed_text: str = "{(#HTML#)}"  # placeholder removed text that does not trigger bold
     html_removed_text_compat: str = "[HTML_REMOVED]"  # for compat with markdown.py
+    safe_mode: Optional[_safe_mode]
 
     _toc: List[Tuple[int, str, str]]
 
@@ -333,7 +334,10 @@ class Markdown(object):
         if getattr(self, 'extras', None) is None:
             self.extras = {}
         elif not isinstance(self.extras, dict):
-            self.extras = dict([(e, None) for e in self.extras])
+            # inheriting classes may set `self.extras` as List[str].
+            # we can't allow it through type hints but we can convert it
+            self.extras = dict([(e, None) for e in self.extras])  # type:ignore
+
         if extras:
             if not isinstance(extras, dict):
                 extras = dict([(e, None) for e in extras])
@@ -393,7 +397,7 @@ class Markdown(object):
         self.list_level = 0
         self.extras = self._instance_extras.copy()
         self._setup_extras()
-        self._toc = None
+        self._toc = []
 
     def _setup_extras(self):
         if "footnotes" in self.extras:
@@ -405,7 +409,7 @@ class Markdown(object):
             if not hasattr(self, '_count_from_header_id') or self.extras['header-ids'].get('reset-count', False):
                 self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
-            self.metadata = {}
+            self.metadata: Dict[str, Any] = {}
 
         self.extra_classes = {}
         for name, klass in Extra._registry.items():
@@ -532,11 +536,12 @@ class Markdown(object):
                 # TOC will only be out of order if mixed headers is enabled
                 def toc_sort(entry):
                     '''Sort the TOC by order of appearance in text'''
-                    return re.search(
+                    match = re.search(
                         # header tag, any attrs, the ID, any attrs, the text, close tag
                         r'^<(h%d).*?id=(["\'])%s\2.*>%s</\1>$' % (entry[0], entry[1], re.escape(entry[2])),
                         text, re.M
-                    ).start()
+                    )
+                    return match.start() if match else 0
 
                 self._toc.sort(key=toc_sort)
             self._toc_html = calculate_toc_html(self._toc)
@@ -613,25 +618,28 @@ class Markdown(object):
         if text.startswith("---"):
             fence_splits = re.split(self._meta_data_fence_pattern, text, maxsplit=2)
             metadata_content = fence_splits[1]
-            match = re.findall(self._meta_data_pattern, metadata_content)
-            if not match:
-                return text
             tail = fence_splits[2]
         else:
             metadata_split = re.split(self._meta_data_newline, text, maxsplit=1)
             metadata_content = metadata_split[0]
-            match = re.findall(self._meta_data_pattern, metadata_content)
-            if not match:
-                return text
             tail = metadata_split[1]
 
-        def parse_structured_value(value):
+        # _meta_data_pattern only has one capturing group, so we can assume
+        # the returned type to be list[str]
+        match: List[str] = re.findall(self._meta_data_pattern, metadata_content)
+        if not match:
+            return text
+
+        def parse_structured_value(value: str) -> Union[List[Any], Dict[str, Any]]:
             vs = value.lstrip()
             vs = value.replace(v[: len(value) - len(vs)], "\n")[1:]
 
             # List
             if vs.startswith("-"):
-                r = []
+                r: List[Any] = []
+                # the regex used has multiple capturing groups, so
+                # returned type from findall will be List[List[str]]
+                match: List[str]
                 for match in re.findall(self._key_val_list_pat, vs):
                     if match[0] and not match[1] and not match[2]:
                         r.append(match[0].strip())
@@ -748,7 +756,7 @@ class Markdown(object):
             if match:
                 prefix = match.group("prefix")
                 suffix = match.group("suffix")
-                lines = match.group("content").splitlines(0)
+                lines = match.group("content").splitlines(False)
                 # print "prefix=%r, suffix=%r, content=%r, lines: %s"\
                 #      % (prefix, suffix, match.group("content"), lines)
 
@@ -893,7 +901,11 @@ class Markdown(object):
             except IndexError:
                 tag = None
 
-        tag = tag or re.match(r'.*?<(\S).*?>', html).group(1)
+        if not tag:
+            m = re.match(r'.*?<(\S).*?>', html)
+            # tag shouldn't be none but make the assertion for type checker
+            assert m is not None
+            tag = m.group(1)
 
         if raw and self.safe_mode:
             html = self._sanitize_html(html)
@@ -1383,7 +1395,7 @@ class Markdown(object):
         after (and including) start
         """
         match = self._whitespace.match(text, start)
-        return match.end()
+        return match.end() if match else len(text)
 
     def _find_balanced(self, text, start, open_c, close_c):
         """Returns the index where the open_c and close_c characters balance
@@ -1901,13 +1913,16 @@ class Markdown(object):
 
     _task_list_warpper_str = r'<input type="checkbox" class="task-list-item-checkbox" %sdisabled> %s'
 
-    def _task_list_item_sub(self, match):
+    def _task_list_item_sub(self, match) -> str:
         marker = match.group(1)
         item_text = match.group(2)
         if marker in ['[x]','[X]']:
-                return self._task_list_warpper_str % ('checked ', item_text)
+            return self._task_list_warpper_str % ('checked ', item_text)
         elif marker == '[ ]':
-                return self._task_list_warpper_str % ('', item_text)
+            return self._task_list_warpper_str % ('', item_text)
+        # returning None has same effect as returning empty str, but only
+        # one makes the type checker happy
+        return ''
 
     _last_li_endswith_two_eols = False
     def _list_item_sub(self, match):
@@ -2457,7 +2472,7 @@ class MarkdownWithExtras(Markdown):
     - link-patterns (because you need to specify some actual
       link-patterns anyway)
     """
-    extras = ["footnotes", "fenced-code-blocks"]
+    extras = ["footnotes", "fenced-code-blocks"]  # type: ignore
 
 
 # ----------------------------------------------------------
@@ -2469,14 +2484,14 @@ class MarkdownWithExtras(Markdown):
 
 class Extra(ABC):
     _registry = {}
-    _exec_order: Dict[Stage, Tuple[List['Extra'], List['Extra']]] = {}
+    _exec_order: Dict[Stage, Tuple[List[Type['Extra']], List[Type['Extra']]]] = {}
 
     name: str
     '''
     An identifiable name that users can use to invoke the extra
     in the Markdown class
     '''
-    order: Tuple[Iterable[Union[Stage, 'Extra']], Iterable[Union[Stage, 'Extra']]]
+    order: Tuple[Collection[Union[Stage, Type['Extra']]], Collection[Union[Stage, Type['Extra']]]]
     '''
     Tuple of two iterables containing the stages/extras this extra will run before and
     after, respectively
@@ -2864,7 +2879,7 @@ class LinkPatterns(Extra):
                 if any(self.md._match_overlaps_substr(text, match, h) for h in link_from_hash):
                     continue
 
-                if hasattr(repl, "__call__"):
+                if callable(repl):
                     href = repl(match)
                 else:
                     href = match.expand(repl)
@@ -3431,7 +3446,7 @@ WikiTables.register()
 # ---- internal support functions
 
 
-def calculate_toc_html(toc):
+def calculate_toc_html(toc) -> Optional[str]:
     """Return the HTML for the current TOC.
 
     This expects the `_toc` attribute to have been set on this instance.
@@ -3470,8 +3485,8 @@ class UnicodeWithAttrs(str):
     possibly attach some attributes. E.g. the "toc_html" attribute when
     the "toc" extra is used.
     """
-    metadata = None
-    toc_html = None
+    metadata: Optional[Dict[str, str]] = None
+    toc_html: Optional[str] = None
 
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
 _slugify_strip_re = re.compile(r'[^\w\s-]')
@@ -3717,7 +3732,11 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % ord(ch)
 
 
-def _html_escape_url(attr, safe_mode=False, charset=None):
+def _html_escape_url(
+    attr: str,
+    safe_mode: Union[_safe_mode, bool, None] = False,
+    charset: Optional[str] = None
+):
     """
     Replace special characters that are potentially malicious in url string.
 
