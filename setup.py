@@ -18,12 +18,11 @@ Intended Audience :: Developers
 License :: OSI Approved :: MIT License
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.6
-Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3.10
 Programming Language :: Python :: 3.11
+Programming Language :: Python :: 3.12
 Operating System :: OS Independent
 Topic :: Software Development :: Libraries :: Python Modules
 Topic :: Software Development :: Documentation
@@ -57,7 +56,7 @@ setup(
         ]
     },
     description="A fast and complete Python implementation of Markdown",
-    python_requires=">=3.6, <4",
+    python_requires=">=3.8, <4",
     extras_require=extras_require,
     classifiers=classifiers.strip().split("\n"),
     long_description="""markdown2: A fast and complete Python implementation of Markdown.

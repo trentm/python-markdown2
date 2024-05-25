@@ -26,8 +26,8 @@ def _gen_python_names():
     if sys.platform == "win32":
         return
 
-    # generate version numbers from python 3.5 to 3.20
-    for ver in [(3, i) for i in range(5, 20)]:
+    # generate version numbers from python 3.8 to 3.20
+    for ver in [(3, i) for i in range(8, 20)]:
         yield "python%d.%d" % ver
         if sys.platform == "win32":
             yield "python%d%d" % ver
@@ -49,7 +49,7 @@ def _gen_pythons():
 def testall():
     all_warnings = []
     for ver, python in _gen_pythons():
-        if ver < (3, 5):
+        if ver < (3, 8):
             # Don't support Python < 3.5
             continue
         ver_str = "%s.%s" % ver
