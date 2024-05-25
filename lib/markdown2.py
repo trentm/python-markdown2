@@ -2018,7 +2018,7 @@ class Markdown(object):
         formatter = HtmlCodeFormatter(**formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
-    def _code_block_sub(self, match):
+    def _code_block_sub(self, match: re.Match) -> str:
         codeblock = match.group(1)
         codeblock = self._outdent(codeblock)
         codeblock = self._detab(codeblock)
@@ -2033,7 +2033,7 @@ class Markdown(object):
         return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
             pre_class_str, code_class_str, codeblock)
 
-    def _html_class_str_from_tag(self, tag):
+    def _html_class_str_from_tag(self, tag: str) -> str:
         """Get the appropriate ' class="..."' string (note the leading
         space), if any, for the given tag.
         """
@@ -2050,7 +2050,7 @@ class Markdown(object):
         return ""
 
     @mark_stage(Stage.CODE_BLOCKS)
-    def _do_code_blocks(self, text):
+    def _do_code_blocks(self, text: str) -> str:
         """Process Markdown `<pre><code>` blocks."""
         code_block_re = re.compile(r'''
             (?:\n\n|\A\n?)
@@ -2086,13 +2086,13 @@ class Markdown(object):
             (?!`)
         ''', re.X | re.S)
 
-    def _code_span_sub(self, match):
+    def _code_span_sub(self, match: re.Match) -> str:
         c = match.group(2).strip(" \t")
         c = self._encode_code(c)
         return "<code%s>%s</code>" % (self._html_class_str_from_tag("code"), c)
 
     @mark_stage(Stage.CODE_SPANS)
-    def _do_code_spans(self, text):
+    def _do_code_spans(self, text: str) -> str:
         #   *   Backtick quotes are used for <code></code> spans.
         #
         #   *   You can use multiple backticks as the delimiters if you want to
@@ -2117,7 +2117,7 @@ class Markdown(object):
         #         ... type <code>`bar`</code> ...
         return self._code_span_re.sub(self._code_span_sub, text)
 
-    def _encode_code(self, text):
+    def _encode_code(self, text: str) -> str:
         """Encode/escape certain characters inside Markdown code runs.
         The point is that in code, these characters are literals,
         and lose their special Markdown meanings.
@@ -2140,7 +2140,7 @@ class Markdown(object):
     _em_re = re.compile(r"(\*|_)(?=\S)(.*?\S)\1", re.S)
 
     @mark_stage(Stage.ITALIC_AND_BOLD)
-    def _do_italics_and_bold(self, text):
+    def _do_italics_and_bold(self, text: str) -> str:
         # <strong> must go first:
         text = self._strong_re.sub(r"<strong>\2</strong>", text)
         text = self._em_re.sub(r"<em>\2</em>", text)
@@ -2161,10 +2161,10 @@ class Markdown(object):
     _bq_one_level_re_spoiler = re.compile('^[ \t]*>[ \t]*?![ \t]?', re.M)
     _bq_all_lines_spoilers = re.compile(r'\A(?:^[ \t]*>[ \t]*?!.*[\n\r]*)+\Z', re.M)
     _html_pre_block_re = re.compile(r'(\s*<pre>.+?</pre>)', re.S)
-    def _dedent_two_spaces_sub(self, match):
+    def _dedent_two_spaces_sub(self, match: re.Match) -> str:
         return re.sub(r'(?m)^  ', '', match.group(1))
 
-    def _block_quote_sub(self, match):
+    def _block_quote_sub(self, match: re.Match) -> str:
         bq = match.group(1)
         is_spoiler = 'spoiler' in self.extras and self._bq_all_lines_spoilers.match(bq)
         # trim one level of quoting
@@ -2186,7 +2186,7 @@ class Markdown(object):
             return '<blockquote>\n%s\n</blockquote>\n\n' % bq
 
     @mark_stage(Stage.BLOCK_QUOTES)
-    def _do_block_quotes(self, text):
+    def _do_block_quotes(self, text: str) -> str:
         if '>' not in text:
             return text
         if 'spoiler' in self.extras:
@@ -2195,7 +2195,7 @@ class Markdown(object):
             return self._block_quote_re.sub(self._block_quote_sub, text)
 
     @mark_stage(Stage.PARAGRAPHS)
-    def _form_paragraphs(self, text):
+    def _form_paragraphs(self, text: str) -> str:
         # Strip leading and trailing lines:
         text = text.strip('\n')
 
@@ -2237,7 +2237,7 @@ class Markdown(object):
 
         return "\n\n".join(grafs)
 
-    def _add_footnotes(self, text):
+    def _add_footnotes(self, text: str) -> str:
         if self.footnotes:
             footer = [
                 '<div class="footnotes">',
@@ -2288,7 +2288,7 @@ class Markdown(object):
     _naked_lt_re = re.compile(r'<(?![a-z/?\$!])', re.I)
     _naked_gt_re = re.compile(r'''(?<![a-z0-9?!/'"-])>''', re.I)
 
-    def _encode_amps_and_angles(self, text):
+    def _encode_amps_and_angles(self, text: str) -> str:
         # Smart processing for ampersands and angle brackets that need
         # to be encoded.
         text = _AMPERSAND_RE.sub('&amp;', text)
@@ -2304,7 +2304,7 @@ class Markdown(object):
 
     _incomplete_tags_re = re.compile(r"<(!--|/?\w+?(?!\w)\s*?.+?[\s/]+?)")
 
-    def _encode_incomplete_tags(self, text):
+    def _encode_incomplete_tags(self, text: str) -> str:
         if self.safe_mode not in ("replace", "escape"):
             return text
 
@@ -2316,13 +2316,13 @@ class Markdown(object):
 
         return self._incomplete_tags_re.sub(incomplete_tags_sub, text)
 
-    def _encode_backslash_escapes(self, text):
+    def _encode_backslash_escapes(self, text: str) -> str:
         for ch, escape in list(self._escape_table.items()):
             text = text.replace("\\"+ch, escape)
         return text
 
     _auto_link_re = re.compile(r'<((https?|ftp):[^\'">\s]+)>', re.I)
-    def _auto_link_sub(self, match):
+    def _auto_link_sub(self, match: re.Match) -> str:
         g1 = match.group(1)
         return '<a href="%s">%s</a>' % (self._protect_url(g1), g1)
 
@@ -2336,16 +2336,16 @@ class Markdown(object):
           )
           >
         """, re.I | re.X | re.U)
-    def _auto_email_link_sub(self, match):
+    def _auto_email_link_sub(self, match: re.Match) -> str:
         return self._encode_email_address(
             self._unescape_special_chars(match.group(1)))
 
-    def _do_auto_links(self, text):
+    def _do_auto_links(self, text: str) -> str:
         text = self._auto_link_re.sub(self._auto_link_sub, text)
         text = self._auto_email_link_re.sub(self._auto_email_link_sub, text)
         return text
 
-    def _encode_email_address(self, addr):
+    def _encode_email_address(self, addr: str) -> str:
         #  Input: an email address, e.g. "foo@example.com"
         #
         #  Output: the email address as a mailto link, with each character
@@ -2365,7 +2365,7 @@ class Markdown(object):
                % (''.join(chars), ''.join(chars[7:]))
         return addr
 
-    def _unescape_special_chars(self, text):
+    def _unescape_special_chars(self, text: str) -> str:
         # Swap back in all the special characters we've hidden.
         hashmap = tuple(self._escape_table.items()) + tuple(self._code_table.items())
         # html_blocks table is in format {hash: item} compared to usual {item: hash}
@@ -2378,12 +2378,16 @@ class Markdown(object):
                 break
         return text
 
-    def _outdent(self, text):
+    def _outdent(self, text: str) -> str:
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
     @staticmethod
-    def _uniform_outdent(text, min_outdent=None, max_outdent=None):
+    def _uniform_outdent(
+        text: str,
+        min_outdent: Optional[str] = None,
+        max_outdent: Optional[str] = None
+    ) -> Tuple[str, str]:
         '''
         Removes the smallest common leading indentation from each (non empty)
         line of `text` and returns said indent along with the outdented text.
@@ -2394,7 +2398,7 @@ class Markdown(object):
         '''
 
         # find the leading whitespace for every line
-        whitespace = [
+        whitespace: List[Union[str, None]] = [
             re.findall(r'^[ \t]*', line)[0] if line else None
             for line in text.splitlines()
         ]
@@ -2426,7 +2430,12 @@ class Markdown(object):
         return outdent, ''.join(outdented)
 
     @staticmethod
-    def _uniform_indent(text, indent, include_empty_lines=False, indent_empty_lines=False):
+    def _uniform_indent(
+        text: str,
+        indent: str,
+        include_empty_lines: bool = False,
+        indent_empty_lines: bool = False
+    ) -> str:
         '''
         Uniformly indent a block of text by a fixed amount
 
@@ -2447,7 +2456,7 @@ class Markdown(object):
         return ''.join(blocks)
 
     @staticmethod
-    def _match_overlaps_substr(text, match, substr):
+    def _match_overlaps_substr(text, match: re.Match, substr: str) -> bool:
         '''
         Checks if a regex match overlaps with a substring in the given text.
         '''
