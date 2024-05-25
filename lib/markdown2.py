@@ -120,13 +120,19 @@ from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
 from random import randint, random
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 from enum import IntEnum, auto
 
 if sys.version_info[1] < 9:
     from typing import Iterable
 else:
     from collections.abc import Iterable
+
+# ---- type defs
+_safe_mode = Literal['replace', 'escape']
+_extras_dict = Dict[str, Any]
+_extras_param = Union[List[str], _extras_dict]
+_link_patterns = Iterable[Tuple[re.Pattern, Union[str, Callable[[re.Match], str]]]]
 
 # ---- globals
 
@@ -158,11 +164,18 @@ class MarkdownError(Exception):
 
 # ---- public api
 
-def markdown_path(path, encoding="utf-8",
-                  html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-                  safe_mode=None, extras=None, link_patterns=None,
-                  footnote_title=None, footnote_return_symbol=None,
-                  use_file_vars=False):
+def markdown_path(
+    path: str,
+    encoding: str = "utf-8",
+    html4tags: bool = False,
+    tab_width: int = DEFAULT_TAB_WIDTH,
+    safe_mode: Optional[_safe_mode] = None,
+    extras: Optional[_extras_param] = None,
+    link_patterns: Optional[_link_patterns] = None,
+    footnote_title: Optional[str] = None,
+    footnote_return_symbol: Optional[str] = None,
+    use_file_vars: bool = False
+) -> 'UnicodeWithAttrs':
     fp = codecs.open(path, 'r', encoding)
     text = fp.read()
     fp.close()
@@ -174,10 +187,18 @@ def markdown_path(path, encoding="utf-8",
                     use_file_vars=use_file_vars).convert(text)
 
 
-def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-             safe_mode=None, extras=None, link_patterns=None,
-             footnote_title=None, footnote_return_symbol=None,
-             use_file_vars=False, cli=False):
+def markdown(
+    text: str,
+    html4tags: bool = False,
+    tab_width: int = DEFAULT_TAB_WIDTH,
+    safe_mode: Optional[_safe_mode] = None,
+    extras: Optional[_extras_param] = None,
+    link_patterns: Optional[_link_patterns] = None,
+    footnote_title: Optional[str] = None,
+    footnote_return_symbol: Optional[str] =None,
+    use_file_vars: bool = False,
+    cli: bool = False
+) -> 'UnicodeWithAttrs':
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns,
@@ -253,18 +274,18 @@ class Markdown(object):
     #
     # This can be set via (a) subclassing and (b) the constructor
     # "extras" argument.
-    extras = None
+    extras: _extras_dict
     # dict of `Extra` names and associated class instances, populated during _setup_extras
-    extra_classes = None
+    extra_classes: Dict[str, 'Extra']
 
-    urls = None
-    titles = None
-    html_blocks = None
-    html_spans = None
-    html_removed_text = "{(#HTML#)}"  # placeholder removed text that does not trigger bold
-    html_removed_text_compat = "[HTML_REMOVED]"  # for compat with markdown.py
+    urls: Dict[str, str]
+    titles: Dict[str, str]
+    html_blocks: Dict[str, str]
+    html_spans: Dict[str, str]
+    html_removed_text: str = "{(#HTML#)}"  # placeholder removed text that does not trigger bold
+    html_removed_text_compat: str = "[HTML_REMOVED]"  # for compat with markdown.py
 
-    _toc = None
+    _toc: List[Tuple[int, str, str]]
 
     # Used to track when we're inside an ordered or unordered list
     # (see _ProcessListItems() for details):
@@ -272,7 +293,7 @@ class Markdown(object):
 
     stage: Stage
     '''Current "stage" of markdown conversion taking place'''
-    order: int
+    order: float
     '''
     Same as `Stage` but will be +/- 0.5 of the value of `Stage`.
     This allows extras to check if they are running before or after a particular stage
@@ -281,10 +302,18 @@ class Markdown(object):
 
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
-    def __init__(self, html4tags=False, tab_width=4, safe_mode=None,
-                 extras=None, link_patterns=None,
-                 footnote_title=None, footnote_return_symbol=None,
-                 use_file_vars=False, cli=False):
+    def __init__(
+        self,
+        html4tags: bool = False,
+        tab_width: int = DEFAULT_TAB_WIDTH,
+        safe_mode: Optional[_safe_mode] = None,
+        extras: Optional[_extras_param] = None,
+        link_patterns: Optional[_link_patterns] = None,
+        footnote_title: Optional[str] = None,
+        footnote_return_symbol: Optional[str] = None,
+        use_file_vars: bool = False,
+        cli: bool = False
+    ):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
@@ -301,7 +330,7 @@ class Markdown(object):
             self.safe_mode = safe_mode
 
         # Massaging and building the "extras" info.
-        if self.extras is None:
+        if getattr(self, 'extras', None) is None:
             self.extras = {}
         elif not isinstance(self.extras, dict):
             self.extras = dict([(e, None) for e in self.extras])
@@ -334,7 +363,7 @@ class Markdown(object):
 
         if 'link-patterns' in self.extras:
             # allow link patterns via extras dict without kwarg explicitly set
-            link_patterns = link_patterns or extras['link-patterns']
+            link_patterns = link_patterns or self.extras['link-patterns']
             if link_patterns is None:
                 # if you have specified that the link-patterns extra SHOULD
                 # be used (via self.extras) but you haven't provided anything
@@ -402,7 +431,7 @@ class Markdown(object):
         re.IGNORECASE | re.VERBOSE
     )
 
-    def convert(self, text):
+    def convert(self, text) -> 'UnicodeWithAttrs':
         """Convert the given text."""
         # Main function. The order in which other subs are called here is
         # essential. Link and image substitutions need to happen before
@@ -2764,6 +2793,7 @@ class FencedCodeBlocks(Extra):
     def run(self, text):
         return self.fenced_code_block_re.sub(self.sub, text)
 
+
 class Latex(Extra):
     '''
     Convert $ and $$ to <math> and </math> tags for inline and block math.
@@ -2814,6 +2844,7 @@ class Latex(Extra):
 
         return text
 
+
 class LinkPatterns(Extra):
     '''
     Auto-link given regex patterns in text (e.g. bug number
@@ -2821,6 +2852,7 @@ class LinkPatterns(Extra):
     '''
     name = 'link-patterns'
     order = (Stage.LINKS,), ()
+    options: _link_patterns
 
     _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
 
