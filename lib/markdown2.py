@@ -120,7 +120,7 @@ from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
 from random import randint, random
-from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Sized, Tuple, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Tuple, Type, TypedDict, Union
 from enum import IntEnum, auto
 
 if sys.version_info[1] < 9:
@@ -133,6 +133,16 @@ _safe_mode = Literal['replace', 'escape']
 _extras_dict = Dict[str, Any]
 _extras_param = Union[List[str], _extras_dict]
 _link_patterns = Iterable[Tuple[re.Pattern[str], Union[str, Callable[[re.Match], str]]]]
+
+
+class _BreaksExtraOpts(TypedDict, total=False):
+    on_backslash: bool
+    on_newline: bool
+
+
+class _WavedromExtraOpts(TypedDict, total=False):
+    prefer_embed_svg: bool
+
 
 # ---- globals
 
@@ -2718,6 +2728,7 @@ class Admonitions(Extra):
 class Breaks(Extra):
     name = 'breaks'
     order = (), (Stage.ITALIC_AND_BOLD,)
+    options: _BreaksExtraOpts
 
     def run(self, text):
         on_backslash = self.options.get('on_backslash', False)
@@ -3366,6 +3377,7 @@ class Wavedrom(Extra):
     '''
     name = 'wavedrom'
     order = (Stage.CODE_BLOCKS, FencedCodeBlocks), ()
+    options: _WavedromExtraOpts
 
     def test(self, text):
         match = FencedCodeBlocks.fenced_code_block_re.search(text)
