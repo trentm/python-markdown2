@@ -2525,7 +2525,7 @@ class MarkdownWithExtras(Markdown):
 # ----------------------------------------------------------
 
 class Extra(ABC):
-    _registry = {}
+    _registry: Dict[str, Type['Extra']] = {}
     _exec_order: Dict[Stage, Tuple[List[Type['Extra']], List[Type['Extra']]]] = {}
 
     name: str
@@ -2642,11 +2642,11 @@ class ItalicAndBoldProcessor(Extra):
         return text
 
     @abstractmethod
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         # do nothing. Let `Markdown._do_italics_and_bold` do its thing later
         return match.string[match.start(): match.end()]
 
-    def sub_hash(self, match):
+    def sub_hash(self, match: re.Match) -> str:
         substr = match.string[match.start(): match.end()]
         key = _hash_text(substr)
         self.hash_table[key] = substr
@@ -2683,7 +2683,7 @@ class Admonitions(Extra):
     def test(self, text):
         return self.admonitions_re.search(text) is not None
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         lead_indent, admonition_name, title, body = match.groups()
 
         admonition_type = '<strong>%s</strong>' % admonition_name
@@ -2744,7 +2744,7 @@ class CodeFriendly(ItalicAndBoldProcessor):
     '''
     name = 'code-friendly'
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         syntax = match.group(1)
         if '_' not in syntax:
             return super().sub(match)
@@ -2781,7 +2781,18 @@ class FencedCodeBlocks(Extra):
             return True
         return self.md.stage == Stage.BLOCK_GAMUT
 
-    def _code_block_with_lexer_sub(self, codeblock, leading_indent, lexer):
+    def _code_block_with_lexer_sub(
+        self,
+        codeblock: str,
+        leading_indent: str,
+        lexer
+    ) -> str:
+        '''
+        Args:
+            codeblock: the codeblock to format
+            leading_indent: the indentation to prefix the block with
+            lexer (pygments.Lexer): the lexer to use
+        '''
         formatter_opts = self.md.extras['fenced-code-blocks'] or {}
 
         def unhash_code(codeblock):
@@ -2805,7 +2816,7 @@ class FencedCodeBlocks(Extra):
         # add back the indent to all lines
         return "\n%s\n" % self.md._uniform_indent(colored, leading_indent, True)
 
-    def tags(self, lexer_name) -> tuple:
+    def tags(self, lexer_name: str) -> Tuple[str, str]:
         '''
         Returns the tags that the encoded code block will be wrapped in, based
         upon the lexer name.
@@ -2823,7 +2834,7 @@ class FencedCodeBlocks(Extra):
             code_class = self.md._html_class_str_from_tag('code')
         return ('<pre%s><code%s>' % (pre_class, code_class), '</code></pre>')
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         lexer_name = match.group(2)
         codeblock = match.group(3)
         codeblock = codeblock[:-1]  # drop one trailing newline
@@ -3043,18 +3054,12 @@ class MiddleWordEm(ItalicAndBoldProcessor):
             text = self.liberal_em_re.sub(self.sub_hash, text)
         return text
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         syntax = match.group(1)
         if len(syntax) != 1:
             # strong syntax
             return super().sub(match)
         return '<em>%s</em>' % match.group(2)
-
-    def sub_hash(self, match):
-        text = match.string[match.start(): match.end()]
-        key = _hash_text(text)
-        self.hash_table[key] = text
-        return key
 
 
 class Numbering(Extra):
@@ -3065,9 +3070,6 @@ class Numbering(Extra):
 
     name = 'numbering'
     order = (Stage.LINK_DEFS,), ()
-
-    def test(self, text):
-        return True
 
     def run(self, text):
         # First pass to define all the references
@@ -3137,7 +3139,7 @@ class PyShell(Extra):
     def test(self, text):
         return ">>>" in text
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         if "fenced-code-blocks" in self.md.extras:
             dedented = _dedent(match.group(0))
             return self.md.extra_classes['fenced-code-blocks'].run("```pycon\n" + dedented + "```\n")
@@ -3183,7 +3185,7 @@ class SmartyPants(Extra):
         "round", "bout", "twixt", "nuff", "fraid", "sup"]
 
 
-    def contractions(self, text):
+    def contractions(self, text: str) -> str:
         text = self._apostrophe_year_re.sub(r"&#8217;\1", text)
         for c in self._contractions:
             text = text.replace("'%s" % c, "&#8217;%s" % c)
@@ -3282,7 +3284,7 @@ class Tables(Extra):
             ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
         return table_re.sub(self.sub, text)
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         trim_space_re = '^[ \t\n]+|[ \t\n]+$'
         trim_bar_re = r'^\||\|$'
         split_bar_re = r'^\||(?<![\`\\])\|'
@@ -3328,9 +3330,6 @@ class Tables(Extra):
 
         return '\n'.join(hlines) + '\n'
 
-    def test(self, text):
-        return True
-
 
 class TelegramSpoiler(Extra):
     name = 'tg-spoiler'
@@ -3372,7 +3371,7 @@ class Wavedrom(Extra):
         match = FencedCodeBlocks.fenced_code_block_re.search(text)
         return match is None or match.group(2) == 'wavedrom'
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         # dedent the block for processing
         lead_indent, waves = self.md._uniform_outdent(match.group(3))
         # default tags to wrap the wavedrom block in
@@ -3418,7 +3417,7 @@ class WikiTables(Extra):
             ''' % less_than_tab, re.M | re.X)
         return wiki_table_re.sub(self.sub, text)
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         ttext = match.group(0).strip()
         rows = []
         for line in ttext.splitlines(0):
