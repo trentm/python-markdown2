@@ -132,7 +132,7 @@ else:
 _safe_mode = Literal['replace', 'escape']
 _extras_dict = Dict[str, Any]
 _extras_param = Union[List[str], _extras_dict]
-_link_patterns = Iterable[Tuple[re.Pattern, Union[str, Callable[[re.Match], str]]]]
+_link_patterns = Iterable[Tuple[re.Pattern[str], Union[str, Callable[[re.Match], str]]]]
 
 # ---- globals
 
@@ -145,7 +145,7 @@ DEFAULT_TAB_WIDTH = 4
 SECRET_SALT = bytes(randint(0, 1000000))
 # MD5 function was previously used for this; the "md5" prefix was kept for
 # backwards compatibility.
-def _hash_text(s):
+def _hash_text(s: str) -> str:
     return 'md5-' + sha256(SECRET_SALT + s.encode("utf-8")).hexdigest()[32:]
 
 # Table of hash values for escaped characters:
@@ -3487,7 +3487,7 @@ WikiTables.register()
 # ---- internal support functions
 
 
-def calculate_toc_html(toc) -> Optional[str]:
+def calculate_toc_html(toc: Union[List[Tuple[int, str, str]], None]) -> Optional[str]:
     """Return the HTML for the current TOC.
 
     This expects the `_toc` attribute to have been set on this instance.
@@ -3532,7 +3532,7 @@ class UnicodeWithAttrs(str):
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
 _slugify_strip_re = re.compile(r'[^\w\s-]')
 _slugify_hyphenate_re = re.compile(r'[-\s]+')
-def _slugify(value):
+def _slugify(value: str) -> str:
     """
     Normalizes string, converts to lowercase, removes non-alpha characters,
     and converts spaces to hyphens.
@@ -3547,8 +3547,7 @@ def _slugify(value):
 
 
 # From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52549
-def _curry(*args, **kwargs):
-    function, args = args[0], args[1:]
+def _curry(function: Callable, *args, **kwargs) -> Callable:
     def result(*rest, **kwrest):
         combined = kwargs.copy()
         combined.update(kwrest)
@@ -3557,7 +3556,7 @@ def _curry(*args, **kwargs):
 
 
 # Recipe: regex_from_encoded_pattern (1.0)
-def _regex_from_encoded_pattern(s):
+def _regex_from_encoded_pattern(s: str) -> re.Pattern[str]:
     """'foo'    -> re.compile(re.escape('foo'))
        '/foo/'  -> re.compile('foo')
        '/foo/i' -> re.compile('foo', re.I)
@@ -3587,7 +3586,7 @@ def _regex_from_encoded_pattern(s):
 
 
 # Recipe: dedent (0.1.2)
-def _dedentlines(lines, tabsize=8, skip_first_line=False):
+def _dedentlines(lines: List[str], tabsize: int = 8, skip_first_line: bool = False) -> List[str]:
     """_dedentlines(lines, tabsize=8, skip_first_line=False) -> dedented lines
 
         "lines" is a list of lines to dedent.
@@ -3657,7 +3656,7 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
     return lines
 
 
-def _dedent(text, tabsize=8, skip_first_line=False):
+def _dedent(text: str, tabsize: int = 8, skip_first_line: bool = False) -> str:
     """_dedent(text, tabsize=8, skip_first_line=False) -> dedented text
 
         "text" is the text to dedent.
@@ -3700,7 +3699,7 @@ class _memoized(object):
         return self.func.__doc__
 
 
-def _xml_oneliner_re_from_tab_width(tab_width):
+def _xml_oneliner_re_from_tab_width(tab_width: int) -> re.Pattern[str]:
     """Standalone XML processing instruction regex."""
     return re.compile(r"""
         (?:
@@ -3722,7 +3721,7 @@ def _xml_oneliner_re_from_tab_width(tab_width):
 _xml_oneliner_re_from_tab_width = _memoized(_xml_oneliner_re_from_tab_width)
 
 
-def _hr_tag_re_from_tab_width(tab_width):
+def _hr_tag_re_from_tab_width(tab_width: int) -> re.Pattern[str]:
     return re.compile(r"""
         (?:
             (?<=\n\n)       # Starting after a blank line
@@ -3742,7 +3741,7 @@ def _hr_tag_re_from_tab_width(tab_width):
 _hr_tag_re_from_tab_width = _memoized(_hr_tag_re_from_tab_width)
 
 
-def _xml_escape_attr(attr, skip_single_quote=True):
+def _xml_escape_attr(attr: str, skip_single_quote: bool = True) -> str:
     """Escape the given string for use in an HTML/XML tag attribute.
 
     By default this doesn't bother with escaping `'` to `&#39;`, presuming that
@@ -3759,7 +3758,7 @@ def _xml_escape_attr(attr, skip_single_quote=True):
     return escaped
 
 
-def _xml_encode_email_char_at_random(ch):
+def _xml_encode_email_char_at_random(ch: str) -> str:
     r = random()
     # Roughly 10% raw, 45% hex, 45% dec.
     # '@' *must* be encoded. I [John Gruber] insist.
