@@ -2872,7 +2872,7 @@ class FencedCodeBlocks(Extra):
 
         tags = self.tags(lexer_name)
 
-        return "\n%s%s%s\n%s\n" % (leading_indent, tags[0], codeblock, tags[1])
+        return "\n%s%s%s\n%s%s\n" % (leading_indent, tags[0], codeblock, leading_indent, tags[1])
 
     def run(self, text):
         return self.fenced_code_block_re.sub(self.sub, text)

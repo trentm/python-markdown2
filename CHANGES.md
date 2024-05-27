@@ -12,6 +12,7 @@
 - [pull #576] Fix `html`, `head` and `body` tags being wrapped in `<p>` tags (#575)
 - [pull #581] Add type hints (#562)
 - [pull #581] Drop Python 3.6 and 3.7 support
+- [pull #582] Fix fenced code blocks breaking lists (#580)
 
 
 ## python-markdown2 2.4.13
