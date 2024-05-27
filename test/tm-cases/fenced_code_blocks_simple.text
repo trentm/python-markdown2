@@ -14,3 +14,16 @@ Here is one at the end of the file:
 ```
     is indentation maintained?
 ```
+
+Here's one in a list, with another one following (see #580):
+
+* List 1
+  ```
+  code 1
+
+  code 2
+  ```
+
+```
+code 3
+```
