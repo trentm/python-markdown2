@@ -120,13 +120,19 @@ from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
 from random import randint, random
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Tuple, Type, TypedDict, Union
 from enum import IntEnum, auto
 
 if sys.version_info[1] < 9:
     from typing import Iterable
 else:
     from collections.abc import Iterable
+
+# ---- type defs
+_safe_mode = Literal['replace', 'escape']
+_extras_dict = Dict[str, Any]
+_extras_param = Union[List[str], _extras_dict]
+_link_patterns = Iterable[Tuple[re.Pattern, Union[str, Callable[[re.Match], str]]]]
 
 # ---- globals
 
@@ -139,7 +145,7 @@ DEFAULT_TAB_WIDTH = 4
 SECRET_SALT = bytes(randint(0, 1000000))
 # MD5 function was previously used for this; the "md5" prefix was kept for
 # backwards compatibility.
-def _hash_text(s):
+def _hash_text(s: str) -> str:
     return 'md5-' + sha256(SECRET_SALT + s.encode("utf-8")).hexdigest()[32:]
 
 # Table of hash values for escaped characters:
@@ -158,11 +164,18 @@ class MarkdownError(Exception):
 
 # ---- public api
 
-def markdown_path(path, encoding="utf-8",
-                  html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-                  safe_mode=None, extras=None, link_patterns=None,
-                  footnote_title=None, footnote_return_symbol=None,
-                  use_file_vars=False):
+def markdown_path(
+    path: str,
+    encoding: str = "utf-8",
+    html4tags: bool = False,
+    tab_width: int = DEFAULT_TAB_WIDTH,
+    safe_mode: Optional[_safe_mode] = None,
+    extras: Optional[_extras_param] = None,
+    link_patterns: Optional[_link_patterns] = None,
+    footnote_title: Optional[str] = None,
+    footnote_return_symbol: Optional[str] = None,
+    use_file_vars: bool = False
+) -> 'UnicodeWithAttrs':
     fp = codecs.open(path, 'r', encoding)
     text = fp.read()
     fp.close()
@@ -174,10 +187,18 @@ def markdown_path(path, encoding="utf-8",
                     use_file_vars=use_file_vars).convert(text)
 
 
-def markdown(text, html4tags=False, tab_width=DEFAULT_TAB_WIDTH,
-             safe_mode=None, extras=None, link_patterns=None,
-             footnote_title=None, footnote_return_symbol=None,
-             use_file_vars=False, cli=False):
+def markdown(
+    text: str,
+    html4tags: bool = False,
+    tab_width: int = DEFAULT_TAB_WIDTH,
+    safe_mode: Optional[_safe_mode] = None,
+    extras: Optional[_extras_param] = None,
+    link_patterns: Optional[_link_patterns] = None,
+    footnote_title: Optional[str] = None,
+    footnote_return_symbol: Optional[str] =None,
+    use_file_vars: bool = False,
+    cli: bool = False
+) -> 'UnicodeWithAttrs':
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns,
@@ -253,18 +274,19 @@ class Markdown(object):
     #
     # This can be set via (a) subclassing and (b) the constructor
     # "extras" argument.
-    extras = None
+    extras: _extras_dict
     # dict of `Extra` names and associated class instances, populated during _setup_extras
-    extra_classes = None
+    extra_classes: Dict[str, 'Extra']
 
-    urls = None
-    titles = None
-    html_blocks = None
-    html_spans = None
-    html_removed_text = "{(#HTML#)}"  # placeholder removed text that does not trigger bold
-    html_removed_text_compat = "[HTML_REMOVED]"  # for compat with markdown.py
+    urls: Dict[str, str]
+    titles: Dict[str, str]
+    html_blocks: Dict[str, str]
+    html_spans: Dict[str, str]
+    html_removed_text: str = "{(#HTML#)}"  # placeholder removed text that does not trigger bold
+    html_removed_text_compat: str = "[HTML_REMOVED]"  # for compat with markdown.py
+    safe_mode: Optional[_safe_mode]
 
-    _toc = None
+    _toc: List[Tuple[int, str, str]]
 
     # Used to track when we're inside an ordered or unordered list
     # (see _ProcessListItems() for details):
@@ -272,7 +294,7 @@ class Markdown(object):
 
     stage: Stage
     '''Current "stage" of markdown conversion taking place'''
-    order: int
+    order: float
     '''
     Same as `Stage` but will be +/- 0.5 of the value of `Stage`.
     This allows extras to check if they are running before or after a particular stage
@@ -281,10 +303,18 @@ class Markdown(object):
 
     _ws_only_line_re = re.compile(r"^[ \t]+$", re.M)
 
-    def __init__(self, html4tags=False, tab_width=4, safe_mode=None,
-                 extras=None, link_patterns=None,
-                 footnote_title=None, footnote_return_symbol=None,
-                 use_file_vars=False, cli=False):
+    def __init__(
+        self,
+        html4tags: bool = False,
+        tab_width: int = DEFAULT_TAB_WIDTH,
+        safe_mode: Optional[_safe_mode] = None,
+        extras: Optional[_extras_param] = None,
+        link_patterns: Optional[_link_patterns] = None,
+        footnote_title: Optional[str] = None,
+        footnote_return_symbol: Optional[str] = None,
+        use_file_vars: bool = False,
+        cli: bool = False
+    ):
         if html4tags:
             self.empty_element_suffix = ">"
         else:
@@ -301,10 +331,13 @@ class Markdown(object):
             self.safe_mode = safe_mode
 
         # Massaging and building the "extras" info.
-        if self.extras is None:
+        if getattr(self, 'extras', None) is None:
             self.extras = {}
         elif not isinstance(self.extras, dict):
-            self.extras = dict([(e, None) for e in self.extras])
+            # inheriting classes may set `self.extras` as List[str].
+            # we can't allow it through type hints but we can convert it
+            self.extras = dict([(e, None) for e in self.extras])  # type:ignore
+
         if extras:
             if not isinstance(extras, dict):
                 extras = dict([(e, None) for e in extras])
@@ -334,7 +367,7 @@ class Markdown(object):
 
         if 'link-patterns' in self.extras:
             # allow link patterns via extras dict without kwarg explicitly set
-            link_patterns = link_patterns or extras['link-patterns']
+            link_patterns = link_patterns or self.extras['link-patterns']
             if link_patterns is None:
                 # if you have specified that the link-patterns extra SHOULD
                 # be used (via self.extras) but you haven't provided anything
@@ -364,7 +397,7 @@ class Markdown(object):
         self.list_level = 0
         self.extras = self._instance_extras.copy()
         self._setup_extras()
-        self._toc = None
+        self._toc = []
 
     def _setup_extras(self):
         if "footnotes" in self.extras:
@@ -376,7 +409,7 @@ class Markdown(object):
             if not hasattr(self, '_count_from_header_id') or self.extras['header-ids'].get('reset-count', False):
                 self._count_from_header_id = defaultdict(int)
         if "metadata" in self.extras:
-            self.metadata = {}
+            self.metadata: Dict[str, Any] = {}
 
         self.extra_classes = {}
         for name, klass in Extra._registry.items():
@@ -402,7 +435,7 @@ class Markdown(object):
         re.IGNORECASE | re.VERBOSE
     )
 
-    def convert(self, text):
+    def convert(self, text: str) -> 'UnicodeWithAttrs':
         """Convert the given text."""
         # Main function. The order in which other subs are called here is
         # essential. Link and image substitutions need to happen before
@@ -503,11 +536,12 @@ class Markdown(object):
                 # TOC will only be out of order if mixed headers is enabled
                 def toc_sort(entry):
                     '''Sort the TOC by order of appearance in text'''
-                    return re.search(
+                    match = re.search(
                         # header tag, any attrs, the ID, any attrs, the text, close tag
                         r'^<(h%d).*?id=(["\'])%s\2.*>%s</\1>$' % (entry[0], entry[1], re.escape(entry[2])),
                         text, re.M
-                    ).start()
+                    )
+                    return match.start() if match else 0
 
                 self._toc.sort(key=toc_sort)
             self._toc_html = calculate_toc_html(self._toc)
@@ -529,7 +563,7 @@ class Markdown(object):
         return rv
 
     @mark_stage(Stage.POSTPROCESS)
-    def postprocess(self, text):
+    def postprocess(self, text: str) -> str:
         """A hook for subclasses to do some postprocessing of the html, if
         desired. This is called before unescaping of special chars and
         unhashing of raw HTML spans.
@@ -537,7 +571,7 @@ class Markdown(object):
         return text
 
     @mark_stage(Stage.PREPROCESS)
-    def preprocess(self, text):
+    def preprocess(self, text: str) -> str:
         """A hook for subclasses to do some preprocessing of the Markdown, if
         desired. This is called after basic formatting of the text, but prior
         to any extras, safe mode, etc. processing.
@@ -580,29 +614,32 @@ class Markdown(object):
     _meta_data_fence_pattern = re.compile(r'^---[\ \t]*\n', re.MULTILINE)
     _meta_data_newline = re.compile("^\n", re.MULTILINE)
 
-    def _extract_metadata(self, text):
+    def _extract_metadata(self, text: str) -> str:
         if text.startswith("---"):
             fence_splits = re.split(self._meta_data_fence_pattern, text, maxsplit=2)
             metadata_content = fence_splits[1]
-            match = re.findall(self._meta_data_pattern, metadata_content)
-            if not match:
-                return text
             tail = fence_splits[2]
         else:
             metadata_split = re.split(self._meta_data_newline, text, maxsplit=1)
             metadata_content = metadata_split[0]
-            match = re.findall(self._meta_data_pattern, metadata_content)
-            if not match:
-                return text
             tail = metadata_split[1]
 
-        def parse_structured_value(value):
+        # _meta_data_pattern only has one capturing group, so we can assume
+        # the returned type to be list[str]
+        match: List[str] = re.findall(self._meta_data_pattern, metadata_content)
+        if not match:
+            return text
+
+        def parse_structured_value(value: str) -> Union[List[Any], Dict[str, Any]]:
             vs = value.lstrip()
             vs = value.replace(v[: len(value) - len(vs)], "\n")[1:]
 
             # List
             if vs.startswith("-"):
-                r = []
+                r: List[Any] = []
+                # the regex used has multiple capturing groups, so
+                # returned type from findall will be List[List[str]]
+                match: List[str]
                 for match in re.findall(self._key_val_list_pat, vs):
                     if match[0] and not match[1] and not match[2]:
                         r.append(match[0].strip())
@@ -667,7 +704,7 @@ class Markdown(object):
         (?P<content>.*?\1End:)
         """, re.IGNORECASE | re.MULTILINE | re.DOTALL | re.VERBOSE)
 
-    def _emacs_vars_oneliner_sub(self, match):
+    def _emacs_vars_oneliner_sub(self, match: re.Match) -> str:
         if match.group(1).strip() == '-*-' and match.group(4).strip() == '-*-':
             lead_ws = re.findall(r'^\s*', match.group(1))[0]
             tail_ws = re.findall(r'\s*$', match.group(4))[0]
@@ -676,7 +713,7 @@ class Markdown(object):
         start, end = match.span()
         return match.string[start: end]
 
-    def _get_emacs_vars(self, text):
+    def _get_emacs_vars(self, text: str) -> Dict[str, str]:
         """Return a dictionary of emacs-style local variables.
 
         Parsing is done loosely according to this spec (and according to
@@ -719,7 +756,7 @@ class Markdown(object):
             if match:
                 prefix = match.group("prefix")
                 suffix = match.group("suffix")
-                lines = match.group("content").splitlines(0)
+                lines = match.group("content").splitlines(False)
                 # print "prefix=%r, suffix=%r, content=%r, lines: %s"\
                 #      % (prefix, suffix, match.group("content"), lines)
 
@@ -742,8 +779,10 @@ class Markdown(object):
                 # Parse out one emacs var per line.
                 continued_for = None
                 for line in lines[:-1]:  # no var on the last line ("PREFIX End:")
-                    if prefix: line = line[len(prefix):]  # strip prefix
-                    if suffix: line = line[:-len(suffix)]  # strip suffix
+                    if prefix:
+                        line = line[len(prefix):]  # strip prefix
+                    if suffix:
+                        line = line[:-len(suffix)]  # strip suffix
                     line = line.strip()
                     if continued_for:
                         variable = continued_for
@@ -777,7 +816,7 @@ class Markdown(object):
 
         return emacs_vars
 
-    def _detab_line(self, line):
+    def _detab_line(self, line: str) -> str:
         r"""Recusively convert tabs to spaces in a single line.
 
         Called from _detab()."""
@@ -788,7 +827,7 @@ class Markdown(object):
         output = chunk1 + chunk2
         return self._detab_line(output)
 
-    def _detab(self, text):
+    def _detab(self, text: str) -> str:
         r"""Iterate text line by line and convert tabs to spaces.
 
             >>> m = Markdown()
@@ -853,7 +892,11 @@ class Markdown(object):
 
     _html_markdown_attr_re = re.compile(
         r'''\s+markdown=("1"|'1')''')
-    def _hash_html_block_sub(self, match, raw=False):
+    def _hash_html_block_sub(
+        self,
+        match: Union[re.Match, str],
+        raw: bool = False
+    ) -> str:
         if isinstance(match, str):
             html = match
             tag = None
@@ -864,7 +907,11 @@ class Markdown(object):
             except IndexError:
                 tag = None
 
-        tag = tag or re.match(r'.*?<(\S).*?>', html).group(1)
+        if not tag:
+            m = re.match(r'.*?<(\S).*?>', html)
+            # tag shouldn't be none but make the assertion for type checker
+            assert m is not None
+            tag = m.group(1)
 
         if raw and self.safe_mode:
             html = self._sanitize_html(html)
@@ -898,7 +945,7 @@ class Markdown(object):
         return "\n\n" + key + "\n\n"
 
     @mark_stage(Stage.HASH_HTML)
-    def _hash_html_blocks(self, text, raw=False):
+    def _hash_html_blocks(self, text: str, raw: bool = False) -> str:
         """Hashify HTML blocks
 
         We only want to do this for block-level HTML tags, such as headers,
@@ -1014,7 +1061,13 @@ class Markdown(object):
 
         return text
 
-    def _strict_tag_block_sub(self, text, html_tags_re, callback, allow_indent=False):
+    def _strict_tag_block_sub(
+        self,
+        text: str,
+        html_tags_re: str,
+        callback: Callable[[str], str],
+        allow_indent: bool = False
+    ) -> str:
         '''
         Finds and substitutes HTML blocks within blocks of text
 
@@ -1022,7 +1075,7 @@ class Markdown(object):
             text: the text to search
             html_tags_re: a regex pattern of HTML block tags to match against.
                 For example, `Markdown._block_tags_a`
-            callback: callback function that receives the found HTML text block
+            callback: callback function that receives the found HTML text block and returns a new str
             allow_indent: allow matching HTML blocks that are not completely outdented
         '''
         tag_count = 0
@@ -1059,12 +1112,12 @@ class Markdown(object):
 
         return result
 
-    def _tag_is_closed(self, tag_name, text):
+    def _tag_is_closed(self, tag_name: str, text: str) -> bool:
         # super basic check if number of open tags == number of closing tags
         return len(re.findall('<%s(?:.*?)>' % tag_name, text)) == len(re.findall('</%s>' % tag_name, text))
 
     @mark_stage(Stage.LINK_DEFS)
-    def _strip_link_definitions(self, text):
+    def _strip_link_definitions(self, text: str) -> str:
         # Strips link definitions from text, stores the URLs and titles in
         # hash references.
         less_than_tab = self.tab_width - 1
@@ -1091,7 +1144,7 @@ class Markdown(object):
             """ % less_than_tab, re.X | re.M | re.U)
         return _link_def_re.sub(self._extract_link_def_sub, text)
 
-    def _extract_link_def_sub(self, match):
+    def _extract_link_def_sub(self, match: re.Match) -> str:
         id, url, title = match.groups()
         key = id.lower()    # Link IDs are case-insensitive
         self.urls[key] = self._encode_amps_and_angles(url)
@@ -1099,7 +1152,7 @@ class Markdown(object):
             self.titles[key] = title
         return ""
 
-    def _extract_footnote_def_sub(self, match):
+    def _extract_footnote_def_sub(self, match: re.Match) -> str:
         id, text = match.groups()
         text = _dedent(text, skip_first_line=not text.startswith('\n')).strip()
         normed_id = re.sub(r'\W', '-', id)
@@ -1108,7 +1161,7 @@ class Markdown(object):
         self.footnotes[normed_id] = text + "\n\n"
         return ""
 
-    def _strip_footnote_definitions(self, text):
+    def _strip_footnote_definitions(self, text: str) -> str:
         """A footnote definition looks like this:
 
             [^note-id]: Text of the note.
@@ -1144,7 +1197,7 @@ class Markdown(object):
     _hr_re = re.compile(r'^[ ]{0,3}([-_*])[ ]{0,2}(\1[ ]{0,2}){2,}$', re.M)
 
     @mark_stage(Stage.BLOCK_GAMUT)
-    def _run_block_gamut(self, text):
+    def _run_block_gamut(self, text: str) -> str:
         # These are all the transformations that form block-level
         # tags like paragraphs, headers, and list items.
 
@@ -1175,7 +1228,7 @@ class Markdown(object):
         return text
 
     @mark_stage(Stage.SPAN_GAMUT)
-    def _run_span_gamut(self, text):
+    def _run_span_gamut(self, text: str) -> str:
         # These are all the transformations that occur *within* block-level
         # tags like paragraphs, headers, and list items.
 
@@ -1222,7 +1275,7 @@ class Markdown(object):
         """, re.X)
 
     @mark_stage(Stage.ESCAPE_SPECIAL)
-    def _escape_special_chars(self, text):
+    def _escape_special_chars(self, text: str) -> str:
         # Python markdown note: the HTML tokenization here differs from
         # that in Markdown.pl, hence the behaviour for subtle cases can
         # differ (I believe the tokenizer here does a better job because
@@ -1254,7 +1307,7 @@ class Markdown(object):
         return ''.join(escaped)
 
     @mark_stage(Stage.HASH_HTML)
-    def _hash_html_spans(self, text):
+    def _hash_html_spans(self, text: str) -> str:
         # Used for safe_mode.
 
         def _is_auto_link(s):
@@ -1306,12 +1359,12 @@ class Markdown(object):
             is_html_markup = not is_html_markup
         return ''.join(tokens)
 
-    def _unhash_html_spans(self, text):
+    def _unhash_html_spans(self, text: str) -> str:
         for key, sanitized in list(self.html_spans.items()):
             text = text.replace(key, sanitized)
         return text
 
-    def _sanitize_html(self, s):
+    def _sanitize_html(self, s: str) -> str:
         if self.safe_mode == "replace":
             return self.html_removed_text
         elif self.safe_mode == "escape":
@@ -1349,14 +1402,14 @@ class Markdown(object):
 
     _strip_anglebrackets = re.compile(r'<(.*)>.*')
 
-    def _find_non_whitespace(self, text, start):
+    def _find_non_whitespace(self, text: str, start: int) -> int:
         """Returns the index of the first non-whitespace character in text
         after (and including) start
         """
         match = self._whitespace.match(text, start)
-        return match.end()
+        return match.end() if match else len(text)
 
-    def _find_balanced(self, text, start, open_c, close_c):
+    def _find_balanced(self, text: str, start: int, open_c: str, close_c: str) -> int:
         """Returns the index where the open_c and close_c characters balance
         out - the same number of open_c and close_c are encountered - or the
         end of string if it's reached before the balance point is found.
@@ -1372,7 +1425,7 @@ class Markdown(object):
             i += 1
         return i
 
-    def _extract_url_and_title(self, text, start):
+    def _extract_url_and_title(self, text: str, start: int) -> Union[Tuple[str, str, int], Tuple[None, None, None]]:
         """Extracts the url and (optional) title from the tail of a link"""
         # text[start] equals the opening parenthesis
         idx = self._find_non_whitespace(text, start+1)
@@ -1402,7 +1455,7 @@ class Markdown(object):
         ,(?P<data>.*)
     ''', re.X)
 
-    def _protect_url(self, url):
+    def _protect_url(self, url: str) -> str:
         '''
         Function that passes a URL through `_html_escape_url` to remove any nasty characters,
         and then hashes the now "safe" URL to prevent other safety mechanisms from tampering
@@ -1440,7 +1493,7 @@ class Markdown(object):
         return re.compile(r'^(?:(%s)?(%s)(%s)|(#|\.{,2}/)(%s))$' % (self._safe_protocols, domain, fragment, fragment), re.I)
 
     @mark_stage(Stage.LINKS)
-    def _do_links(self, text):
+    def _do_links(self, text: str) -> str:
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
 
         This is a combination of Markdown.pl's _DoAnchors() and
@@ -1639,7 +1692,11 @@ class Markdown(object):
 
         return text
 
-    def header_id_from_text(self, text, prefix, n):
+    def header_id_from_text(self,
+        text: str,
+        prefix: str,
+        n: Optional[int] = None
+    ) -> str:
         """Generate a header id attribute value from the given header
         HTML content.
 
@@ -1649,7 +1706,7 @@ class Markdown(object):
         @param text {str} The text of the header tag
         @param prefix {str} The requested prefix for header ids. This is the
             value of the "header-ids" extra key, if any. Otherwise, None.
-        @param n {int} The <hN> tag number, i.e. `1` for an <h1> tag.
+        @param n {int} (unused) The <hN> tag number, i.e. `1` for an <h1> tag.
         @returns {str} The value for the header tag's "id" attribute. Return
             None to not have an id attribute and to exclude this header from
             the TOC (if the "toc" extra is specified).
@@ -1664,14 +1721,14 @@ class Markdown(object):
 
         return header_id
 
-    def _header_id_exists(self, text):
+    def _header_id_exists(self, text: str) -> bool:
         header_id = _slugify(text)
         prefix = self.extras['header-ids'].get('prefix')
         if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
         return header_id in self._count_from_header_id or header_id in map(lambda x: x[1], self._toc)
 
-    def _toc_add_entry(self, level, id, name):
+    def _toc_add_entry(self, level: int, id: str, name: str) -> None:
         if level > self._toc_depth:
             return
         if self._toc is None:
@@ -1694,7 +1751,7 @@ class Markdown(object):
     _h_re = re.compile(_h_re_base % '*', re.X | re.M)
     _h_re_tag_friendly = re.compile(_h_re_base % '+', re.X | re.M)
 
-    def _h_sub(self, match):
+    def _h_sub(self, match: re.Match) -> str:
         '''Handles processing markdown headers'''
         if match.group(1) is not None and match.group(3) == "-":
             return match.group(1)
@@ -1727,7 +1784,7 @@ class Markdown(object):
         </h\1>
     ''', re.X | re.M)
 
-    def _h_tag_sub(self, match):
+    def _h_tag_sub(self, match: re.Match) -> str:
         '''Different to `_h_sub` in that this function handles existing HTML headers'''
         text = match.string[match.start(): match.end()]
         h_level = int(match.group(1))
@@ -1753,7 +1810,7 @@ class Markdown(object):
         return text
 
     @mark_stage(Stage.HEADERS)
-    def _do_headers(self, text):
+    def _do_headers(self, text: str) -> str:
         # Setext-style headers:
         #     Header 1
         #     ========
@@ -1777,7 +1834,7 @@ class Markdown(object):
     _marker_ul = '(?:[%s])' % _marker_ul_chars
     _marker_ol = r'(?:\d+\.)'
 
-    def _list_sub(self, match):
+    def _list_sub(self, match: re.Match) -> str:
         lst = match.group(1)
         lst_type = match.group(4) in self._marker_ul_chars and "ul" or "ol"
 
@@ -1796,7 +1853,7 @@ class Markdown(object):
             return "<%s%s>\n%s</%s>\n\n" % (lst_type, lst_opts, result, lst_type)
 
     @mark_stage(Stage.LISTS)
-    def _do_lists(self, text):
+    def _do_lists(self, text: str) -> str:
         # Form HTML ordered (numbered) and unordered (bulleted) lists.
 
         # Iterate over each *non-overlapping* list match.
@@ -1872,16 +1929,19 @@ class Markdown(object):
 
     _task_list_warpper_str = r'<input type="checkbox" class="task-list-item-checkbox" %sdisabled> %s'
 
-    def _task_list_item_sub(self, match):
+    def _task_list_item_sub(self, match: re.Match) -> str:
         marker = match.group(1)
         item_text = match.group(2)
         if marker in ['[x]','[X]']:
-                return self._task_list_warpper_str % ('checked ', item_text)
+            return self._task_list_warpper_str % ('checked ', item_text)
         elif marker == '[ ]':
-                return self._task_list_warpper_str % ('', item_text)
+            return self._task_list_warpper_str % ('', item_text)
+        # returning None has same effect as returning empty str, but only
+        # one makes the type checker happy
+        return ''
 
     _last_li_endswith_two_eols = False
-    def _list_item_sub(self, match):
+    def _list_item_sub(self, match: re.Match) -> str:
         item = match.group(4)
         leading_line = match.group(1)
         if leading_line or "\n\n" in item or self._last_li_endswith_two_eols:
@@ -1900,7 +1960,7 @@ class Markdown(object):
 
         return "<li>%s</li>\n" % item
 
-    def _process_list_items(self, list_str):
+    def _process_list_items(self, list_str: str) -> str:
         # Process the contents of a single ordered or unordered list,
         # splitting it into individual list items.
 
@@ -1931,7 +1991,12 @@ class Markdown(object):
         self.list_level -= 1
         return list_str
 
-    def _get_pygments_lexer(self, lexer_name):
+    def _get_pygments_lexer(self, lexer_name: str):
+        '''
+        Returns:
+            `pygments.Lexer` or None if a lexer matching `lexer_name` is
+            not found
+        '''
         try:
             from pygments import lexers, util
         except ImportError:
@@ -1941,7 +2006,21 @@ class Markdown(object):
         except util.ClassNotFound:
             return None
 
-    def _color_with_pygments(self, codeblock, lexer, **formatter_opts):
+    def _color_with_pygments(
+        self,
+        codeblock: str,
+        lexer,
+        **formatter_opts
+    ) -> str:
+        '''
+        TODO: this function is only referenced by the `FencedCodeBlocks`
+        extra. May be worth moving over there
+
+        Args:
+            codeblock: the codeblock to highlight
+            lexer (pygments.Lexer): lexer to use
+            formatter_opts: pygments HtmlFormatter options
+        '''
         import pygments
         import pygments.formatters
 
@@ -1974,7 +2053,7 @@ class Markdown(object):
         formatter = HtmlCodeFormatter(**formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
-    def _code_block_sub(self, match):
+    def _code_block_sub(self, match: re.Match) -> str:
         codeblock = match.group(1)
         codeblock = self._outdent(codeblock)
         codeblock = self._detab(codeblock)
@@ -1989,7 +2068,7 @@ class Markdown(object):
         return "\n<pre%s><code%s>%s\n</code></pre>\n" % (
             pre_class_str, code_class_str, codeblock)
 
-    def _html_class_str_from_tag(self, tag):
+    def _html_class_str_from_tag(self, tag: str) -> str:
         """Get the appropriate ' class="..."' string (note the leading
         space), if any, for the given tag.
         """
@@ -2006,7 +2085,7 @@ class Markdown(object):
         return ""
 
     @mark_stage(Stage.CODE_BLOCKS)
-    def _do_code_blocks(self, text):
+    def _do_code_blocks(self, text: str) -> str:
         """Process Markdown `<pre><code>` blocks."""
         code_block_re = re.compile(r'''
             (?:\n\n|\A\n?)
@@ -2042,13 +2121,13 @@ class Markdown(object):
             (?!`)
         ''', re.X | re.S)
 
-    def _code_span_sub(self, match):
+    def _code_span_sub(self, match: re.Match) -> str:
         c = match.group(2).strip(" \t")
         c = self._encode_code(c)
         return "<code%s>%s</code>" % (self._html_class_str_from_tag("code"), c)
 
     @mark_stage(Stage.CODE_SPANS)
-    def _do_code_spans(self, text):
+    def _do_code_spans(self, text: str) -> str:
         #   *   Backtick quotes are used for <code></code> spans.
         #
         #   *   You can use multiple backticks as the delimiters if you want to
@@ -2073,7 +2152,7 @@ class Markdown(object):
         #         ... type <code>`bar`</code> ...
         return self._code_span_re.sub(self._code_span_sub, text)
 
-    def _encode_code(self, text):
+    def _encode_code(self, text: str) -> str:
         """Encode/escape certain characters inside Markdown code runs.
         The point is that in code, these characters are literals,
         and lose their special Markdown meanings.
@@ -2096,7 +2175,7 @@ class Markdown(object):
     _em_re = re.compile(r"(\*|_)(?=\S)(.*?\S)\1", re.S)
 
     @mark_stage(Stage.ITALIC_AND_BOLD)
-    def _do_italics_and_bold(self, text):
+    def _do_italics_and_bold(self, text: str) -> str:
         # <strong> must go first:
         text = self._strong_re.sub(r"<strong>\2</strong>", text)
         text = self._em_re.sub(r"<em>\2</em>", text)
@@ -2117,10 +2196,10 @@ class Markdown(object):
     _bq_one_level_re_spoiler = re.compile('^[ \t]*>[ \t]*?![ \t]?', re.M)
     _bq_all_lines_spoilers = re.compile(r'\A(?:^[ \t]*>[ \t]*?!.*[\n\r]*)+\Z', re.M)
     _html_pre_block_re = re.compile(r'(\s*<pre>.+?</pre>)', re.S)
-    def _dedent_two_spaces_sub(self, match):
+    def _dedent_two_spaces_sub(self, match: re.Match) -> str:
         return re.sub(r'(?m)^  ', '', match.group(1))
 
-    def _block_quote_sub(self, match):
+    def _block_quote_sub(self, match: re.Match) -> str:
         bq = match.group(1)
         is_spoiler = 'spoiler' in self.extras and self._bq_all_lines_spoilers.match(bq)
         # trim one level of quoting
@@ -2142,7 +2221,7 @@ class Markdown(object):
             return '<blockquote>\n%s\n</blockquote>\n\n' % bq
 
     @mark_stage(Stage.BLOCK_QUOTES)
-    def _do_block_quotes(self, text):
+    def _do_block_quotes(self, text: str) -> str:
         if '>' not in text:
             return text
         if 'spoiler' in self.extras:
@@ -2151,7 +2230,7 @@ class Markdown(object):
             return self._block_quote_re.sub(self._block_quote_sub, text)
 
     @mark_stage(Stage.PARAGRAPHS)
-    def _form_paragraphs(self, text):
+    def _form_paragraphs(self, text: str) -> str:
         # Strip leading and trailing lines:
         text = text.strip('\n')
 
@@ -2198,7 +2277,7 @@ class Markdown(object):
 
         return "\n\n".join(grafs)
 
-    def _add_footnotes(self, text):
+    def _add_footnotes(self, text: str) -> str:
         if self.footnotes:
             footer = [
                 '<div class="footnotes">',
@@ -2249,7 +2328,7 @@ class Markdown(object):
     _naked_lt_re = re.compile(r'<(?![a-z/?\$!])', re.I)
     _naked_gt_re = re.compile(r'''(?<![a-z0-9?!/'"-])>''', re.I)
 
-    def _encode_amps_and_angles(self, text):
+    def _encode_amps_and_angles(self, text: str) -> str:
         # Smart processing for ampersands and angle brackets that need
         # to be encoded.
         text = _AMPERSAND_RE.sub('&amp;', text)
@@ -2265,7 +2344,7 @@ class Markdown(object):
 
     _incomplete_tags_re = re.compile(r"<(!--|/?\w+?(?!\w)\s*?.+?[\s/]+?)")
 
-    def _encode_incomplete_tags(self, text):
+    def _encode_incomplete_tags(self, text: str) -> str:
         if self.safe_mode not in ("replace", "escape"):
             return text
 
@@ -2277,13 +2356,13 @@ class Markdown(object):
 
         return self._incomplete_tags_re.sub(incomplete_tags_sub, text)
 
-    def _encode_backslash_escapes(self, text):
+    def _encode_backslash_escapes(self, text: str) -> str:
         for ch, escape in list(self._escape_table.items()):
             text = text.replace("\\"+ch, escape)
         return text
 
     _auto_link_re = re.compile(r'<((https?|ftp):[^\'">\s]+)>', re.I)
-    def _auto_link_sub(self, match):
+    def _auto_link_sub(self, match: re.Match) -> str:
         g1 = match.group(1)
         return '<a href="%s">%s</a>' % (self._protect_url(g1), g1)
 
@@ -2297,16 +2376,16 @@ class Markdown(object):
           )
           >
         """, re.I | re.X | re.U)
-    def _auto_email_link_sub(self, match):
+    def _auto_email_link_sub(self, match: re.Match) -> str:
         return self._encode_email_address(
             self._unescape_special_chars(match.group(1)))
 
-    def _do_auto_links(self, text):
+    def _do_auto_links(self, text: str) -> str:
         text = self._auto_link_re.sub(self._auto_link_sub, text)
         text = self._auto_email_link_re.sub(self._auto_email_link_sub, text)
         return text
 
-    def _encode_email_address(self, addr):
+    def _encode_email_address(self, addr: str) -> str:
         #  Input: an email address, e.g. "foo@example.com"
         #
         #  Output: the email address as a mailto link, with each character
@@ -2326,7 +2405,7 @@ class Markdown(object):
                % (''.join(chars), ''.join(chars[7:]))
         return addr
 
-    def _unescape_special_chars(self, text):
+    def _unescape_special_chars(self, text: str) -> str:
         # Swap back in all the special characters we've hidden.
         hashmap = tuple(self._escape_table.items()) + tuple(self._code_table.items())
         # html_blocks table is in format {hash: item} compared to usual {item: hash}
@@ -2339,12 +2418,16 @@ class Markdown(object):
                 break
         return text
 
-    def _outdent(self, text):
+    def _outdent(self, text: str) -> str:
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
     @staticmethod
-    def _uniform_outdent(text, min_outdent=None, max_outdent=None):
+    def _uniform_outdent(
+        text: str,
+        min_outdent: Optional[str] = None,
+        max_outdent: Optional[str] = None
+    ) -> Tuple[str, str]:
         '''
         Removes the smallest common leading indentation from each (non empty)
         line of `text` and returns said indent along with the outdented text.
@@ -2355,7 +2438,7 @@ class Markdown(object):
         '''
 
         # find the leading whitespace for every line
-        whitespace = [
+        whitespace: List[Union[str, None]] = [
             re.findall(r'^[ \t]*', line)[0] if line else None
             for line in text.splitlines()
         ]
@@ -2387,7 +2470,12 @@ class Markdown(object):
         return outdent, ''.join(outdented)
 
     @staticmethod
-    def _uniform_indent(text, indent, include_empty_lines=False, indent_empty_lines=False):
+    def _uniform_indent(
+        text: str,
+        indent: str,
+        include_empty_lines: bool = False,
+        indent_empty_lines: bool = False
+    ) -> str:
         '''
         Uniformly indent a block of text by a fixed amount
 
@@ -2408,7 +2496,7 @@ class Markdown(object):
         return ''.join(blocks)
 
     @staticmethod
-    def _match_overlaps_substr(text, match, substr):
+    def _match_overlaps_substr(text, match: re.Match, substr: str) -> bool:
         '''
         Checks if a regex match overlaps with a substring in the given text.
         '''
@@ -2433,7 +2521,7 @@ class MarkdownWithExtras(Markdown):
     - link-patterns (because you need to specify some actual
       link-patterns anyway)
     """
-    extras = ["footnotes", "fenced-code-blocks"]
+    extras = ["footnotes", "fenced-code-blocks"]  # type: ignore
 
 
 # ----------------------------------------------------------
@@ -2444,15 +2532,15 @@ class MarkdownWithExtras(Markdown):
 # ----------------------------------------------------------
 
 class Extra(ABC):
-    _registry = {}
-    _exec_order: Dict[Stage, Tuple[List['Extra'], List['Extra']]] = {}
+    _registry: Dict[str, Type['Extra']] = {}
+    _exec_order: Dict[Stage, Tuple[List[Type['Extra']], List[Type['Extra']]]] = {}
 
     name: str
     '''
     An identifiable name that users can use to invoke the extra
     in the Markdown class
     '''
-    order: Tuple[Iterable[Union[Stage, 'Extra']], Iterable[Union[Stage, 'Extra']]]
+    order: Tuple[Collection[Union[Stage, Type['Extra']]], Collection[Union[Stage, Type['Extra']]]]
     '''
     Tuple of two iterables containing the stages/extras this extra will run before and
     after, respectively
@@ -2561,11 +2649,11 @@ class ItalicAndBoldProcessor(Extra):
         return text
 
     @abstractmethod
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         # do nothing. Let `Markdown._do_italics_and_bold` do its thing later
         return match.string[match.start(): match.end()]
 
-    def sub_hash(self, match):
+    def sub_hash(self, match: re.Match) -> str:
         substr = match.string[match.start(): match.end()]
         key = _hash_text(substr)
         self.hash_table[key] = substr
@@ -2602,7 +2690,7 @@ class Admonitions(Extra):
     def test(self, text):
         return self.admonitions_re.search(text) is not None
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         lead_indent, admonition_name, title, body = match.groups()
 
         admonition_type = '<strong>%s</strong>' % admonition_name
@@ -2634,9 +2722,18 @@ class Admonitions(Extra):
         return self.admonitions_re.sub(self.sub, text)
 
 
+class _BreaksExtraOpts(TypedDict, total=False):
+    '''Options for the `Breaks` extra'''
+    on_backslash: bool
+    '''Replace backslashes at the end of a line with <br>'''
+    on_newline: bool
+    '''Replace single new line characters with <br> when True'''
+
+
 class Breaks(Extra):
     name = 'breaks'
     order = (), (Stage.ITALIC_AND_BOLD,)
+    options: _BreaksExtraOpts
 
     def run(self, text):
         on_backslash = self.options.get('on_backslash', False)
@@ -2663,7 +2760,7 @@ class CodeFriendly(ItalicAndBoldProcessor):
     '''
     name = 'code-friendly'
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         syntax = match.group(1)
         if '_' not in syntax:
             return super().sub(match)
@@ -2700,7 +2797,18 @@ class FencedCodeBlocks(Extra):
             return True
         return self.md.stage == Stage.BLOCK_GAMUT
 
-    def _code_block_with_lexer_sub(self, codeblock, leading_indent, lexer):
+    def _code_block_with_lexer_sub(
+        self,
+        codeblock: str,
+        leading_indent: str,
+        lexer
+    ) -> str:
+        '''
+        Args:
+            codeblock: the codeblock to format
+            leading_indent: the indentation to prefix the block with
+            lexer (pygments.Lexer): the lexer to use
+        '''
         formatter_opts = self.md.extras['fenced-code-blocks'] or {}
 
         def unhash_code(codeblock):
@@ -2724,7 +2832,7 @@ class FencedCodeBlocks(Extra):
         # add back the indent to all lines
         return "\n%s\n" % self.md._uniform_indent(colored, leading_indent, True)
 
-    def tags(self, lexer_name) -> tuple:
+    def tags(self, lexer_name: str) -> Tuple[str, str]:
         '''
         Returns the tags that the encoded code block will be wrapped in, based
         upon the lexer name.
@@ -2742,7 +2850,7 @@ class FencedCodeBlocks(Extra):
             code_class = self.md._html_class_str_from_tag('code')
         return ('<pre%s><code%s>' % (pre_class, code_class), '</code></pre>')
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         lexer_name = match.group(2)
         codeblock = match.group(3)
         codeblock = codeblock[:-1]  # drop one trailing newline
@@ -2768,6 +2876,7 @@ class FencedCodeBlocks(Extra):
 
     def run(self, text):
         return self.fenced_code_block_re.sub(self.sub, text)
+
 
 class Latex(Extra):
     '''
@@ -2819,6 +2928,7 @@ class Latex(Extra):
 
         return text
 
+
 class LinkPatterns(Extra):
     '''
     Auto-link given regex patterns in text (e.g. bug number
@@ -2826,6 +2936,7 @@ class LinkPatterns(Extra):
     '''
     name = 'link-patterns'
     order = (Stage.LINKS,), ()
+    options: _link_patterns
 
     _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
 
@@ -2837,7 +2948,7 @@ class LinkPatterns(Extra):
                 if any(self.md._match_overlaps_substr(text, match, h) for h in link_from_hash):
                     continue
 
-                if hasattr(repl, "__call__"):
+                if callable(repl):
                     href = repl(match)
                 else:
                     href = match.expand(repl)
@@ -2959,18 +3070,12 @@ class MiddleWordEm(ItalicAndBoldProcessor):
             text = self.liberal_em_re.sub(self.sub_hash, text)
         return text
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         syntax = match.group(1)
         if len(syntax) != 1:
             # strong syntax
             return super().sub(match)
         return '<em>%s</em>' % match.group(2)
-
-    def sub_hash(self, match):
-        text = match.string[match.start(): match.end()]
-        key = _hash_text(text)
-        self.hash_table[key] = text
-        return key
 
 
 class Numbering(Extra):
@@ -2981,9 +3086,6 @@ class Numbering(Extra):
 
     name = 'numbering'
     order = (Stage.LINK_DEFS,), ()
-
-    def test(self, text):
-        return True
 
     def run(self, text):
         # First pass to define all the references
@@ -3053,7 +3155,7 @@ class PyShell(Extra):
     def test(self, text):
         return ">>>" in text
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         if "fenced-code-blocks" in self.md.extras:
             dedented = _dedent(match.group(0))
             return self.md.extra_classes['fenced-code-blocks'].run("```pycon\n" + dedented + "```\n")
@@ -3099,7 +3201,7 @@ class SmartyPants(Extra):
         "round", "bout", "twixt", "nuff", "fraid", "sup"]
 
 
-    def contractions(self, text):
+    def contractions(self, text: str) -> str:
         text = self._apostrophe_year_re.sub(r"&#8217;\1", text)
         for c in self._contractions:
             text = text.replace("'%s" % c, "&#8217;%s" % c)
@@ -3198,7 +3300,7 @@ class Tables(Extra):
             ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
         return table_re.sub(self.sub, text)
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         trim_space_re = '^[ \t\n]+|[ \t\n]+$'
         trim_bar_re = r'^\||\|$'
         split_bar_re = r'^\||(?<![\`\\])\|'
@@ -3244,9 +3346,6 @@ class Tables(Extra):
 
         return '\n'.join(hlines) + '\n'
 
-    def test(self, text):
-        return True
-
 
 class TelegramSpoiler(Extra):
     name = 'tg-spoiler'
@@ -3277,18 +3376,30 @@ class Underline(Extra):
         return '--' in text
 
 
+class _WavedromExtraOpts(TypedDict, total=False):
+    '''Options for the `Wavedrom` extra'''
+    prefer_embed_svg: bool
+    '''
+    Use the `wavedrom` library to convert diagrams to SVGs and embed them directly.
+    This will only work if the `wavedrom` library has been installed.
+
+    Defaults to `True`
+    '''
+
+
 class Wavedrom(Extra):
     '''
     Support for generating Wavedrom digital timing diagrams
     '''
     name = 'wavedrom'
     order = (Stage.CODE_BLOCKS, FencedCodeBlocks), ()
+    options: _WavedromExtraOpts
 
     def test(self, text):
         match = FencedCodeBlocks.fenced_code_block_re.search(text)
         return match is None or match.group(2) == 'wavedrom'
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         # dedent the block for processing
         lead_indent, waves = self.md._uniform_outdent(match.group(3))
         # default tags to wrap the wavedrom block in
@@ -3334,7 +3445,7 @@ class WikiTables(Extra):
             ''' % less_than_tab, re.M | re.X)
         return wiki_table_re.sub(self.sub, text)
 
-    def sub(self, match):
+    def sub(self, match: re.Match) -> str:
         ttext = match.group(0).strip()
         rows = []
         for line in ttext.splitlines(0):
@@ -3404,7 +3515,7 @@ WikiTables.register()
 # ---- internal support functions
 
 
-def calculate_toc_html(toc):
+def calculate_toc_html(toc: Union[List[Tuple[int, str, str]], None]) -> Optional[str]:
     """Return the HTML for the current TOC.
 
     This expects the `_toc` attribute to have been set on this instance.
@@ -3443,13 +3554,13 @@ class UnicodeWithAttrs(str):
     possibly attach some attributes. E.g. the "toc_html" attribute when
     the "toc" extra is used.
     """
-    metadata = None
-    toc_html = None
+    metadata: Optional[Dict[str, str]] = None
+    toc_html: Optional[str] = None
 
 ## {{{ http://code.activestate.com/recipes/577257/ (r1)
 _slugify_strip_re = re.compile(r'[^\w\s-]')
 _slugify_hyphenate_re = re.compile(r'[-\s]+')
-def _slugify(value):
+def _slugify(value: str) -> str:
     """
     Normalizes string, converts to lowercase, removes non-alpha characters,
     and converts spaces to hyphens.
@@ -3464,8 +3575,7 @@ def _slugify(value):
 
 
 # From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52549
-def _curry(*args, **kwargs):
-    function, args = args[0], args[1:]
+def _curry(function: Callable, *args, **kwargs) -> Callable:
     def result(*rest, **kwrest):
         combined = kwargs.copy()
         combined.update(kwrest)
@@ -3474,7 +3584,7 @@ def _curry(*args, **kwargs):
 
 
 # Recipe: regex_from_encoded_pattern (1.0)
-def _regex_from_encoded_pattern(s):
+def _regex_from_encoded_pattern(s: str) -> re.Pattern:
     """'foo'    -> re.compile(re.escape('foo'))
        '/foo/'  -> re.compile('foo')
        '/foo/i' -> re.compile('foo', re.I)
@@ -3504,7 +3614,7 @@ def _regex_from_encoded_pattern(s):
 
 
 # Recipe: dedent (0.1.2)
-def _dedentlines(lines, tabsize=8, skip_first_line=False):
+def _dedentlines(lines: List[str], tabsize: int = 8, skip_first_line: bool = False) -> List[str]:
     """_dedentlines(lines, tabsize=8, skip_first_line=False) -> dedented lines
 
         "lines" is a list of lines to dedent.
@@ -3522,7 +3632,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
               % (tabsize, skip_first_line))
     margin = None
     for i, line in enumerate(lines):
-        if i == 0 and skip_first_line: continue
+        if i == 0 and skip_first_line:
+            continue
         indent = 0
         for ch in line:
             if ch == ' ':
@@ -3535,16 +3646,19 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 break
         else:
             continue  # skip all-whitespace lines
-        if DEBUG: print("dedent: indent=%d: %r" % (indent, line))
+        if DEBUG:
+            print("dedent: indent=%d: %r" % (indent, line))
         if margin is None:
             margin = indent
         else:
             margin = min(margin, indent)
-    if DEBUG: print("dedent: margin=%r" % margin)
+    if DEBUG:
+        print("dedent: margin=%r" % margin)
 
     if margin is not None and margin > 0:
         for i, line in enumerate(lines):
-            if i == 0 and skip_first_line: continue
+            if i == 0 and skip_first_line:
+                continue
             removed = 0
             for j, ch in enumerate(line):
                 if ch == ' ':
@@ -3552,7 +3666,8 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
                 elif ch == '\t':
                     removed += tabsize - (removed % tabsize)
                 elif ch in '\r\n':
-                    if DEBUG: print("dedent: %r: EOL -> strip up to EOL" % line)
+                    if DEBUG:
+                        print("dedent: %r: EOL -> strip up to EOL" % line)
                     lines[i] = lines[i][j:]
                     break
                 else:
@@ -3574,7 +3689,7 @@ def _dedentlines(lines, tabsize=8, skip_first_line=False):
     return lines
 
 
-def _dedent(text, tabsize=8, skip_first_line=False):
+def _dedent(text: str, tabsize: int = 8, skip_first_line: bool = False) -> str:
     """_dedent(text, tabsize=8, skip_first_line=False) -> dedented text
 
         "text" is the text to dedent.
@@ -3585,7 +3700,7 @@ def _dedent(text, tabsize=8, skip_first_line=False):
 
     textwrap.dedent(s), but don't expand tabs to spaces
     """
-    lines = text.splitlines(1)
+    lines = text.splitlines(True)
     _dedentlines(lines, tabsize=tabsize, skip_first_line=skip_first_line)
     return ''.join(lines)
 
@@ -3617,7 +3732,7 @@ class _memoized(object):
         return self.func.__doc__
 
 
-def _xml_oneliner_re_from_tab_width(tab_width):
+def _xml_oneliner_re_from_tab_width(tab_width: int) -> re.Pattern:
     """Standalone XML processing instruction regex."""
     return re.compile(r"""
         (?:
@@ -3639,7 +3754,7 @@ def _xml_oneliner_re_from_tab_width(tab_width):
 _xml_oneliner_re_from_tab_width = _memoized(_xml_oneliner_re_from_tab_width)
 
 
-def _hr_tag_re_from_tab_width(tab_width):
+def _hr_tag_re_from_tab_width(tab_width: int) -> re.Pattern:
     return re.compile(r"""
         (?:
             (?<=\n\n)       # Starting after a blank line
@@ -3659,7 +3774,7 @@ def _hr_tag_re_from_tab_width(tab_width):
 _hr_tag_re_from_tab_width = _memoized(_hr_tag_re_from_tab_width)
 
 
-def _xml_escape_attr(attr, skip_single_quote=True):
+def _xml_escape_attr(attr: str, skip_single_quote: bool = True) -> str:
     """Escape the given string for use in an HTML/XML tag attribute.
 
     By default this doesn't bother with escaping `'` to `&#39;`, presuming that
@@ -3676,7 +3791,7 @@ def _xml_escape_attr(attr, skip_single_quote=True):
     return escaped
 
 
-def _xml_encode_email_char_at_random(ch):
+def _xml_encode_email_char_at_random(ch: str) -> str:
     r = random()
     # Roughly 10% raw, 45% hex, 45% dec.
     # '@' *must* be encoded. I [John Gruber] insist.
@@ -3690,7 +3805,11 @@ def _xml_encode_email_char_at_random(ch):
         return '&#%s;' % ord(ch)
 
 
-def _html_escape_url(attr, safe_mode=False, charset=None):
+def _html_escape_url(
+    attr: str,
+    safe_mode: Union[_safe_mode, bool, None] = False,
+    charset: Optional[str] = None
+):
     """
     Replace special characters that are potentially malicious in url string.
 
@@ -3794,8 +3913,10 @@ def main(argv=None):
         f = open(opts.link_patterns_file)
         try:
             for i, line in enumerate(f.readlines()):
-                if not line.strip(): continue
-                if line.lstrip().startswith("#"): continue
+                if not line.strip():
+                    continue
+                if line.lstrip().startswith("#"):
+                    continue
                 try:
                     pat, href = line.rstrip().rsplit(None, 1)
                 except ValueError:

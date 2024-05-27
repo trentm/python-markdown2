@@ -10,6 +10,8 @@
 - [pull #572] Process inline tags as HTML blocks when they span multiple lines (#571)
 - [pull #573] Add new LaTeX Extra
 - [pull #576] Fix `html`, `head` and `body` tags being wrapped in `<p>` tags (#575)
+- [pull #581] Add type hints (#562)
+- [pull #581] Drop Python 3.6 and 3.7 support
 
 
 ## python-markdown2 2.4.13
