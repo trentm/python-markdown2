@@ -134,16 +134,6 @@ _extras_dict = Dict[str, Any]
 _extras_param = Union[List[str], _extras_dict]
 _link_patterns = Iterable[Tuple[re.Pattern[str], Union[str, Callable[[re.Match], str]]]]
 
-
-class _BreaksExtraOpts(TypedDict, total=False):
-    on_backslash: bool
-    on_newline: bool
-
-
-class _WavedromExtraOpts(TypedDict, total=False):
-    prefer_embed_svg: bool
-
-
 # ---- globals
 
 DEBUG = False
@@ -2725,6 +2715,14 @@ class Admonitions(Extra):
         return self.admonitions_re.sub(self.sub, text)
 
 
+class _BreaksExtraOpts(TypedDict, total=False):
+    '''Options for the `Breaks` extra'''
+    on_backslash: bool
+    '''Replace backslashes at the end of a line with <br>'''
+    on_newline: bool
+    '''Replace single new line characters with <br> when True'''
+
+
 class Breaks(Extra):
     name = 'breaks'
     order = (), (Stage.ITALIC_AND_BOLD,)
@@ -3369,6 +3367,17 @@ class Underline(Extra):
 
     def test(self, text):
         return '--' in text
+
+
+class _WavedromExtraOpts(TypedDict, total=False):
+    '''Options for the `Wavedrom` extra'''
+    prefer_embed_svg: bool
+    '''
+    Use the `wavedrom` library to convert diagrams to SVGs and embed them directly.
+    This will only work if the `wavedrom` library has been installed.
+
+    Defaults to `True`
+    '''
 
 
 class Wavedrom(Extra):
