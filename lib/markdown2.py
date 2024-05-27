@@ -132,7 +132,7 @@ else:
 _safe_mode = Literal['replace', 'escape']
 _extras_dict = Dict[str, Any]
 _extras_param = Union[List[str], _extras_dict]
-_link_patterns = Iterable[Tuple[re.Pattern[str], Union[str, Callable[[re.Match], str]]]]
+_link_patterns = Iterable[Tuple[re.Pattern, Union[str, Callable[[re.Match], str]]]]
 
 # ---- globals
 
@@ -3579,7 +3579,7 @@ def _curry(function: Callable, *args, **kwargs) -> Callable:
 
 
 # Recipe: regex_from_encoded_pattern (1.0)
-def _regex_from_encoded_pattern(s: str) -> re.Pattern[str]:
+def _regex_from_encoded_pattern(s: str) -> re.Pattern:
     """'foo'    -> re.compile(re.escape('foo'))
        '/foo/'  -> re.compile('foo')
        '/foo/i' -> re.compile('foo', re.I)
@@ -3727,7 +3727,7 @@ class _memoized(object):
         return self.func.__doc__
 
 
-def _xml_oneliner_re_from_tab_width(tab_width: int) -> re.Pattern[str]:
+def _xml_oneliner_re_from_tab_width(tab_width: int) -> re.Pattern:
     """Standalone XML processing instruction regex."""
     return re.compile(r"""
         (?:
@@ -3749,7 +3749,7 @@ def _xml_oneliner_re_from_tab_width(tab_width: int) -> re.Pattern[str]:
 _xml_oneliner_re_from_tab_width = _memoized(_xml_oneliner_re_from_tab_width)
 
 
-def _hr_tag_re_from_tab_width(tab_width: int) -> re.Pattern[str]:
+def _hr_tag_re_from_tab_width(tab_width: int) -> re.Pattern:
     return re.compile(r"""
         (?:
             (?<=\n\n)       # Starting after a blank line
