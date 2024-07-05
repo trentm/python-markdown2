@@ -14,6 +14,8 @@
 - [pull #581] Add type hints (#562)
 - [pull #581] Drop Python 3.6 and 3.7 support
 - [pull #582] Fix fenced code blocks breaking lists (#580)
+- [pull #586] Fix #583 by tweaking incomplete tag regex
+- [pull #587] Fix AssertionError on malformed HTML (#584)
 
 
 ## python-markdown2 2.4.13
