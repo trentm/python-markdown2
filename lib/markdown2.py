@@ -908,7 +908,7 @@ class Markdown(object):
                 tag = None
 
         if not tag:
-            m = re.match(r'.*?<(\S).*?>', html)
+            m = re.match(r'.*?<(\S).*?\s*>', html)
             # tag shouldn't be none but make the assertion for type checker
             assert m is not None
             tag = m.group(1)
