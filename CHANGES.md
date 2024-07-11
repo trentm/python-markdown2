@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.5.1 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.5.0
 
 - [pull #519] Add support for custom extras
