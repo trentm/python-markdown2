@@ -2643,9 +2643,12 @@ class ItalicAndBoldProcessor(Extra):
             text = self.strong_re.sub(self.sub, text)
             text = self.em_re.sub(self.sub, text)
         else:
-            # put any hashed values back
-            for key, substr in self.hash_table.items():
-                text = text.replace(key, substr)
+            # push any hashed values back, using a while loop to deal with recursive hashes
+            orig_text = ''
+            while orig_text != text:
+                orig_text = text
+                for key, substr in self.hash_table.items():
+                    text = text.replace(key, substr)
         return text
 
     @abstractmethod
@@ -2762,12 +2765,20 @@ class CodeFriendly(ItalicAndBoldProcessor):
 
     def sub(self, match: re.Match) -> str:
         syntax = match.group(1)
-        if '_' not in syntax:
-            return super().sub(match)
-        text = match.string[match.start(): match.end()]
-        key = _hash_text(text)
-        self.hash_table[key] = text
-        return key
+        text: str = match.string[match.start(): match.end()]
+        if '_' in syntax:
+            # if using _this_ syntax, hash the whole thing so that it doesn't get processed
+            key = _hash_text(text)
+            self.hash_table[key] = text
+            return key
+        elif '_' in text:
+            # if the text within the bold/em markers contains '_' then hash those contents to protect them from em_re
+            text = text[len(syntax): -len(syntax)]
+            key = _hash_text(text)
+            self.hash_table[key] = text
+            return syntax + key + syntax
+        # if no underscores are present, the text is fine and we can just leave it alone
+        return super().sub(match)
 
 
 class FencedCodeBlocks(Extra):
