@@ -2725,6 +2725,41 @@ class Admonitions(Extra):
         return self.admonitions_re.sub(self.sub, text)
 
 
+class Alerts(Extra):
+    '''
+    Markdown Alerts as per
+    https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts
+    '''
+
+    name = 'alerts'
+    order = (), (Stage.BLOCK_QUOTES, )
+
+    alert_re = re.compile(r'''
+        <blockquote>\s*
+        <p>
+        \[!(?P<type>NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]
+        (?P<closing_tag></p>[ \t]*\n?)?
+        (?P<contents>[\s\S]+?)
+        </blockquote>
+    ''', re.X
+    )
+
+    def test(self, text):
+        return "<blockquote>" in text
+
+    def sub(self, match: re.Match) -> str:
+        typ = match["type"].lower()
+        heading = f"<em>{match['type'].title()}</em>"
+        contents = match["contents"].strip()
+        if match["closing_tag"]:
+            return f'<div class="alert {typ}">\n{heading}\n{contents}\n</div>'
+        else:
+            return f'<div class="alert {typ}">\n{heading}\n<p>{contents}\n</div>'
+
+    def run(self, text):
+        return self.alert_re.sub(self.sub, text)
+
+
 class _BreaksExtraOpts(TypedDict, total=False):
     '''Options for the `Breaks` extra'''
     on_backslash: bool
@@ -3501,6 +3536,7 @@ class WikiTables(Extra):
 
 # Register extras
 Admonitions.register()
+Alerts.register()
 Breaks.register()
 CodeFriendly.register()
 FencedCodeBlocks.register()
