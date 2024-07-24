@@ -2746,7 +2746,7 @@ class Alerts(Extra):
 
     def sub(self, match: re.Match) -> str:
         typ = match["type"].lower()
-        heading = f"<em>{match["type"].title()}</em>"
+        heading = f"<em>{match['type'].title()}</em>"
         contents = match["contents"].strip()
         if match["closing_tag"]:
             return f'<div class="alert {typ}">\n{heading}\n{contents}\n</div>'
