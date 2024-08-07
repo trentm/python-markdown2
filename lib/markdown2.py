@@ -516,8 +516,8 @@ class Markdown(object):
 
         text = self._unescape_special_chars(text)
 
+        text = self._unhash_html_spans(text)
         if self.safe_mode:
-            text = self._unhash_html_spans(text)
             # return the removed text warning to its markdown.py compatible form
             text = text.replace(self.html_removed_text, self.html_removed_text_compat)
 
@@ -1336,11 +1336,6 @@ class Markdown(object):
                 return
             return re.match(r'(<!--)(.*)(-->)', token)
 
-        def _hash(token):
-            key = _hash_text(token)
-            self.html_spans[key] = token
-            return key
-
         tokens = []
         split_tokens = self._sorta_html_tokenize_re.split(text)
         is_html_markup = False
@@ -1348,12 +1343,12 @@ class Markdown(object):
             if is_html_markup and not _is_auto_link(token) and not _is_code_span(index, token):
                 is_comment = _is_comment(token)
                 if is_comment:
-                    tokens.append(_hash(self._sanitize_html(is_comment.group(1))))
+                    tokens.append(self._hash_span(self._sanitize_html(is_comment.group(1))))
                     # sanitise but leave comment body intact for further markdown processing
                     tokens.append(self._sanitize_html(is_comment.group(2)))
-                    tokens.append(_hash(self._sanitize_html(is_comment.group(3))))
+                    tokens.append(self._hash_span(self._sanitize_html(is_comment.group(3))))
                 else:
-                    tokens.append(_hash(self._sanitize_html(token)))
+                    tokens.append(self._hash_span(self._sanitize_html(token)))
             else:
                 tokens.append(self._encode_incomplete_tags(token))
             is_html_markup = not is_html_markup
@@ -1600,7 +1595,7 @@ class Markdown(object):
                         img_class_str = self._html_class_str_from_tag("img")
                         result = '<img src="%s" alt="%s"%s%s%s' \
                             % (self._protect_url(url),
-                               _xml_escape_attr(link_text),
+                               self._hash_span(_xml_escape_attr(link_text)),
                                title_str,
                                img_class_str,
                                self.empty_element_suffix)
@@ -1657,7 +1652,7 @@ class Markdown(object):
                             img_class_str = self._html_class_str_from_tag("img")
                             result = '<img src="%s" alt="%s"%s%s%s' \
                                 % (self._protect_url(url),
-                                   _xml_escape_attr(link_text),
+                                   self._hash_span(_xml_escape_attr(link_text)),
                                    title_str,
                                    img_class_str,
                                    self.empty_element_suffix)
@@ -2421,6 +2416,15 @@ class Markdown(object):
     def _outdent(self, text: str) -> str:
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
+
+    def _hash_span(self, text: str) -> str:
+        '''
+        Wrapper around `_hash_text` that also adds the hash to `self.hash_spans`,
+        meaning it will be automatically unhashed during conversion.
+        '''
+        key = _hash_text(text)
+        self.html_spans[key] = text
+        return key
 
     @staticmethod
     def _uniform_outdent(
