@@ -2024,7 +2024,9 @@ class Markdown(object):
                 """A function for use in a Pygments Formatter which
                 wraps in <code> tags.
                 """
-                yield 0, "<code>"
+                # class format following what we do for highlight-js
+                # eg: class="python language-python"
+                yield 0, f'<code class="{lang_class} language-{lang_class}">'
                 for tup in inner:
                     yield tup
                 yield 0, "</code>"
@@ -2044,6 +2046,7 @@ class Markdown(object):
                     # pygments < 2.12
                     return self._wrap_div(self._add_newline(self._wrap_pre(self._wrap_code(source))))
 
+        lang_class = lexer.name.lower().replace(' ', '-')
         formatter_opts.setdefault("cssclass", "codehilite")
         formatter = HtmlCodeFormatter(**formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
