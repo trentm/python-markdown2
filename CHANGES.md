@@ -5,6 +5,7 @@
 - [pull #590] Fix underscores within bold text getting emphasized (#589)
 - [pull #591] Add Alerts extra
 - [pull #595] Fix img alt text being processed as markdown (#594)
+- [pull #598] Add `link-shortrefs` extra (#597)
 
 
 ## python-markdown2 2.5.0
