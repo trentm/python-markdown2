@@ -1260,8 +1260,13 @@ class Markdown(object):
             (?:
                 # tag
                 </?
-                (?:\w+)                                     # tag name
-                (?:\s+(?:[\w-]+:)?[\w-]+=(?:".*?"|'.*?'))*  # attributes
+                (?:\w+)         # tag name
+                (?:             # attributes
+                    \s+                           # whitespace after tag
+                    (?:[^\t<>"'=/]+:)?
+                    [^<>"'=/]+=                   # attr name
+                    (?:".*?"|'.*?'|[^<>"'=/\s]+)  # value, quoted or unquoted. If unquoted, no spaces allowed
+                )*
                 \s*/?>
                 |
                 # auto-link (e.g., <http://www.activestate.com/>)
