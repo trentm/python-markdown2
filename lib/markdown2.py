@@ -122,6 +122,7 @@ from hashlib import sha256
 from random import randint, random
 from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Tuple, Type, TypedDict, Union
 from enum import IntEnum, auto
+from os import urandom
 
 if sys.version_info[1] < 9:
     from typing import Iterable
@@ -142,7 +143,7 @@ log = logging.getLogger("markdown")
 DEFAULT_TAB_WIDTH = 4
 
 
-SECRET_SALT = bytes(randint(0, 1000000))
+SECRET_SALT = urandom(16)
 # MD5 function was previously used for this; the "md5" prefix was kept for
 # backwards compatibility.
 def _hash_text(s: str) -> str:
