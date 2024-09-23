@@ -6,6 +6,7 @@
 - [pull #591] Add Alerts extra
 - [pull #595] Fix img alt text being processed as markdown (#594)
 - [pull #602] Fix XSS issue in safe mode (#601)
+- [pull #604] Fix XSS injection in image URLs (#603)
 
 
 ## python-markdown2 2.5.0

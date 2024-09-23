@@ -1359,9 +1359,23 @@ class Markdown(object):
             is_html_markup = not is_html_markup
         return ''.join(tokens)
 
-    def _unhash_html_spans(self, text: str) -> str:
-        for key, sanitized in list(self.html_spans.items()):
-            text = text.replace(key, sanitized)
+    def _unhash_html_spans(self, text: str, spans=True, code=False) -> str:
+        '''
+        Recursively unhash a block of text
+
+        Args:
+            spans: unhash anything from `self.html_spans`
+            code: unhash code blocks
+        '''
+        orig = ''
+        while text != orig:
+            if spans:
+                for key, sanitized in list(self.html_spans.items()):
+                    text = text.replace(key, sanitized)
+            if code:
+                for code, key in list(self._code_table.items()):
+                    text = text.replace(key, code)
+            orig = text
         return text
 
     def _sanitize_html(self, s: str) -> str:
@@ -1587,8 +1601,9 @@ class Markdown(object):
 
                     # We've got to encode these to avoid conflicting
                     # with italics/bold.
-                    url = url.replace('*', self._escape_table['*']) \
-                             .replace('_', self._escape_table['_'])
+                    url = self._unhash_html_spans(url, code=True) \
+                              .replace('*', self._escape_table['*']) \
+                              .replace('_', self._escape_table['_'])
                     if title:
                         title_str = ' title="%s"' % (
                             _xml_escape_attr(title)

@@ -1,0 +1,12 @@
+![](`" onerror=alert()//`)
+
+
+![][XSS]
+[][XSS]
+![][XSS2]
+![][XSS3]
+
+
+[XSS]: " onerror=alert()//
+[XSS2]: `" onerror=alert()//`
+[XSS3]: <code>" onerror=alert()//<code>
