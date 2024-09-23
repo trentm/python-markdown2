@@ -64,6 +64,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   this for other tags.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
   references, revision number references).
+* link-shortrefs: allow shortcut reference links, not followed by `[]` or
+  a link label.
 * markdown-in-html: Allow the use of `markdown="1"` in a block HTML tag to
   have markdown processing be done on its contents. Similar to
   <http://michelf.com/projects/php-markdown/extra/#markdown-attr> but with
@@ -1646,7 +1648,23 @@ class Markdown(object):
 
             # Reference anchor or img?
             else:
-                match = self._tail_of_reference_link_re.match(text, p)
+                match = None
+                if 'link-shortrefs' in self.extras:
+                    # check if there's no tailing id section
+                    if link_text and re.match(r'[ ]?(?:\n[ ]*)?(?!\[)', text[p:]):
+                        # try a match with `[]` inserted into the text
+                        match = self._tail_of_reference_link_re.match(f'{text[:p]}[]{text[p:]}', p)
+                        if match:
+                            # if we get a match, we'll have to modify the `text` variable to insert the `[]`
+                            # but we ONLY want to do that if the link_id is valid. This makes sure that we
+                            # don't get stuck in any loops and also that when a user inputs `[abc]` we don't
+                            # output `[abc][]` in the final HTML
+                            if (match.group("id").lower() or link_text.lower()) in self.urls:
+                                text = f'{text[:p]}[]{text[p:]}'
+                            else:
+                                match = None
+
+                match = match or self._tail_of_reference_link_re.match(text, p)
                 if match:
                     # Handle a reference-style anchor or img.
                     is_img = start_idx > 0 and text[start_idx-1] == "!"
