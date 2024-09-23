@@ -121,9 +121,10 @@ from collections import defaultdict, OrderedDict
 from abc import ABC, abstractmethod
 import functools
 from hashlib import sha256
-from random import randint, random
+from random import random
 from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Tuple, Type, TypedDict, Union
 from enum import IntEnum, auto
+from os import urandom
 
 if sys.version_info[1] < 9:
     from typing import Iterable
@@ -144,7 +145,7 @@ log = logging.getLogger("markdown")
 DEFAULT_TAB_WIDTH = 4
 
 
-SECRET_SALT = bytes(randint(0, 1000000))
+SECRET_SALT = urandom(16)
 # MD5 function was previously used for this; the "md5" prefix was kept for
 # backwards compatibility.
 def _hash_text(s: str) -> str:
@@ -1262,8 +1263,13 @@ class Markdown(object):
             (?:
                 # tag
                 </?
-                (?:\w+)                                     # tag name
-                (?:\s+(?:[\w-]+:)?[\w-]+=(?:".*?"|'.*?'))*  # attributes
+                (?:\w+)         # tag name
+                (?:             # attributes
+                    \s+                           # whitespace after tag
+                    (?:[^\t<>"'=/]+:)?
+                    [^<>"'=/]+=                   # attr name
+                    (?:".*?"|'.*?'|[^<>"'=/\s]+)  # value, quoted or unquoted. If unquoted, no spaces allowed
+                )*
                 \s*/?>
                 |
                 # auto-link (e.g., <http://www.activestate.com/>)
@@ -1356,9 +1362,23 @@ class Markdown(object):
             is_html_markup = not is_html_markup
         return ''.join(tokens)
 
-    def _unhash_html_spans(self, text: str) -> str:
-        for key, sanitized in list(self.html_spans.items()):
-            text = text.replace(key, sanitized)
+    def _unhash_html_spans(self, text: str, spans=True, code=False) -> str:
+        '''
+        Recursively unhash a block of text
+
+        Args:
+            spans: unhash anything from `self.html_spans`
+            code: unhash code blocks
+        '''
+        orig = ''
+        while text != orig:
+            if spans:
+                for key, sanitized in list(self.html_spans.items()):
+                    text = text.replace(key, sanitized)
+            if code:
+                for code, key in list(self._code_table.items()):
+                    text = text.replace(key, code)
+            orig = text
         return text
 
     def _sanitize_html(self, s: str) -> str:
@@ -1584,8 +1604,9 @@ class Markdown(object):
 
                     # We've got to encode these to avoid conflicting
                     # with italics/bold.
-                    url = url.replace('*', self._escape_table['*']) \
-                             .replace('_', self._escape_table['_'])
+                    url = self._unhash_html_spans(url, code=True) \
+                              .replace('*', self._escape_table['*']) \
+                              .replace('_', self._escape_table['_'])
                     if title:
                         title_str = ' title="%s"' % (
                             _xml_escape_attr(title)

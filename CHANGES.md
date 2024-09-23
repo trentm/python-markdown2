@@ -6,6 +6,9 @@
 - [pull #591] Add Alerts extra
 - [pull #595] Fix img alt text being processed as markdown (#594)
 - [pull #598] Add `link-shortrefs` extra (#597)
+- [pull #600] Use urandom for SECRET_SALT
+- [pull #602] Fix XSS issue in safe mode (#601)
+- [pull #604] Fix XSS injection in image URLs (#603)
 
 
 ## python-markdown2 2.5.0
