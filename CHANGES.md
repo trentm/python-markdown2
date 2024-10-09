@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.5.2 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.5.1
 
 - [pull #590] Fix underscores within bold text getting emphasized (#589)
