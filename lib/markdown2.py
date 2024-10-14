@@ -120,16 +120,12 @@ import sys
 from collections import defaultdict, OrderedDict
 from abc import ABC, abstractmethod
 import functools
+from collections.abc import Iterable
 from hashlib import sha256
 from random import random
 from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Tuple, Type, TypedDict, Union
 from enum import IntEnum, auto
 from os import urandom
-
-if sys.version_info[1] < 9:
-    from typing import Iterable
-else:
-    from collections.abc import Iterable
 
 # ---- type defs
 _safe_mode = Literal['replace', 'escape']
