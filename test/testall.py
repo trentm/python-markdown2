@@ -53,14 +53,14 @@ def testall():
             # Don't support Python < 3.5
             continue
         ver_str = "%s.%s" % ver
-        print("-- test with Python %s (%s)" % (ver_str, python))
+        print("-- test with Python {} ({})".format(ver_str, python))
         assert ' ' not in python
 
         env_args = 'MACOSX_DEPLOYMENT_TARGET= ' if sys.platform == 'darwin' else ''
 
         proc = subprocess.Popen(
             # pass "-u" option to force unbuffered output
-            "%s%s -u test.py -- -knownfailure" % (env_args, python),
+            "{}{} -u test.py -- -knownfailure".format(env_args, python),
             shell=True, stderr=subprocess.PIPE
         )
 
@@ -77,6 +77,6 @@ def testall():
 
     for python, ver_str, warning in all_warnings:
         # now re-print all warnings to make sure they are seen
-        print('-- warning raised by Python %s (%s) -- %s' % (ver_str, python, warning))
+        print('-- warning raised by Python {} ({}) -- {}'.format(ver_str, python, warning))
 
 testall()

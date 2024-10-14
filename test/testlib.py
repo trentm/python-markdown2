@@ -130,8 +130,8 @@ def timedtest(max_time, tolerance=TOLERANCE):
             finally:
                 total_time = time.time() - start_time
                 if total_time > max_time + tolerance:
-                    raise DurationError(('Test was too long (%.2f s)'
-                                           % total_time))
+                    raise DurationError('Test was too long (%.2f s)'
+                                           % total_time)
         return wrapper
 
     return _timedtest
@@ -140,7 +140,7 @@ def timedtest(max_time, tolerance=TOLERANCE):
 
 #---- module api
 
-class Test(object):
+class Test:
     def __init__(self, ns, testmod, testcase, testfn_name,
                  testsuite_class=None):
         self.ns = ns
@@ -439,7 +439,7 @@ def list_tests(testdir_from_ns, tags):
             if testfile.endswith(".pyc"):
                 testfile = testfile[:-1]
             print("%s:" % t.shortname())
-            print("  from: %s#%s.%s" % (testfile,
+            print("  from: {}#{}.{}".format(testfile,
                 t.testcase.__class__.__name__, t.testfn_name))
             wrapped = textwrap.fill(' '.join(t.tags()), WIDTH-10)
             print("  tags: %s" % _indent(wrapped, 8, True))
@@ -470,7 +470,7 @@ class ConsoleTestResult(unittest.TestResult):
 
     def getDescription(self, test):
         if test._testlib_explicit_tags_:
-            return "%s [%s]" % (test._testlib_shortname_,
+            return "{} [{}]".format(test._testlib_shortname_,
                                 ', '.join(test._testlib_explicit_tags_))
         else:
             return test._testlib_shortname_
@@ -514,7 +514,7 @@ class ConsoleTestResult(unittest.TestResult):
             self.stream.write("%s\n" % err)
 
 
-class ConsoleTestRunner(object):
+class ConsoleTestRunner:
     """A test runner class that displays results on the console.
 
     It prints out the names of tests as they are run, errors as they
