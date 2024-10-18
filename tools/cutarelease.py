@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2009-2012 Trent Mick
 
 """cutarelease -- Cut a release of your project.
@@ -154,10 +153,10 @@ def cutarelease(project_name, version_files, dry_run=False):
             % (changes_path, version))
 
     # Tag version and push.
-    curr_tags = set(t for t in _capture_stdout(["git", "tag", "-l"]).split(b'\n') if t)
+    curr_tags = {t for t in _capture_stdout(["git", "tag", "-l"]).split(b'\n') if t}
     if not dry_run and version not in curr_tags:
         log.info("tag the release")
-        run('git tag -a "%s" -m "version %s"' % (version, version))
+        run('git tag -a "{}" -m "version {}"'.format(version, version))
         run('git push --tags')
 
     # Optionally release.
@@ -193,9 +192,9 @@ def cutarelease(project_name, version_files, dry_run=False):
     if marker not in changes_txt:
         raise Error("couldn't find `%s' marker in `%s' "
             "content: can't prep for subsequent dev" % (marker, changes_path))
-    next_verline = "%s %s%s" % (marker.rsplit(None, 1)[0], next_version, nyr)
+    next_verline = "{} {}{}".format(marker.rsplit(None, 1)[0], next_version, nyr)
     changes_txt = changes_txt.replace(marker + '\n',
-        "%s\n\n(nothing yet)\n\n\n%s\n" % (next_verline, marker))
+        "{}\n\n(nothing yet)\n\n\n{}\n".format(next_verline, marker))
     if not dry_run:
         f = codecs.open(changes_path, 'w', 'utf-8')
         f.write(changes_txt)
@@ -221,12 +220,12 @@ def cutarelease(project_name, version_files, dry_run=False):
             ver_content = ver_content.replace(marker,
                 'var VERSION = "%s";' % next_version)
         elif ver_file_type == "python":
-            marker = "__version_info__ = %r" % (version_info,)
+            marker = "__version_info__ = {!r}".format(version_info)
             if marker not in ver_content:
                 raise Error("couldn't find `%s' version marker in `%s' "
                     "content: can't prep for subsequent dev" % (marker, ver_file))
             ver_content = ver_content.replace(marker,
-                "__version_info__ = %r" % (next_version_tuple,))
+                "__version_info__ = {!r}".format(next_version_tuple))
         elif ver_file_type == "version":
             ver_content = next_version
         else:
@@ -238,7 +237,7 @@ def cutarelease(project_name, version_files, dry_run=False):
             f.close()
 
     if not dry_run:
-        run('git commit %s %s -m "prep for future dev"' % (
+        run('git commit {} {} -m "prep for future dev"'.format(
             changes_path, ' '.join(version_files)))
         run('git push')
 

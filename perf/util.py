@@ -30,7 +30,7 @@ def timeit(func):
             return func(*args, **kw)
         finally:
             total_time = clock() - start_time
-            print("%s took %.3fs" % (func.__name__, total_time))
+            print("{} took {:.3f}s".format(func.__name__, total_time))
     return wrapper
 
 def hotshotit(func):
