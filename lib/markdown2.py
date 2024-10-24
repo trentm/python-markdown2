@@ -3160,6 +3160,10 @@ class MiddleWordEm(ItalicAndBoldProcessor):
                 , re.S | re.X)
 
     def run(self, text):
+        if self.options['allowed']:
+            # if middle word em is allowed, do nothing. This extra's only use is to prevent them
+            return text
+
         # run strong and whatnot first
         # this also will process all strict ems
         text = super().run(text)
