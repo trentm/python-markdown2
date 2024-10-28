@@ -3144,9 +3144,26 @@ class MiddleWordEm(ItalicAndBoldProcessor):
 
         self.liberal_em_re = self.em_re
         if not options['allowed']:
-            self.em_re = re.compile(r'(?<=\b)%s(?=\b)' % self.liberal_em_re.pattern, self.liberal_em_re.flags)
+            self.em_re = re.compile(r'(?<=\b)%s(?=\b)' % self.em_re.pattern, self.em_re.flags)
+            self.liberal_em_re = re.compile(
+                r'''
+                    (                # \1 - must be a single em char in the middle of a word
+                        (?<![*_\s])  # cannot be preceeded by em character or whitespace (must be in middle of word)
+                        [*_]         # em character
+                        (?![*_])     # cannot be followed by another em char
+                    )
+                    (?=\S)           # em opening must be followed by non-whitespace text
+                    (.*?\S)          # the emphasized text
+                    \1               # closing char
+                    (?!\s|$)         # must not be followed by whitespace (middle of word) or EOF
+                '''
+                , re.S | re.X)
 
     def run(self, text):
+        if self.options['allowed']:
+            # if middle word em is allowed, do nothing. This extra's only use is to prevent them
+            return text
+
         # run strong and whatnot first
         # this also will process all strict ems
         text = super().run(text)
