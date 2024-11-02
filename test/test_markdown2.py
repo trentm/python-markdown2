@@ -152,7 +152,7 @@ class _MarkdownTestCase(unittest.TestCase):
             if exists(opts_path):
                 try:
                     with warnings.catch_warnings(record=True) as caught_warnings:
-                        opts = eval(open(opts_path, 'r').read())
+                        opts = eval(open(opts_path).read())
                     for warning in caught_warnings:
                         print("WARNING: loading %s generated warning: %s - lineno %d" % (opts_path, warning.message, warning.lineno), file=sys.stderr)
                 except Exception:
@@ -335,7 +335,7 @@ def _markdown_email_link_sub(match):
     href, text = match.groups()
     href = _xml_escape_re.sub(_xml_escape_sub, href)
     text = _xml_escape_re.sub(_xml_escape_sub, text)
-    return '<a href="%s">%s</a>' % (href, text)
+    return '<a href="{}">{}</a>'.format(href, text)
 
 def norm_html_from_html(html):
     """Normalize (somewhat) Markdown'd HTML.

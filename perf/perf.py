@@ -34,7 +34,7 @@ def time_markdown_py(cases_dir, repeat):
     for i in range(repeat):
         start = clock()
         for path in glob(join(cases_dir, "*.text")):
-            f = open(path, 'r')
+            f = open(path)
             content = f.read()
             f.close()
             try:
@@ -59,7 +59,7 @@ def time_markdown2_py(cases_dir, repeat):
     for i in range(repeat):
         start = clock()
         for path in glob(join(cases_dir, "*.text")):
-            f = open(path, 'r')
+            f = open(path)
             content = f.read()
             f.close()
             markdowner.convert(content)

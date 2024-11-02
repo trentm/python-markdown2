@@ -1,11 +1,21 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.5.1 (not yet released)
+## python-markdown2 2.5.2 (not yet released)
+
+- [pull #605] Add support for Python 3.13, drop EOL 3.8
+- [pull #607] Fix `middle-word-em` extra preventing strongs from being recognized (#606)
+- [pull #596] Add language to HTML output in pygments code blocks (#379)
+
+
+## python-markdown2 2.5.1
 
 - [pull #590] Fix underscores within bold text getting emphasized (#589)
 - [pull #591] Add Alerts extra
 - [pull #595] Fix img alt text being processed as markdown (#594)
-- [pull #596] Add language to HTML output in pygments code blocks (#379)
+- [pull #598] Add `link-shortrefs` extra (#597)
+- [pull #600] Use urandom for SECRET_SALT
+- [pull #602] Fix XSS issue in safe mode (#601)
+- [pull #604] Fix XSS injection in image URLs (#603)
 
 
 ## python-markdown2 2.5.0

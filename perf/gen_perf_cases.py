@@ -104,9 +104,9 @@ def _markdown_from_aspn_html(html):
             title = None
         escaped_href = href.replace('(', '\\(').replace(')', '\\)')
         if title is None:
-            replacement = '[%s](%s)' % (content, escaped_href)
+            replacement = '[{}]({})'.format(content, escaped_href)
         else:
-            replacement = '[%s](%s "%s")' % (content, escaped_href, 
+            replacement = '[{}]({} "{}")'.format(content, escaped_href, 
                                              title.replace('"', "'"))
         markdown = markdown[:start] + replacement + markdown[end:]
         

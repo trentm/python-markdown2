@@ -1,0 +1,19 @@
+Double variants:
+
+**one_two_three**
+
+***one_two_three***
+
+_**one_two_three**_
+
+**_one_two_three_**
+
+Single variants:
+
+*one_two_three*
+
+_one_two_three_
+
+_one*two*three_
+
+*one*two*three*
