@@ -4,6 +4,7 @@
 
 - [pull #605] Add support for Python 3.13, drop EOL 3.8
 - [pull #607] Fix `middle-word-em` extra preventing strongs from being recognized (#606)
+- [pull #596] Add language to HTML output in pygments code blocks (#379)
 
 
 ## python-markdown2 2.5.1
