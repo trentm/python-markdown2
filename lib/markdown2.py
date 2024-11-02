@@ -3985,6 +3985,7 @@ def main(argv=None):
                       help="run internal self-tests (some doctests)")
     parser.add_argument("--compare", action="store_true",
                       help="run against Markdown.pl as well (for testing)")
+    parser.add_argument('--output', type=str, help='output to a file instead of stdout')
     parser.set_defaults(log_level=logging.INFO, compare=False,
                         encoding="utf-8", safe_mode=None, use_file_vars=False)
     opts = parser.parse_args()
@@ -4059,7 +4060,11 @@ def main(argv=None):
             extras=extras, link_patterns=link_patterns,
             use_file_vars=opts.use_file_vars,
             cli=True)
-        sys.stdout.write(html)
+        if opts.output:
+            with open(opts.output, 'w') as f:
+                f.write(html)
+        else:
+            sys.stdout.write(html)
         if extras and "toc" in extras:
             log.debug("toc_html: " +
                 str(html.toc_html.encode(sys.stdout.encoding or "utf-8", 'xmlcharrefreplace')))

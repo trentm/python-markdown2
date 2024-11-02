@@ -4,6 +4,7 @@
 
 - [pull #605] Add support for Python 3.13, drop EOL 3.8
 - [pull #607] Fix `middle-word-em` extra preventing strongs from being recognized (#606)
+- [pull #609] Add option to output to file in CLI (#608)
 
 
 ## python-markdown2 2.5.1
