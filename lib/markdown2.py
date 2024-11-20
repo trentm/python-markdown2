@@ -1524,7 +1524,8 @@ class Markdown:
         anchor_allowed_pos = 0
 
         curr_pos = 0
-        while True:  # Handle the next link.
+
+        while True:
             # The next '[' is the start of:
             # - an inline anchor:   [text](url "title")
             # - a reference anchor: [text][id]
@@ -1552,8 +1553,11 @@ class Markdown:
             # matching brackets in img alt text -- we'll differ in that
             # regard.
             bracket_depth = 0
-            for p in range(start_idx+1, min(start_idx+MAX_LINK_TEXT_SENTINEL,
-                                            text_length)):
+
+            for p in range(
+                start_idx + 1,
+                min(start_idx + MAX_LINK_TEXT_SENTINEL, text_length)
+            ):
                 ch = text[p]
                 if ch == ']':
                     bracket_depth -= 1
@@ -1566,7 +1570,7 @@ class Markdown:
                 # This isn't markup.
                 curr_pos = start_idx + 1
                 continue
-            link_text = text[start_idx+1:p]
+            link_text = text[start_idx + 1: p]
 
             # Fix for issue 341 - Injecting XSS into link text
             if self.safe_mode:
@@ -1578,72 +1582,30 @@ class Markdown:
                 normed_id = re.sub(r'\W', '-', link_text[1:])
                 if normed_id in self.footnotes:
                     self.footnote_ids.append(normed_id)
-                    result = '<sup class="footnote-ref" id="fnref-%s">' \
-                             '<a href="#fn-%s">%s</a></sup>' \
-                             % (normed_id, normed_id, len(self.footnote_ids))
+                    result = (
+                        f'<sup class="footnote-ref" id="fnref-{normed_id}">'
+                        f'<a href="#fn-{normed_id}">{len(self.footnote_ids)}</a></sup>'
+                    )
                     text = text[:start_idx] + result + text[p+1:]
                 else:
                     # This id isn't defined, leave the markup alone.
-                    curr_pos = p+1
+                    curr_pos = p + 1
                 continue
 
             # Now determine what this is by the remainder.
             p += 1
 
-            # Inline anchor or img?
-            if text[p:p + 1] == '(':  # attempt at perf improvement
+            # -- Extract the URL, title and end index from the link
+
+            # inline anchor or inline img
+            if text[p:p + 1] == '(':
                 url, title, url_end_idx = self._extract_url_and_title(text, p)
-                if url is not None:
-                    # Handle an inline anchor or img.
-                    is_img = start_idx > 0 and text[start_idx-1] == "!"
-                    if is_img:
-                        start_idx -= 1
-
-                    # We've got to encode these to avoid conflicting
-                    # with italics/bold.
-                    url = self._unhash_html_spans(url, code=True) \
-                              .replace('*', self._escape_table['*']) \
-                              .replace('_', self._escape_table['_'])
-                    if title:
-                        title_str = ' title="%s"' % (
-                            _xml_escape_attr(title)
-                                .replace('*', self._escape_table['*'])
-                                .replace('_', self._escape_table['_']))
-                    else:
-                        title_str = ''
-                    if is_img:
-                        img_class_str = self._html_class_str_from_tag("img")
-                        result = '<img src="%s" alt="%s"%s%s%s' \
-                            % (self._protect_url(url),
-                               self._hash_span(_xml_escape_attr(link_text)),
-                               title_str,
-                               img_class_str,
-                               self.empty_element_suffix)
-                        if "smarty-pants" in self.extras:
-                            result = result.replace('"', self._escape_table['"'])
-                        curr_pos = start_idx + len(result)
-                        anchor_allowed_pos = start_idx + len(result)
-                        text = text[:start_idx] + result + text[url_end_idx:]
-                    elif start_idx >= anchor_allowed_pos:
-                        safe_link = self._safe_href.match(url)
-                        if self.safe_mode and not safe_link:
-                            result_head = '<a href="#"%s>' % (title_str)
-                        else:
-                            result_head = '<a href="{}"{}>'.format(self._protect_url(url), title_str)
-                        result = '{}{}</a>'.format(result_head, link_text)
-                        if "smarty-pants" in self.extras:
-                            result = result.replace('"', self._escape_table['"'])
-                        # <img> allowed from curr_pos on, <a> from
-                        # anchor_allowed_pos on.
-                        curr_pos = start_idx + len(result_head)
-                        anchor_allowed_pos = start_idx + len(result)
-                        text = text[:start_idx] + result + text[url_end_idx:]
-                    else:
-                        # Anchor not allowed here.
-                        curr_pos = start_idx + 1
+                if url is None:
+                    # text isn't markup
+                    curr_pos = start_idx + 1
                     continue
-
-            # Reference anchor or img?
+                url = self._unhash_html_spans(url, code=True)
+            # reference anchor or reference img
             else:
                 match = None
                 if 'link-shortrefs' in self.extras:
@@ -1662,64 +1624,71 @@ class Markdown:
                                 match = None
 
                 match = match or self._tail_of_reference_link_re.match(text, p)
-                if match:
-                    # Handle a reference-style anchor or img.
-                    is_img = start_idx > 0 and text[start_idx-1] == "!"
-                    if is_img:
-                        start_idx -= 1
-                    link_id = match.group("id").lower()
-                    if not link_id:
-                        link_id = link_text.lower()  # for links like [this][]
-                    if link_id in self.urls:
-                        url = self.urls[link_id]
-                        # We've got to encode these to avoid conflicting
-                        # with italics/bold.
-                        url = url.replace('*', self._escape_table['*']) \
-                                 .replace('_', self._escape_table['_'])
-                        title = self.titles.get(link_id)
-                        if title:
-                            title = _xml_escape_attr(title) \
-                                .replace('*', self._escape_table['*']) \
-                                .replace('_', self._escape_table['_'])
-                            title_str = ' title="%s"' % title
-                        else:
-                            title_str = ''
-                        if is_img:
-                            img_class_str = self._html_class_str_from_tag("img")
-                            result = '<img src="%s" alt="%s"%s%s%s' \
-                                % (self._protect_url(url),
-                                   self._hash_span(_xml_escape_attr(link_text)),
-                                   title_str,
-                                   img_class_str,
-                                   self.empty_element_suffix)
-                            if "smarty-pants" in self.extras:
-                                result = result.replace('"', self._escape_table['"'])
-                            curr_pos = start_idx + len(result)
-                            text = text[:start_idx] + result + text[match.end():]
-                        elif start_idx >= anchor_allowed_pos:
-                            if self.safe_mode and not self._safe_href.match(url):
-                                result_head = '<a href="#"%s>' % (title_str)
-                            else:
-                                result_head = '<a href="{}"{}>'.format(self._protect_url(url), title_str)
-                            result = '{}{}</a>'.format(result_head, link_text)
-                            if "smarty-pants" in self.extras:
-                                result = result.replace('"', self._escape_table['"'])
-                            # <img> allowed from curr_pos on, <a> from
-                            # anchor_allowed_pos on.
-                            curr_pos = start_idx + len(result_head)
-                            anchor_allowed_pos = start_idx + len(result)
-                            text = text[:start_idx] + result + text[match.end():]
-                        else:
-                            # Anchor not allowed here.
-                            curr_pos = start_idx + 1
-                    else:
-                        # This id isn't defined, leave the markup alone.
-                        # set current pos to end of link title and continue from there
-                        curr_pos = p
+                if not match:
+                    # text isn't markup
+                    curr_pos = start_idx + 1
                     continue
 
-            # Otherwise, it isn't markup.
-            curr_pos = start_idx + 1
+                link_id = match.group("id").lower() or link_text.lower()  # for links like [this][]
+
+                if link_id not in self.urls:
+                    # This id isn't defined, leave the markup alone.
+                    # set current pos to end of link title and continue from there
+                    curr_pos = p
+                    continue
+
+                url = self.urls[link_id]
+                title = self.titles.get(link_id)
+                url_end_idx = match.end()
+
+            # -- Encode and hash the URL and title to avoid conflicts with italics/bold
+
+            url = (
+                url
+                .replace('*', self._escape_table['*'])
+                .replace('_', self._escape_table['_'])
+            )
+            if title:
+                title = (
+                    _xml_escape_attr(title)
+                    .replace('*', self._escape_table['*'])
+                    .replace('_', self._escape_table['_'])
+                )
+                title_str = f' title="{title}"'
+            else:
+                title_str = ''
+
+            # -- Process the anchor/image
+
+            is_img = start_idx > 0 and text[start_idx-1] == "!"
+            if is_img:
+                start_idx -= 1
+                img_class_str = self._html_class_str_from_tag("img")
+                result = result_head = (
+                    f'<img src="{self._protect_url(url)}"'
+                    f' alt="{self._hash_span(_xml_escape_attr(link_text))}"'
+                    f'{title_str}{img_class_str}{self.empty_element_suffix}'
+                )
+            elif start_idx >= anchor_allowed_pos:
+                if self.safe_mode and not self._safe_href.match(url):
+                    result_head = f'<a href="#"{title_str}>'
+                else:
+                    result_head = f'<a href="{self._protect_url(url)}"{title_str}>'
+                result = f'{result_head}{link_text}</a>'
+            else:
+                # anchor not allowed here/invalid markup
+                curr_pos = start_idx + 1
+                continue
+
+            if "smarty-pants" in self.extras:
+                result = result.replace('"', self._escape_table['"'])
+
+            # <img> allowed from curr_pos onwards, <a> allowed from anchor_allowed_pos onwards.
+            # this means images can exist within `<a>` tags but anchors can only come after the
+            # current anchor has been closed
+            curr_pos = start_idx + len(result_head)
+            anchor_allowed_pos = start_idx + len(result)
+            text = text[:start_idx] + result + text[url_end_idx:]
 
         return text
 
