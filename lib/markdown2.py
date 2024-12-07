@@ -3314,7 +3314,13 @@ class SmartyPants(Extra):
         return text
 
     def test(self, text):
-        return "'" in text or '"' in text
+        return any(i in text for i in (
+            "'",
+            '"',
+            '--',
+            '...',
+            '. . .'
+        ))
 
 
 class Strike(Extra):
