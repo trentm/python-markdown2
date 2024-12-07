@@ -6,6 +6,7 @@
 - [pull #607] Fix `middle-word-em` extra preventing strongs from being recognized (#606)
 - [pull #609] Add option to output to file in CLI (#608)
 - [pull #612] Fix footnote labels appearing out-of-order (#536)
+- [pull #613] Fix smarty pants extra not triggering when it should (#611)
 
 
 ## python-markdown2 2.5.1
