@@ -405,6 +405,7 @@ class Markdown:
             # https://docs.python.org/3/whatsnew/3.7.html#summary-release-highlights
             self.footnotes = OrderedDict()
             self.footnote_ids = []
+            self._footnote_marker = _hash_text('<<footnote>>')
         if "header-ids" in self.extras:
             if not hasattr(self, '_count_from_header_id') or self.extras['header-ids'].get('reset-count', False):
                 self._count_from_header_id = defaultdict(int)
@@ -510,6 +511,12 @@ class Markdown:
         text = self._run_block_gamut(text)
 
         if "footnotes" in self.extras:
+            def footnote_sub(match):
+                normed_id = match.group(1)
+                self.footnote_ids.append(normed_id)
+                return str(len(self.footnote_ids))
+
+            text = re.sub(r'%s-(.*?)(?=</a></sup>)' % self._footnote_marker, footnote_sub, text)
             text = self._add_footnotes(text)
 
         text = self.postprocess(text)
@@ -1581,10 +1588,10 @@ class Markdown:
             if "footnotes" in self.extras and link_text.startswith("^"):
                 normed_id = re.sub(r'\W', '-', link_text[1:])
                 if normed_id in self.footnotes:
-                    self.footnote_ids.append(normed_id)
                     result = (
                         f'<sup class="footnote-ref" id="fnref-{normed_id}">'
-                        f'<a href="#fn-{normed_id}">{len(self.footnote_ids)}</a></sup>'
+                        # insert special footnote marker that's easy to find and match against later
+                        f'<a href="#fn-{normed_id}">{self._footnote_marker}-{normed_id}</a></sup>'
                     )
                     text = text[:start_idx] + result + text[p+1:]
                 else:
