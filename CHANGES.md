@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.5.3 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.5.2
 
 - [pull #605] Add support for Python 3.13, drop EOL 3.8
