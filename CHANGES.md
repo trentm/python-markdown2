@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.5.2 (not yet released)
+## python-markdown2 2.5.2
 
 - [pull #605] Add support for Python 3.13, drop EOL 3.8
 - [pull #607] Fix `middle-word-em` extra preventing strongs from being recognized (#606)
