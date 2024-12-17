@@ -3379,7 +3379,7 @@ class Tables(Extra):
                     (?:
                         ^[ ]{0,%d}(?!\ )         # ensure line begins with 0 to less_than_tab spaces
                         .*\|.*[ ]*\n
-                    )+
+                    )*
                 )
             ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
         return table_re.sub(self.sub, text)
@@ -3415,17 +3415,19 @@ class Tables(Extra):
         hlines.append('</thead>')
 
         # tbody
-        hlines.append('<tbody>')
-        for line in body.strip('\n').split('\n'):
-            hlines.append('<tr>')
-            cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", line)))]
-            for col_idx, col in enumerate(cols):
-                hlines.append('  <td{}>{}</td>'.format(
-                    align_from_col_idx.get(col_idx, ''),
-                    self.md._run_span_gamut(col)
-                ))
-            hlines.append('</tr>')
-        hlines.append('</tbody>')
+        body = body.strip('\n')
+        if body:
+            hlines.append('<tbody>')
+            for line in body.strip('\n').split('\n'):
+                hlines.append('<tr>')
+                cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", line)))]
+                for col_idx, col in enumerate(cols):
+                    hlines.append('  <td{}>{}</td>'.format(
+                        align_from_col_idx.get(col_idx, ''),
+                        self.md._run_span_gamut(col)
+                    ))
+                hlines.append('</tr>')
+            hlines.append('</tbody>')
         hlines.append('</table>')
 
         return '\n'.join(hlines) + '\n'
