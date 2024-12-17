@@ -3418,7 +3418,7 @@ class Tables(Extra):
         body = body.strip('\n')
         if body:
             hlines.append('<tbody>')
-            for line in body.strip('\n').split('\n'):
+            for line in body.split('\n'):
                 hlines.append('<tr>')
                 cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", line)))]
                 for col_idx, col in enumerate(cols):
