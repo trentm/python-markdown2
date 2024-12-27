@@ -156,3 +156,8 @@ the rule is it must have at least a single dash in there.
 | A  | \| | C \| C |
 |--- |--- | ------ |
 |\|\|| BB | C |
+
+# table without rows
+
+| abc | def |
+| --- | --- |
