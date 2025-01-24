@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.5.4 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.5.3
 
 - [pull #616] make tables without body gfm compatible
