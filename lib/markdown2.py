@@ -1523,180 +1523,9 @@ class Markdown:
         Markdown.pl because of the lack of atomic matching support in
         Python's regex engine used in $g_nested_brackets.
         """
-        MAX_LINK_TEXT_SENTINEL = 3000  # markdown2 issue 24
-
-        # `anchor_allowed_pos` is used to support img links inside
-        # anchors, but not anchors inside anchors. An anchor's start
-        # pos must be `>= anchor_allowed_pos`.
-        anchor_allowed_pos = 0
-
-        curr_pos = 0
-
-        while True:
-            # The next '[' is the start of:
-            # - an inline anchor:   [text](url "title")
-            # - a reference anchor: [text][id]
-            # - an inline img:      ![text](url "title")
-            # - a reference img:    ![text][id]
-            # - a footnote ref:     [^id]
-            #   (Only if 'footnotes' extra enabled)
-            # - a footnote defn:    [^id]: ...
-            #   (Only if 'footnotes' extra enabled) These have already
-            #   been stripped in _strip_footnote_definitions() so no
-            #   need to watch for them.
-            # - a link definition:  [id]: url "title"
-            #   These have already been stripped in
-            #   _strip_link_definitions() so no need to watch for them.
-            # - not markup:         [...anything else...
-            try:
-                start_idx = text.index('[', curr_pos)
-            except ValueError:
-                break
-            text_length = len(text)
-
-            # Find the matching closing ']'.
-            # Markdown.pl allows *matching* brackets in link text so we
-            # will here too. Markdown.pl *doesn't* currently allow
-            # matching brackets in img alt text -- we'll differ in that
-            # regard.
-            bracket_depth = 0
-
-            for p in range(
-                start_idx + 1,
-                min(start_idx + MAX_LINK_TEXT_SENTINEL, text_length)
-            ):
-                ch = text[p]
-                if ch == ']':
-                    bracket_depth -= 1
-                    if bracket_depth < 0:
-                        break
-                elif ch == '[':
-                    bracket_depth += 1
-            else:
-                # Closing bracket not found within sentinel length.
-                # This isn't markup.
-                curr_pos = start_idx + 1
-                continue
-            link_text = text[start_idx + 1: p]
-
-            # Fix for issue 341 - Injecting XSS into link text
-            if self.safe_mode:
-                link_text = self._hash_html_spans(link_text)
-                link_text = self._unhash_html_spans(link_text)
-
-            # Possibly a footnote ref?
-            if "footnotes" in self.extras and link_text.startswith("^"):
-                normed_id = re.sub(r'\W', '-', link_text[1:])
-                if normed_id in self.footnotes:
-                    result = (
-                        f'<sup class="footnote-ref" id="fnref-{normed_id}">'
-                        # insert special footnote marker that's easy to find and match against later
-                        f'<a href="#fn-{normed_id}">{self._footnote_marker}-{normed_id}</a></sup>'
-                    )
-                    text = text[:start_idx] + result + text[p+1:]
-                else:
-                    # This id isn't defined, leave the markup alone.
-                    curr_pos = p + 1
-                continue
-
-            # Now determine what this is by the remainder.
-            p += 1
-
-            # -- Extract the URL, title and end index from the link
-
-            # inline anchor or inline img
-            if text[p:p + 1] == '(':
-                url, title, url_end_idx = self._extract_url_and_title(text, p)
-                if url is None:
-                    # text isn't markup
-                    curr_pos = start_idx + 1
-                    continue
-                url = self._unhash_html_spans(url, code=True)
-            # reference anchor or reference img
-            else:
-                match = None
-                if 'link-shortrefs' in self.extras:
-                    # check if there's no tailing id section
-                    if link_text and re.match(r'[ ]?(?:\n[ ]*)?(?!\[)', text[p:]):
-                        # try a match with `[]` inserted into the text
-                        match = self._tail_of_reference_link_re.match(f'{text[:p]}[]{text[p:]}', p)
-                        if match:
-                            # if we get a match, we'll have to modify the `text` variable to insert the `[]`
-                            # but we ONLY want to do that if the link_id is valid. This makes sure that we
-                            # don't get stuck in any loops and also that when a user inputs `[abc]` we don't
-                            # output `[abc][]` in the final HTML
-                            if (match.group("id").lower() or link_text.lower()) in self.urls:
-                                text = f'{text[:p]}[]{text[p:]}'
-                            else:
-                                match = None
-
-                match = match or self._tail_of_reference_link_re.match(text, p)
-                if not match:
-                    # text isn't markup
-                    curr_pos = start_idx + 1
-                    continue
-
-                link_id = match.group("id").lower() or link_text.lower()  # for links like [this][]
-
-                if link_id not in self.urls:
-                    # This id isn't defined, leave the markup alone.
-                    # set current pos to end of link title and continue from there
-                    curr_pos = p
-                    continue
-
-                url = self.urls[link_id]
-                title = self.titles.get(link_id)
-                url_end_idx = match.end()
-
-            # -- Encode and hash the URL and title to avoid conflicts with italics/bold
-
-            url = (
-                url
-                .replace('*', self._escape_table['*'])
-                .replace('_', self._escape_table['_'])
-            )
-            if title:
-                title = (
-                    _xml_escape_attr(title)
-                    .replace('*', self._escape_table['*'])
-                    .replace('_', self._escape_table['_'])
-                )
-                title_str = f' title="{title}"'
-            else:
-                title_str = ''
-
-            # -- Process the anchor/image
-
-            is_img = start_idx > 0 and text[start_idx-1] == "!"
-            if is_img:
-                start_idx -= 1
-                img_class_str = self._html_class_str_from_tag("img")
-                result = result_head = (
-                    f'<img src="{self._protect_url(url)}"'
-                    f' alt="{self._hash_span(_xml_escape_attr(link_text))}"'
-                    f'{title_str}{img_class_str}{self.empty_element_suffix}'
-                )
-            elif start_idx >= anchor_allowed_pos:
-                if self.safe_mode and not self._safe_href.match(url):
-                    result_head = f'<a href="#"{title_str}>'
-                else:
-                    result_head = f'<a href="{self._protect_url(url)}"{title_str}>'
-                result = f'{result_head}{link_text}</a>'
-            else:
-                # anchor not allowed here/invalid markup
-                curr_pos = start_idx + 1
-                continue
-
-            if "smarty-pants" in self.extras:
-                result = result.replace('"', self._escape_table['"'])
-
-            # <img> allowed from curr_pos onwards, <a> allowed from anchor_allowed_pos onwards.
-            # this means images can exist within `<a>` tags but anchors can only come after the
-            # current anchor has been closed
-            curr_pos = start_idx + len(result_head)
-            anchor_allowed_pos = start_idx + len(result)
-            text = text[:start_idx] + result + text[url_end_idx:]
-
+        link_processor = LinkProcessor(self, None)
+        if link_processor.test(text):
+            text = link_processor.run(text)
         return text
 
     def header_id_from_text(self,
@@ -2681,6 +2510,311 @@ class ItalicAndBoldProcessor(Extra):
         if self.md.order < Stage.ITALIC_AND_BOLD:
             return '*' in text or '_' in text
         return self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
+
+
+class LinkProcessor(Extra):
+    name = 'link-processor'
+    order = (Stage.ITALIC_AND_BOLD,), (Stage.ESCAPE_SPECIAL,)
+
+    def parse_inline_anchor_or_image(self, text: str, _link_text: str, start_idx: int) -> Optional[Tuple[str, str, Optional[str], int]]:
+        '''
+        Parse a string and extract a link from it. This can be an inline anchor or an image.
+
+        Args:
+            text: the whole text containing the link
+            link_text: the human readable text inside the link
+            start_idx: the index of the link within `text`
+
+        Returns:
+            None if a link was not able to be parsed from `text`.
+            If successful, a tuple is returned containing:
+
+            1. potentially modified version of the `text` param
+            2. the URL
+            3. the title (can be None if not present)
+            4. the index where the link ends within text
+        '''
+        idx = self.md._find_non_whitespace(text, start_idx + 1)
+        if idx == len(text):
+            return
+        end_idx = idx
+        has_anglebrackets = text[idx] == "<"
+        if has_anglebrackets:
+            end_idx = self.md._find_balanced(text, end_idx+1, "<", ">")
+        end_idx = self.md._find_balanced(text, end_idx, "(", ")")
+        match = self.md._inline_link_title.search(text, idx, end_idx)
+        if not match:
+            return
+        url, title = text[idx:match.start()], match.group("title")
+        if has_anglebrackets:
+            url = self.md._strip_anglebrackets.sub(r'\1', url)
+        return text, url, title, end_idx
+
+    def process_link_shortrefs(self, text: str, link_text: str, start_idx: int) -> Tuple[Optional[re.Match], str]:
+        '''
+        Detects shortref links within a string and converts them to normal references
+
+        Args:
+            text: the whole text containing the link
+            link_text: the human readable text inside the link
+            start_idx: the index of the link within `text`
+
+        Returns:
+            A tuple containing:
+
+            1. A potential `re.Match` against the link reference within `text` (will be None if not found)
+            2. potentially modified version of the `text` param
+        '''
+        match = None
+        # check if there's no tailing id section
+        if link_text and re.match(r'[ ]?(?:\n[ ]*)?(?!\[)', text[start_idx:]):
+            # try a match with `[]` inserted into the text
+            match = self.md._tail_of_reference_link_re.match(f'{text[:start_idx]}[]{text[start_idx:]}', start_idx)
+            if match:
+                # if we get a match, we'll have to modify the `text` variable to insert the `[]`
+                # but we ONLY want to do that if the link_id is valid. This makes sure that we
+                # don't get stuck in any loops and also that when a user inputs `[abc]` we don't
+                # output `[abc][]` in the final HTML
+                if (match.group("id").lower() or link_text.lower()) in self.md.urls:
+                    text = f'{text[:start_idx]}[]{text[start_idx:]}'
+                else:
+                    match = None
+
+        return match, text
+
+    def parse_ref_anchor_or_ref_image(self, text: str, link_text: str, start_idx: int) -> Optional[Tuple[str, Optional[str], Optional[str], int]]:
+        '''
+        Parse a string and extract a link from it. This can be a reference anchor or image.
+
+        Args:
+            text: the whole text containing the link
+            link_text: the human readable text inside the link
+            start_idx: the index of the link within `text`
+
+        Returns:
+            None if a link was not able to be parsed from `text`.
+            If successful, a tuple is returned containing:
+
+            1. potentially modified version of the `text` param
+            2. the URL (can be None if the reference doesn't exist)
+            3. the title (can be None if not present)
+            4. the index where the link ends within text
+        '''
+        match = None
+        if 'link-shortrefs' in self.md.extras:
+            match, text = self.process_link_shortrefs(text, link_text, start_idx)
+
+        match = match or self.md._tail_of_reference_link_re.match(text, start_idx)
+        if not match:
+            # text isn't markup
+            return
+
+        link_id = match.group("id").lower() or link_text.lower()  # for links like [this][]
+
+        url = self.md.urls.get(link_id)
+        title = self.md.titles.get(link_id)
+        url_end_idx = match.end()
+
+        return text, url, title, url_end_idx
+
+    def process_image(self, url: str, title_attr: str, link_text: str) -> Tuple[str, int]:
+        '''
+        Takes a URL, title and link text and returns an HTML `<img>` tag
+
+        Args:
+            url: the image URL/src
+            title_attr: a string containing the title attribute of the tag (eg: `' title="..."'`)
+            link_text: the human readable text portion of the link
+
+        Returns:
+            A tuple containing:
+
+            1. The HTML string
+            2. The length of the opening HTML tag in the string. For `<img>` it's the whole string.
+               This section will be skipped by the link processor
+        '''
+        img_class_str = self.md._html_class_str_from_tag("img")
+        result = (
+            f'<img src="{self.md._protect_url(url)}"'
+            f' alt="{self.md._hash_span(_xml_escape_attr(link_text))}"'
+            f'{title_attr}{img_class_str}{self.md.empty_element_suffix}'
+        )
+        return result, len(result)
+
+    def process_anchor(self, url: str, title_attr: str, link_text: str) -> Tuple[str, int]:
+        '''
+        Takes a URL, title and link text and returns an HTML `<a>` tag
+
+        Args:
+            url: the URL
+            title_attr: a string containing the title attribute of the tag (eg: `' title="..."'`)
+            link_text: the human readable text portion of the link
+
+        Returns:
+            A tuple containing:
+
+            1. The HTML string
+            2. The length of the opening HTML tag in the string. This section will be skipped
+               by the link processor
+        '''
+        if self.md.safe_mode and not self.md._safe_href.match(url):
+            result_head = f'<a href="#"{title_attr}>'
+        else:
+            result_head = f'<a href="{self.md._protect_url(url)}"{title_attr}>'
+
+        return f'{result_head}{link_text}</a>', len(result_head)
+
+    def run(self, text: str):
+        MAX_LINK_TEXT_SENTINEL = 3000  # markdown2 issue 24
+
+        # `anchor_allowed_pos` is used to support img links inside
+        # anchors, but not anchors inside anchors. An anchor's start
+        # pos must be `>= anchor_allowed_pos`.
+        anchor_allowed_pos = 0
+
+        curr_pos = 0
+
+        while True:
+            # The next '[' is the start of:
+            # - an inline anchor:   [text](url "title")
+            # - a reference anchor: [text][id]
+            # - an inline img:      ![text](url "title")
+            # - a reference img:    ![text][id]
+            # - a footnote ref:     [^id]
+            #   (Only if 'footnotes' extra enabled)
+            # - a footnote defn:    [^id]: ...
+            #   (Only if 'footnotes' extra enabled) These have already
+            #   been stripped in _strip_footnote_definitions() so no
+            #   need to watch for them.
+            # - a link definition:  [id]: url "title"
+            #   These have already been stripped in
+            #   _strip_link_definitions() so no need to watch for them.
+            # - not markup:         [...anything else...
+            try:
+                start_idx = text.index('[', curr_pos)
+            except ValueError:
+                break
+            text_length = len(text)
+
+            # Find the matching closing ']'.
+            # Markdown.pl allows *matching* brackets in link text so we
+            # will here too. Markdown.pl *doesn't* currently allow
+            # matching brackets in img alt text -- we'll differ in that
+            # regard.
+            bracket_depth = 0
+
+            for p in range(
+                start_idx + 1,
+                min(start_idx + MAX_LINK_TEXT_SENTINEL, text_length)
+            ):
+                ch = text[p]
+                if ch == ']':
+                    bracket_depth -= 1
+                    if bracket_depth < 0:
+                        break
+                elif ch == '[':
+                    bracket_depth += 1
+            else:
+                # Closing bracket not found within sentinel length.
+                # This isn't markup.
+                curr_pos = start_idx + 1
+                continue
+            link_text = text[start_idx + 1: p]
+
+            # Fix for issue 341 - Injecting XSS into link text
+            if self.md.safe_mode:
+                link_text = self.md._hash_html_spans(link_text)
+                link_text = self.md._unhash_html_spans(link_text)
+
+            # Possibly a footnote ref?
+            if "footnotes" in self.md.extras and link_text.startswith("^"):
+                normed_id = re.sub(r'\W', '-', link_text[1:])
+                if normed_id in self.md.footnotes:
+                    result = (
+                        f'<sup class="footnote-ref" id="fnref-{normed_id}">'
+                        # insert special footnote marker that's easy to find and match against later
+                        f'<a href="#fn-{normed_id}">{self.md._footnote_marker}-{normed_id}</a></sup>'
+                    )
+                    text = text[:start_idx] + result + text[p+1:]
+                else:
+                    # This id isn't defined, leave the markup alone.
+                    curr_pos = p + 1
+                continue
+
+            # Now determine what this is by the remainder.
+            p += 1
+
+            # -- Extract the URL, title and end index from the link
+
+            # inline anchor or inline img
+            if text[p:p + 1] == '(':
+                parsed = self.parse_inline_anchor_or_image(text, link_text, p)
+                if not parsed:
+                    # text isn't markup
+                    curr_pos = start_idx + 1
+                    continue
+
+                text, url, title, url_end_idx = parsed
+                url = self.md._unhash_html_spans(url, code=True)
+            # reference anchor or reference img
+            else:
+                parsed = self.parse_ref_anchor_or_ref_image(text, link_text, p)
+                if not parsed:
+                    curr_pos = start_idx + 1
+                    continue
+
+                text, url, title, url_end_idx = parsed
+                if url is None:
+                    # This id isn't defined, leave the markup alone.
+                    # set current pos to end of link title and continue from there
+                    curr_pos = p
+                    continue
+
+            # -- Encode and hash the URL and title to avoid conflicts with italics/bold
+
+            url = (
+                url
+                .replace('*', self.md._escape_table['*'])
+                .replace('_', self.md._escape_table['_'])
+            )
+            if title:
+                title = (
+                    _xml_escape_attr(title)
+                    .replace('*', self.md._escape_table['*'])
+                    .replace('_', self.md._escape_table['_'])
+                )
+                title_str = f' title="{title}"'
+            else:
+                title_str = ''
+
+            # -- Process the anchor/image
+
+            is_img = start_idx > 0 and text[start_idx-1] == "!"
+            if is_img:
+                start_idx -= 1
+                result, skip = self.process_image(url, title_str, link_text)
+            elif start_idx >= anchor_allowed_pos:
+                result, skip = self.process_anchor(url, title_str, link_text)
+            else:
+                # anchor not allowed here/invalid markup
+                curr_pos = start_idx + 1
+                continue
+
+            if "smarty-pants" in self.md.extras:
+                result = result.replace('"', self.md._escape_table['"'])
+
+            # <img> allowed from curr_pos onwards, <a> allowed from anchor_allowed_pos onwards.
+            # this means images can exist within `<a>` tags but anchors can only come after the
+            # current anchor has been closed
+            curr_pos = start_idx + skip
+            anchor_allowed_pos = start_idx + len(result)
+            text = text[:start_idx] + result + text[url_end_idx:]
+
+        return text
+
+    def test(self, text):
+        return '(' in text or '[' in text
+
 
 # User facing extras
 # ----------------------------------------------------------
