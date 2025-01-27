@@ -1,0 +1,6 @@
+[This is a link to a markdown file](./file.md)
+
+[This is a reference to a markdown file link][]
+
+
+[This is a reference to a markdown file link]: ./something.md
