@@ -2509,7 +2509,7 @@ class LinkProcessor(Extra):
     order = (Stage.ITALIC_AND_BOLD,), (Stage.ESCAPE_SPECIAL,)
     options: _LinkProcessorExtraOpts
 
-    def __init__(self, md: Markdown, options: Dict | None):
+    def __init__(self, md: Markdown, options: Optional[dict]):
         options = options or {}
         super().__init__(md, options)
 
@@ -3247,7 +3247,7 @@ class MarkdownFileLinks(LinkProcessor):
     order = (Stage.LINKS,), (Stage.LINK_DEFS,)
     options: _MarkdownFileLinksExtraOpts
 
-    def __init__(self, md: Markdown, options: Dict | None):
+    def __init__(self, md: Markdown, options: Optional[dict]):
         # override LinkProcessor defaults
         options = {'tags': ['a'], 'ref': False, **(options or {})}
         super().__init__(md, options)
