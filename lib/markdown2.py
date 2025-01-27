@@ -66,6 +66,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   references, revision number references).
 * link-shortrefs: allow shortcut reference links, not followed by `[]` or
   a link label.
+* markdown-file-links: Replace links to `.md` files with `.html` links
 * markdown-in-html: Allow the use of `markdown="1"` in a block HTML tag to
   have markdown processing be done on its contents. Similar to
   <http://michelf.com/projects/php-markdown/extra/#markdown-attr> but with
@@ -3219,6 +3220,32 @@ class MarkdownInHTML(Extra):
         return True
 
 
+class MarkdownFileLinks(LinkProcessor):
+    '''
+    Replace links to `.md` files with `.html` links
+    '''
+
+    name = 'markdown-file-links'
+    order = (Stage.LINKS,), (Stage.LINK_DEFS,)
+
+    def process_anchor(self, url: str, title_attr: str, link_text: str):
+        if url.endswith('.md'):
+            url = url.removesuffix('.md') + '.html'
+        return super().process_anchor(url, title_attr, link_text)
+
+    def run(self, text: str):
+        if Stage.LINKS > self.md.order > Stage.LINK_DEFS:
+            # running just after link defs have been stripped
+            for key, url in self.md.urls.items():
+                if url.endswith('.md'):
+                    self.md.urls[key] = url.removesuffix('.md') + '.html'
+
+        return super().run(text)
+
+    def test(self, text):
+        return super().test(text) and '.md' in text
+
+
 class Mermaid(FencedCodeBlocks):
     name = 'mermaid'
     order = (FencedCodeBlocks,), ()
@@ -3717,6 +3744,7 @@ FencedCodeBlocks.register()
 Latex.register()
 LinkPatterns.register()
 MarkdownInHTML.register()
+MarkdownFileLinks.register()
 MiddleWordEm.register()
 Mermaid.register()
 Numbering.register()
