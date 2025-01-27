@@ -2513,9 +2513,24 @@ class ItalicAndBoldProcessor(Extra):
         return self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
 
 
+class _LinkProcessorExtraOpts(TypedDict, total=False):
+    '''Options for the `LinkProcessor` extra'''
+    tags: List[str]
+    '''List of tags to be processed by the extra. Default is `['a', 'img']`'''
+    inline: bool
+    '''Whether to process inline links. Default: True'''
+    ref: bool
+    '''Whether to process reference links. Default: True'''
+
+
 class LinkProcessor(Extra):
     name = 'link-processor'
     order = (Stage.ITALIC_AND_BOLD,), (Stage.ESCAPE_SPECIAL,)
+    options: _LinkProcessorExtraOpts
+
+    def __init__(self, md: Markdown, options: Dict | None):
+        options = options or {}
+        super().__init__(md, options)
 
     def parse_inline_anchor_or_image(self, text: str, _link_text: str, start_idx: int) -> Optional[Tuple[str, str, Optional[str], int]]:
         '''
@@ -2749,6 +2764,10 @@ class LinkProcessor(Extra):
 
             # inline anchor or inline img
             if text[p:p + 1] == '(':
+                if not self.options.get('inline', True):
+                    curr_pos = start_idx + 1
+                    continue
+
                 parsed = self.parse_inline_anchor_or_image(text, link_text, p)
                 if not parsed:
                     # text isn't markup
@@ -2759,6 +2778,10 @@ class LinkProcessor(Extra):
                 url = self.md._unhash_html_spans(url, code=True)
             # reference anchor or reference img
             else:
+                if not self.options.get('ref', True):
+                    curr_pos = start_idx + 1
+                    continue
+
                 parsed = self.parse_ref_anchor_or_ref_image(text, link_text, p)
                 if not parsed:
                     curr_pos = start_idx + 1
@@ -2792,9 +2815,17 @@ class LinkProcessor(Extra):
 
             is_img = start_idx > 0 and text[start_idx-1] == "!"
             if is_img:
+                if 'img' not in self.options.get('tags', ['img']):
+                    curr_pos = start_idx + 1
+                    continue
+
                 start_idx -= 1
                 result, skip = self.process_image(url, title_str, link_text)
             elif start_idx >= anchor_allowed_pos:
+                if 'a' not in self.options.get('tags', ['a']):
+                    curr_pos = start_idx + 1
+                    continue
+
                 result, skip = self.process_anchor(url, title_str, link_text)
             else:
                 # anchor not allowed here/invalid markup
@@ -3220,6 +3251,12 @@ class MarkdownInHTML(Extra):
         return True
 
 
+class _MarkdownFileLinksExtraOpts(_LinkProcessorExtraOpts, total=False):
+    '''Options for the `MarkdownFileLinks` extra'''
+    link_defs: bool
+    '''Whether to convert link definitions as well. Default: True'''
+
+
 class MarkdownFileLinks(LinkProcessor):
     '''
     Replace links to `.md` files with `.html` links
@@ -3227,6 +3264,12 @@ class MarkdownFileLinks(LinkProcessor):
 
     name = 'markdown-file-links'
     order = (Stage.LINKS,), (Stage.LINK_DEFS,)
+    options: _MarkdownFileLinksExtraOpts
+
+    def __init__(self, md: Markdown, options: Dict | None):
+        # override LinkProcessor defaults
+        options = {'tags': ['a'], 'ref': False, **(options or {})}
+        super().__init__(md, options)
 
     def process_anchor(self, url: str, title_attr: str, link_text: str):
         if url.endswith('.md'):
@@ -3234,7 +3277,7 @@ class MarkdownFileLinks(LinkProcessor):
         return super().process_anchor(url, title_attr, link_text)
 
     def run(self, text: str):
-        if Stage.LINKS > self.md.order > Stage.LINK_DEFS:
+        if Stage.LINKS > self.md.order > Stage.LINK_DEFS and self.options.get('link_defs', True):
             # running just after link defs have been stripped
             for key, url in self.md.urls.items():
                 if url.endswith('.md'):
