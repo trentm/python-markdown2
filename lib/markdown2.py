@@ -3271,10 +3271,14 @@ class MarkdownFileLinks(LinkProcessor):
         options = {'tags': ['a'], 'ref': False, **(options or {})}
         super().__init__(md, options)
 
-    def process_anchor(self, url: str, title_attr: str, link_text: str):
-        if url.endswith('.md'):
-            url = url.removesuffix('.md') + '.html'
-        return super().process_anchor(url, title_attr, link_text)
+    def parse_inline_anchor_or_image(self, text: str, _link_text: str, start_idx: int):
+        result = super().parse_inline_anchor_or_image(text, _link_text, start_idx)
+        if not result or not result[1] or not result[1].endswith('.md'):
+            # return None for invalid markup, or links that don't end with '.md'
+            # so that we don't touch them, and other extras can process them freely
+            return
+        url = result[1].removesuffix('.md') + '.html'
+        return result[0], url, *result[2:]
 
     def run(self, text: str):
         if Stage.LINKS > self.md.order > Stage.LINK_DEFS and self.options.get('link_defs', True):
