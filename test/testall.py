@@ -17,7 +17,7 @@ def _python_ver_from_python(python):
     assert ' ' not in python
     o = os.popen('''%s -c "import sys; print(sys.version)"''' % python)
     ver_str = o.read().strip()
-    ver_bits = re.split(r"\.|[^\d]", ver_str, 2)[:2]
+    ver_bits = re.split(r"\.|[^\d]", ver_str, maxsplit=2)[:2]
     ver = tuple(map(int, ver_bits))
     return ver
 
