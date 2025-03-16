@@ -4099,8 +4099,6 @@ def _html_escape_url(
         .replace('<', '&lt;')
         .replace('>', '&gt;'))
     if safe_mode:
-        if charset != 'base64':
-            escaped = escaped.replace('+', ' ')
         escaped = escaped.replace("'", "&#39;")
     return escaped
 
