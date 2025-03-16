@@ -859,9 +859,9 @@ class Markdown:
 
     # I broke out the html5 tags here and add them to _block_tags_a and
     # _block_tags_b.  This way html5 tags are easy to keep track of.
-    _html5tags = '|article|aside|header|hgroup|footer|nav|section|figure|figcaption'
+    _html5tags = '|address|article|aside|canvas|figcaption|figure|footer|header|main|nav|section|video'
 
-    _block_tags_a = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math|ins|del|style|html|head|body'
+    _block_tags_a = 'blockquote|body|dd|del|div|dl|dt|fieldset|form|h[1-6]|head|hr|html|iframe|ins|li|math|noscript|ol|p|pre|script|style|table|tfoot|ul'
     _block_tags_a += _html5tags
 
     _strict_tag_block_re = re.compile(r"""
@@ -877,7 +877,7 @@ class Markdown:
         """ % _block_tags_a,
         re.X | re.M)
 
-    _block_tags_b = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|script|noscript|form|fieldset|iframe|math'
+    _block_tags_b = 'blockquote|div|dl|fieldset|form|h[1-6]|iframe|math|noscript|ol|p|pre|script|table|ul'
     _block_tags_b += _html5tags
 
     _span_tags = (
