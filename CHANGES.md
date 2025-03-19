@@ -3,7 +3,9 @@
 ## python-markdown2 2.5.4 (not yet released)
 
 - [pull #617] Add MarkdownFileLinks extra (#528)
+- [pull #622] Add missing block tags to regex (#620)
 - [pull #623] Don't escape plus signs in URLs (#621)
+
 
 ## python-markdown2 2.5.3
 
