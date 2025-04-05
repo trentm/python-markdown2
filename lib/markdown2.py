@@ -1319,16 +1319,16 @@ class Markdown:
             is_html_markup = not is_html_markup
         return ''.join(escaped)
 
+    def _is_auto_link(self, text):
+        if ':' in text and self._auto_link_re.match(text):
+            return True
+        elif '@' in text and self._auto_email_link_re.match(text):
+            return True
+        return False
+
     @mark_stage(Stage.HASH_HTML)
     def _hash_html_spans(self, text: str) -> str:
         # Used for safe_mode.
-
-        def _is_auto_link(s):
-            if ':' in s and self._auto_link_re.match(s):
-                return True
-            elif '@' in s and self._auto_email_link_re.match(s):
-                return True
-            return False
 
         def _is_code_span(index, token):
             try:
@@ -1353,7 +1353,7 @@ class Markdown:
         split_tokens = self._sorta_html_tokenize_re.split(text)
         is_html_markup = False
         for index, token in enumerate(split_tokens):
-            if is_html_markup and not _is_auto_link(token) and not _is_code_span(index, token):
+            if is_html_markup and not self._is_auto_link(token) and not _is_code_span(index, token):
                 is_comment = _is_comment(token)
                 if is_comment:
                     tokens.append(self._hash_span(self._sanitize_html(is_comment.group(1))))
@@ -2165,7 +2165,7 @@ class Markdown:
         if self.safe_mode not in ("replace", "escape"):
             return text
 
-        if text.endswith(">"):
+        if self._is_auto_link(text):
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
         def incomplete_tags_sub(match):
