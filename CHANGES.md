@@ -5,6 +5,7 @@
 - [pull #617] Add MarkdownFileLinks extra (#528)
 - [pull #622] Add missing block tags to regex (#620)
 - [pull #623] Don't escape plus signs in URLs (#621)
+- [pull #626] Fix XSS when encoding incomplete tags (#625)
 
 
 ## python-markdown2 2.5.3
