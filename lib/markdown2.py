@@ -2460,7 +2460,7 @@ class ItalicAndBoldProcessor(Extra):
     strong_re = Markdown._strong_re
     em_re = Markdown._em_re
 
-    def __init__(self, md: Markdown, options: dict):
+    def __init__(self, md: Markdown, options: Optional[dict]):
         super().__init__(md, options)
         self.hash_table = {}
 
@@ -3293,7 +3293,7 @@ class MiddleWordEm(ItalicAndBoldProcessor):
     name = 'middle-word-em'
     order = (CodeFriendly,), (Stage.ITALIC_AND_BOLD,)
 
-    def __init__(self, md: Markdown, options: Union[dict, bool]):
+    def __init__(self, md: Markdown, options: Union[dict, bool, None]):
         '''
         Args:
             md: the markdown instance
@@ -3304,6 +3304,8 @@ class MiddleWordEm(ItalicAndBoldProcessor):
         '''
         if isinstance(options, bool):
             options = {'allowed': options}
+        else:
+            options = options or {}
         options.setdefault('allowed', True)
         super().__init__(md, options)
 
