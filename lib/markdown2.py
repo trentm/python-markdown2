@@ -3576,7 +3576,7 @@ class Tables(Extra):
         return table_re.sub(self.sub, text)
 
     def sub(self, match: re.Match) -> str:
-        trim_space_re = '^[ \t\n]+|[ \t\n]+$'
+        trim_space_re = r'^\s+|\s+$'
         trim_bar_re = r'^\||\|$'
         split_bar_re = r'^\||(?<![\`\\])\|'
         escape_bar_re = r'\\\|'
