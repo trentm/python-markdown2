@@ -8,6 +8,7 @@
 - [pull #626] Fix XSS when encoding incomplete tags (#625)
 - [pull #628] Fix TypeError in MiddleWordEm extra when options was None (#627)
 - [pull #630] Fix nbsp breaking tables (#629)
+- [pull #634] Fix ReDoS in HTML tokenizer regex (#633)
 
 
 ## python-markdown2 2.5.3
