@@ -12,6 +12,10 @@ test:
 testone:
 	cd test && python test.py -- -knownfailure
 
+.PHONY: testredos
+testredos:
+	python test/test_redos.py
+
 .PHONY: pygments
 pygments:
 	[[ -d deps/pygments ]] || ( \
