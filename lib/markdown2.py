@@ -1273,7 +1273,7 @@ class Markdown:
                     \s+                           # whitespace after tag
                     (?:[^\t<>"'=/]+:)?
                     [^<>"'=/]+=                   # attr name
-                    (?:".*?"|'.*?'|[^<>"'=/\s]+)  # value, quoted or unquoted. If unquoted, no spaces allowed
+                    (?:"[^"]*?"|'[^']*?'|[^<>"'=/\s]+)  # value, quoted or unquoted. If unquoted, no spaces allowed
                 )*
                 \s*/?>
                 |
