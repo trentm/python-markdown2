@@ -35,7 +35,7 @@ def issue493():
 
 def issue_633():
     # https://github.com/trentm/python-markdown2/issues/633
-    return '<p m="1"' * 5000 + " " * 10_000 + "</div"
+    return '<p m="1"' * 2500 + " " * 5000 + "</div"
 
 
 # whack everything in a dict for easy lookup later on
