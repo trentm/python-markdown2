@@ -1,6 +1,6 @@
 # python-markdown2 Changelog
 
-## python-markdown2 2.5.4 (not yet released)
+## python-markdown2 2.5.4
 
 - [pull #617] Add MarkdownFileLinks extra (#528)
 - [pull #622] Add missing block tags to regex (#620)
