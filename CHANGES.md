@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.5.5 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.5.4
 
 - [pull #617] Add MarkdownFileLinks extra (#528)
