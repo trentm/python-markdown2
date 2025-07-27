@@ -27,3 +27,6 @@ jobs:
       - name: Test
         run: |
           make testone
+      - name: Test ReDoS
+        run: |
+          make testredos
