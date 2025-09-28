@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.5.5 (not yet released)
 
-(nothing yet)
+- [pull #640] Fix code friendly extra stopping other syntax being processed (#638)
 
 
 ## python-markdown2 2.5.4
