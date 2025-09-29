@@ -3309,42 +3309,42 @@ class MiddleWordEm(ItalicAndBoldProcessor):
         options.setdefault('allowed', True)
         super().__init__(md, options)
 
-        self.liberal_em_re = self.em_re
-        if not options['allowed']:
-            self.em_re = re.compile(r'(?<=\b)%s(?=\b)' % self.em_re.pattern, self.em_re.flags)
-            self.liberal_em_re = re.compile(
-                r'''
-                    (                # \1 - must be a single em char in the middle of a word
-                        (?<![*_\s])  # cannot be preceeded by em character or whitespace (must be in middle of word)
-                        [*_]         # em character
-                        (?![*_])     # cannot be followed by another em char
-                    )
-                    (?=\S)           # em opening must be followed by non-whitespace text
-                    (.*?\S)          # the emphasized text
-                    \1               # closing char
-                    (?!\s|$)         # must not be followed by whitespace (middle of word) or EOF
-                '''
-                , re.S | re.X)
+        self.middle_word_em_re = re.compile(
+            r'''
+            (?<!^)         # To be middle of a word, it cannot be at the start of the input
+            (?<![*_\s])    # cannot be preceeded by em character or whitespace (must be in middle of word)
+            ([*_])         # em char
+            (?=\S)         # must be followed by non-whitespace char
+            (?![*_]|$|\W)  # cannot be followed by another em char, EOF or a non-word char
+            ''', re.X | re.M
+        )
+
+        # add a prefix to it so we don't interfere with escaped/hashed chars from other stages
+        self.hash_table['_'] = _hash_text(self.name + '_')
+        self.hash_table['*'] = _hash_text(self.name + '*')
 
     def run(self, text):
         if self.options['allowed']:
             # if middle word em is allowed, do nothing. This extra's only use is to prevent them
             return text
 
-        # run strong and whatnot first
-        # this also will process all strict ems
-        text = super().run(text)
+        # hash all em chars in the middle of words to prevent em_re from picking up on them
         if self.md.order < self.md.stage:
-            # hash all non-valid ems
-            text = self.liberal_em_re.sub(self.sub_hash, text)
+            text = self.middle_word_em_re.sub(self.sub, text)
+
+        # put all the em chars back
+        if self.md.order > self.md.stage:
+            text = text.replace(self.hash_table['_'], '_')
+            text = text.replace(self.hash_table['*'], '*')
+
         return text
 
-    def sub(self, match: re.Match) -> str:
-        syntax = match.group(1)
-        if len(syntax) != 1:
-            # strong syntax
+    def sub(self, match: re.Match):
+        if match.re != self.middle_word_em_re:
             return super().sub(match)
-        return '<em>%s</em>' % match.group(2)
+
+        syntax = match.group(1)
+        return self.hash_table[syntax]
 
 
 class Numbering(Extra):
