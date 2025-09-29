@@ -2960,20 +2960,28 @@ class CodeFriendly(ItalicAndBoldProcessor):
     '''
     name = 'code-friendly'
 
+    def __init__(self, md, options):
+        super().__init__(md, options)
+
+        # add a prefix to it so we don't interfere with escaped/hashed chars from other stages
+        self.hash_table[_hash_text(self.name + '_')] = '_'
+        self.hash_table[_hash_text(self.name + '__')] = '__'
+
     def sub(self, match: re.Match) -> str:
         syntax = match.group(1)
         text: str = match.string[match.start(): match.end()]
         if '_' in syntax:
-            # if using _this_ syntax, hash the whole thing so that it doesn't get processed
-            key = _hash_text(text)
-            self.hash_table[key] = text
-            return key
+            # if using _this_ syntax, hash it to avoid processing, but don't hash the contents incase of nested syntax
+            text = text.replace(syntax, _hash_text(self.name + syntax))
+            return text
         elif '_' in text:
-            # if the text within the bold/em markers contains '_' then hash those contents to protect them from em_re
-            text = text[len(syntax): -len(syntax)]
-            key = _hash_text(text)
-            self.hash_table[key] = text
-            return syntax + key + syntax
+            # if the text within the bold/em markers contains '_' then hash those chars to protect them from em_re
+            text = (
+                text[len(syntax): -len(syntax)]
+                .replace('__', _hash_text(self.name + '__'))
+                .replace('_', _hash_text(self.name + '_'))
+            )
+            return syntax + text + syntax
         # if no underscores are present, the text is fine and we can just leave it alone
         return super().sub(match)
 
