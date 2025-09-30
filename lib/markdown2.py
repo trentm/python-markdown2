@@ -122,12 +122,10 @@ from collections import defaultdict, OrderedDict
 from abc import ABC, abstractmethod
 import functools
 from collections.abc import Iterable
-from hashlib import sha256
 from random import random
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, TypedDict, Union
 from collections.abc import Collection
 from enum import IntEnum, auto
-from os import urandom
 
 # ---- type defs
 _safe_mode = Literal['replace', 'escape']
@@ -143,11 +141,18 @@ log = logging.getLogger("markdown")
 DEFAULT_TAB_WIDTH = 4
 
 
-SECRET_SALT = urandom(16)
-# MD5 function was previously used for this; the "md5" prefix was kept for
-# backwards compatibility.
+# _hash_text is used to temporarily escape (replace) characters and HTML which
+# should be ignored by the processor.
+#
+# Afterwards, we find stuff that looks like 'key32-???' and convert it back
+# to the escaped things.
 def _hash_text(s: str) -> str:
-    return 'md5-' + sha256(SECRET_SALT + s.encode("utf-8")).hexdigest()[32:]
+    h = hash(s) # Not cryptographically secure, and that's fine
+    h = abs(h)*2 + int(h>0) # As a non-negative number
+    h = hex(h)[2:34] # Convert to hex.
+    h = '0'*(32-len(h)) + h # Pad if needed
+    return 'key32-' + h
+HASH_REGEX = r'key32-[0-9a-f]{32}'
 
 # Table of hash values for escaped characters:
 g_escape_table = {ch: _hash_text(ch)
@@ -1341,7 +1346,7 @@ class Markdown:
             except IndexError:
                 return False
 
-            return re.match(r'<code>md5-[A-Fa-f0-9]{32}</code>', ''.join(peek_tokens))
+            return re.match('<code>' + HASH_REGEX + '</code>', ''.join(peek_tokens))
 
         def _is_comment(token):
             if self.safe_mode == 'replace':
@@ -2491,7 +2496,7 @@ class ItalicAndBoldProcessor(Extra):
     def test(self, text):
         if self.md.order < Stage.ITALIC_AND_BOLD:
             return '*' in text or '_' in text
-        return self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
+        return self.hash_table and re.search(HASH_REGEX, text)
 
 
 class _LinkProcessorExtraOpts(TypedDict, total=False):
