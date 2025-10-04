@@ -1993,9 +1993,32 @@ class Markdown:
 
     @mark_stage(Stage.ITALIC_AND_BOLD)
     def _do_italics_and_bold(self, text: str) -> str:
+        def sub(match: re.Match):
+            '''
+            regex sub function that checks that the match isn't matching across spans.
+            The span shouldn't be across a closing or opening HTML tag, although spans within
+            the span is acceptable.
+            '''
+            contents: str = match.group(2)
+            # look for all possible span HTML tags
+            for tag in re.findall(rf'</?({self._span_tags})', contents):
+                # if it's unbalanced then that violates the rules
+                if not self._tag_is_closed(tag, contents):
+                    return match.group(1) + contents + match.group(2)
+
+                # if it is balanced, but the closing tag is before the opening then
+                # the text probably looks like `_</strong>abcdef<strong>_`, which is across 2 spans
+                close_index = contents.find(f'</{tag}')
+                open_index = contents.find(f'<{tag}')
+                if close_index != -1 and close_index < open_index:
+                    return match.group(1) + contents + match.group(1)
+
+            syntax = 'strong' if len(match.group(1)) == 2 else 'em'
+            return f'<{syntax}>{contents}</{syntax}>'
+
         # <strong> must go first:
-        text = self._strong_re.sub(r"<strong>\2</strong>", text)
-        text = self._em_re.sub(r"<em>\2</em>", text)
+        text = self._strong_re.sub(sub, text)
+        text = self._em_re.sub(sub, text)
         return text
 
     _block_quote_base = r'''
