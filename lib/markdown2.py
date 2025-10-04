@@ -3320,7 +3320,7 @@ class MiddleWordEm(ItalicAndBoldProcessor):
         self.middle_word_em_re = re.compile(
             r'''
             (?<!^)         # To be middle of a word, it cannot be at the start of the input
-            (?<![*_\s])    # cannot be preceeded by em character or whitespace (must be in middle of word)
+            (?<![*_\W])    # cannot be preceeded by em char or non word char (must be in middle of word)
             ([*_])         # em char
             (?=\S)         # must be followed by non-whitespace char
             (?![*_]|$|\W)  # cannot be followed by another em char, EOF or a non-word char
