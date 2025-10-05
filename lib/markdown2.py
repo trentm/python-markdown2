@@ -1989,12 +1989,12 @@ class Markdown:
         return hashed
 
     _strong_re = re.compile(r'''
-        [*_]*            # ignore any leading em chars because we want to wrap `<strong>` as tightly around the text as possible
-                         # eg: `***abc***` -> `*<strong>abc</strong>*` instead of `<strong>*abc*</strong>`
-                         # Makes subsequent <em> processing easier
-        (\*\*|__)(?=\S)  # strong syntax - must be followed by a non whitespace char
-        (.+?)            # the strong text itself
-        (?<=\S)\1        # closing syntax - must be preceeded by non whitespace char
+        (?:_{1,}|\*{1,})?  # ignore any leading em chars because we want to wrap `<strong>` as tightly around the text as possible
+                           # eg: `***abc***` -> `*<strong>abc</strong>*` instead of `<strong>*abc*</strong>`
+                           # Makes subsequent <em> processing easier
+        (\*\*|__)(?=\S)    # strong syntax - must be followed by a non whitespace char
+        (.+?)              # the strong text itself
+        (?<=\S)\1          # closing syntax - must be preceeded by non whitespace char
         ''',
         re.S | re.X
     )
