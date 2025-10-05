@@ -1988,7 +1988,16 @@ class Markdown:
         self._code_table[text] = hashed
         return hashed
 
-    _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]?)(?<=\S)\1", re.S)
+    _strong_re = re.compile(r'''
+        [*_]*            # ignore any leading em chars because we want to wrap `<strong>` as tightly around the text as possible
+                         # eg: `***abc***` -> `*<strong>abc</strong>*` instead of `<strong>*abc*</strong>`
+                         # Makes subsequent <em> processing easier
+        (\*\*|__)(?=\S)  # strong syntax - must be followed by a non whitespace char
+        (.+?)            # the strong text itself
+        (?<=\S)\1        # closing syntax - must be preceeded by non whitespace char
+        ''',
+        re.S | re.X
+    )
     _em_re = re.compile(r"(\*|_)(?=\S)(.*?\S)\1", re.S)
 
     @mark_stage(Stage.ITALIC_AND_BOLD)
@@ -2000,21 +2009,23 @@ class Markdown:
             the span is acceptable.
             '''
             contents: str = match.group(2)
+            # the strong re also checks for leading em chars, so the match may cover some additional text
+            prefix = match.string[match.start(): match.regs[1][0]]
             # look for all possible span HTML tags
             for tag in re.findall(rf'</?({self._span_tags})', contents):
                 # if it's unbalanced then that violates the rules
                 if not self._tag_is_closed(tag, contents):
-                    return match.group(1) + contents + match.group(2)
+                    return prefix + match.group(1) + contents + match.group(1)
 
                 # if it is balanced, but the closing tag is before the opening then
                 # the text probably looks like `_</strong>abcdef<strong>_`, which is across 2 spans
                 close_index = contents.find(f'</{tag}')
                 open_index = contents.find(f'<{tag}')
                 if close_index != -1 and close_index < open_index:
-                    return match.group(1) + contents + match.group(1)
+                    return prefix + match.group(1) + contents + match.group(1)
 
             syntax = 'strong' if len(match.group(1)) == 2 else 'em'
-            return f'<{syntax}>{contents}</{syntax}>'
+            return f'{prefix}<{syntax}>{contents}</{syntax}>'
 
         # <strong> must go first:
         text = self._strong_re.sub(sub, text)
