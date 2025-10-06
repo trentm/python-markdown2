@@ -4,6 +4,7 @@
 
 - [pull #639] Fix middle-word-em interfering with strongs (#637)
 - [pull #640] Fix code friendly extra stopping other syntax being processed (#638)
+- [pull #644] Fix a number of em/strong issues (#641, #642, #643)
 
 
 ## python-markdown2 2.5.4
