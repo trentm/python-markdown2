@@ -3003,7 +3003,8 @@ class CodeFriendly(ItalicAndBoldProcessor):
 
     def sub(self, match: re.Match) -> str:
         syntax = match.group(1)
-        text: str = match.string[match.start(): match.end()]
+        # use match.regs because strong/em regex may include preceding text in the match as well
+        text: str = match.string[match.regs[1][0]: match.end()]
         if '_' in syntax:
             # if using _this_ syntax, hash it to avoid processing, but don't hash the contents incase of nested syntax
             text = text.replace(syntax, _hash_text(self.name + syntax))
