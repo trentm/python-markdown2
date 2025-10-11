@@ -1351,9 +1351,13 @@ class Markdown:
 
         tokens = []
         split_tokens = self._sorta_html_tokenize_re.split(text)
-        is_html_markup = False
-        for index, token in enumerate(split_tokens):
-            if is_html_markup and not self._is_auto_link(token) and not _is_code_span(index, token):
+        index = 0
+        while index < len(split_tokens):
+            is_html_markup = index % 2 != 0
+            token = split_tokens[index]
+            is_code = _is_code_span(index, token)
+
+            if is_html_markup and not self._is_auto_link(token) and not is_code:
                 is_comment = _is_comment(token)
                 if is_comment:
                     tokens.append(self._hash_span(self._sanitize_html(is_comment.group(1))))
@@ -1362,9 +1366,14 @@ class Markdown:
                     tokens.append(self._hash_span(self._sanitize_html(is_comment.group(3))))
                 else:
                     tokens.append(self._hash_span(self._sanitize_html(token)))
+            elif is_html_markup and is_code:
+                # code span contents are hashed, so should be safe to just add directly
+                tokens.extend(split_tokens[index: index + 3])
+                index += 3
+                continue
             else:
                 tokens.append(self._encode_incomplete_tags(token))
-            is_html_markup = not is_html_markup
+            index += 1
         return ''.join(tokens)
 
     def _unhash_html_spans(self, text: str, spans=True, code=False) -> str:
