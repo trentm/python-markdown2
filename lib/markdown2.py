@@ -1464,6 +1464,10 @@ class Markdown:
         and then hashes the now "safe" URL to prevent other safety mechanisms from tampering
         with it (eg: escaping "&" in URL parameters)
         '''
+        if not url:
+            # ignore links with empty URLs. Don't bother putting a hash there because then we'll have
+            # `"''"": "md5-..."` as an entry in the escape table, and that will cause havok
+            return url
         data_url = self._data_url_re.match(url)
         charset = None
         if data_url is not None:
