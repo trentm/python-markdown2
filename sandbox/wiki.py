@@ -1,8 +1,8 @@
 import sys
 import re
-from os.path import *
+from os.path import dirname, abspath
 
-sys.path.insert(0, dirname(dirname(abspath(__file__))))
+sys.path.insert(0, dirname(dirname(abspath(__file__))) + '/lib')
 import markdown2
 
 wiki_page = """
