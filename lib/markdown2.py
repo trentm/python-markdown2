@@ -3071,8 +3071,10 @@ class FencedCodeBlocks(Extra):
         if '```' not in text:
             return False
         if self.md.stage == Stage.PREPROCESS and not self.md.safe_mode:
+            # if safe mode is off then run before HASH_HTML and not worry about the tags getting messed up
             return True
         if self.md.stage == Stage.LINK_DEFS and self.md.safe_mode:
+            # if safe mode is on then run after HASH_HTML is done
             return True
         return self.md.stage == Stage.BLOCK_GAMUT
 
@@ -3151,7 +3153,19 @@ class FencedCodeBlocks(Extra):
 
         tags = self.tags(lexer_name)
 
-        return "\n{}{}{}\n{}{}\n".format(leading_indent, tags[0], codeblock, leading_indent, tags[1])
+        # when not in safe-mode, we convert fenced code blocks before Stage.HASH_HTML, which means the text
+        # ends up as `\n\nmd5-...\n\n`, thanks to the hashing stages adding in some newlines
+        # in safe mode, we run fenced code blocks AFTER the hashing, so we don't end up with that same
+        # `\n\n` wrap. We can correct that here
+        surrounding_newlines = '\n\n' if self.md.safe_mode else '\n'
+
+        return (
+            f'{surrounding_newlines}'
+            f'{leading_indent}{tags[0]}'
+            f'{codeblock}'
+            f'\n{leading_indent}{tags[1]}'
+            f'{surrounding_newlines}'
+        )
 
     def run(self, text):
         return self.fenced_code_block_re.sub(self.sub, text)
