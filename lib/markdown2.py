@@ -2215,10 +2215,25 @@ class Markdown:
         if self._is_auto_link(text):
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
+        # protect code blocks. code blocks may have stuff like `C:\<folder>` in which is NOT a tag
+        # and will get encoded anyway in _encode_code
+        hashes = {}
+        for span in self._code_span_re.findall(text):
+            # the regex matches 2 groups: the syntax and the context. Reconstruct the entire match for easier processing
+            span = span[0] + span[1] + span[0]
+            hashed = _hash_text(span)
+            hashes[hashed] = span
+            text = text.replace(span, hashed)
+
         def incomplete_tags_sub(match):
             return match.group().replace('<', '&lt;')
 
-        return self._incomplete_tags_re.sub(incomplete_tags_sub, text)
+        text = self._incomplete_tags_re.sub(incomplete_tags_sub, text)
+
+        for hashed, original in hashes.items():
+            text = text.replace(hashed, original)
+
+        return text
 
     def _encode_backslash_escapes(self, text: str) -> str:
         for ch, escape in list(self._escape_table.items()):
