@@ -155,7 +155,9 @@ g_escape_table = {ch: _hash_text(ch)
 
 # Ampersand-encoding based entirely on Nat Irons's Amputator MT plugin:
 #   http://bumppo.net/projects/amputator/
-_AMPERSAND_RE = re.compile(r'&(?!#?[xX]?(?:[0-9a-fA-F]+|\w+);)')
+_AMPERSAND_BODY_RE = r'#?[xX]?(?:[0-9a-fA-F]+|\w+);'
+_AMPERSAND_RE = re.compile(r'&(?!%s)' % _AMPERSAND_BODY_RE)
+_ESCAPED_AMPERSAND_RE = re.compile(r'(?:\\\\)*\\&(%s)' % _AMPERSAND_BODY_RE)
 
 
 # ---- exceptions
@@ -2196,6 +2198,7 @@ class Markdown:
         # Smart processing for ampersands and angle brackets that need
         # to be encoded.
         text = _AMPERSAND_RE.sub('&amp;', text)
+        text = _ESCAPED_AMPERSAND_RE.sub(r'&amp;\1', text)
 
         # Encode naked <'s
         text = self._naked_lt_re.sub('&lt;', text)
