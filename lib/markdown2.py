@@ -1289,6 +1289,10 @@ class Markdown:
         )
         """, re.X)
 
+    # regex that checks that the start of a string is NOT escaped
+    # it does this by matching pairs of `\` chars and checking that they're NOT followed by another `\`
+    _is_unescaped_re = re.compile(r'^((?:\\\\)*(?!\\))')
+
     @mark_stage(Stage.ESCAPE_SPECIAL)
     def _escape_special_chars(self, text: str) -> str:
         # Python markdown note: the HTML tokenization here differs from
@@ -1297,20 +1301,19 @@ class Markdown:
         # it isn't susceptible to unmatched '<' and '>' in HTML tags).
         # Note, however, that '>' is not allowed in an auto-link URL
         # here.
-        lead_escape_re = re.compile(r'^((?:\\\\)*(?!\\))')
         escaped = []
         is_html_markup = False
         for token in self._sorta_html_tokenize_re.split(text):
             # check token is preceded by 0 or more PAIRS of escapes, because escape pairs
             # escape themselves and don't affect the token
-            if is_html_markup and lead_escape_re.match(token):
+            if is_html_markup and self._is_unescaped_re.match(token):
                 # Within tags/HTML-comments/auto-links, encode * and _
                 # so they don't conflict with their use in Markdown for
                 # italics and strong.  We're replacing each such
                 # character with its corresponding MD5 checksum value;
                 # this is likely overkill, but it should prevent us from
                 # colliding with the escape values by accident.
-                escape_seq, token = lead_escape_re.split(token)[1:] or ('', token)
+                escape_seq, token = self._is_unescaped_re.split(token)[1:] or ('', token)
                 escaped.append(
                     escape_seq.replace('\\\\', self._escape_table['\\'])
                     + token.replace('*', self._escape_table['*'])
@@ -1366,6 +1369,9 @@ class Markdown:
                     # sanitise but leave comment body intact for further markdown processing
                     tokens.append(self._sanitize_html(is_comment.group(2)))
                     tokens.append(self._hash_span(self._sanitize_html(is_comment.group(3))))
+                elif self._is_unescaped_re.match(token) is None:
+                    # if the HTML is escaped then escape any special chars and add the token as-is
+                    tokens.append(self._escape_special_chars(token))
                 else:
                     tokens.append(self._hash_span(self._sanitize_html(token)))
             elif is_html_markup and is_code:
