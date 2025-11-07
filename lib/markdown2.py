@@ -1320,7 +1320,11 @@ class Markdown:
                            .replace('_', self._escape_table['_'])
                 )
             else:
-                escaped.append(self._encode_backslash_escapes(token.replace('\\<', '&lt;')))
+                escaped.append(
+                    self._encode_backslash_escapes(
+                        token.replace('\\<', '&lt;').replace('\\>', '&gt;')
+                    )
+                )
             is_html_markup = not is_html_markup
         return ''.join(escaped)
 
