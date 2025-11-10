@@ -155,7 +155,9 @@ g_escape_table = {ch: _hash_text(ch)
 
 # Ampersand-encoding based entirely on Nat Irons's Amputator MT plugin:
 #   http://bumppo.net/projects/amputator/
-_AMPERSAND_RE = re.compile(r'&(?!#?[xX]?(?:[0-9a-fA-F]+|\w+);)')
+_AMPERSAND_BODY_RE = r'#?[xX]?(?:[0-9a-fA-F]+|\w+);'
+_AMPERSAND_RE = re.compile(r'&(?!%s)' % _AMPERSAND_BODY_RE)
+_ESCAPED_AMPERSAND_RE = re.compile(r'(?:\\\\)*\\&(%s)' % _AMPERSAND_BODY_RE)
 
 
 # ---- exceptions
@@ -1287,6 +1289,10 @@ class Markdown:
         )
         """, re.X)
 
+    # regex that checks that the start of a string is NOT escaped
+    # it does this by matching pairs of `\` chars and checking that they're NOT followed by another `\`
+    _is_unescaped_re = re.compile(r'^((?:\\\\)*(?!\\))')
+
     @mark_stage(Stage.ESCAPE_SPECIAL)
     def _escape_special_chars(self, text: str) -> str:
         # Python markdown note: the HTML tokenization here differs from
@@ -1295,27 +1301,30 @@ class Markdown:
         # it isn't susceptible to unmatched '<' and '>' in HTML tags).
         # Note, however, that '>' is not allowed in an auto-link URL
         # here.
-        lead_escape_re = re.compile(r'^((?:\\\\)*(?!\\))')
         escaped = []
         is_html_markup = False
         for token in self._sorta_html_tokenize_re.split(text):
             # check token is preceded by 0 or more PAIRS of escapes, because escape pairs
             # escape themselves and don't affect the token
-            if is_html_markup and lead_escape_re.match(token):
+            if is_html_markup and self._is_unescaped_re.match(token):
                 # Within tags/HTML-comments/auto-links, encode * and _
                 # so they don't conflict with their use in Markdown for
                 # italics and strong.  We're replacing each such
                 # character with its corresponding MD5 checksum value;
                 # this is likely overkill, but it should prevent us from
                 # colliding with the escape values by accident.
-                escape_seq, token = lead_escape_re.split(token)[1:] or ('', token)
+                escape_seq, token = self._is_unescaped_re.split(token)[1:] or ('', token)
                 escaped.append(
                     escape_seq.replace('\\\\', self._escape_table['\\'])
                     + token.replace('*', self._escape_table['*'])
                            .replace('_', self._escape_table['_'])
                 )
             else:
-                escaped.append(self._encode_backslash_escapes(token.replace('\\<', '&lt;')))
+                escaped.append(
+                    self._encode_backslash_escapes(
+                        token.replace('\\<', '&lt;').replace('\\>', '&gt;')
+                    )
+                )
             is_html_markup = not is_html_markup
         return ''.join(escaped)
 
@@ -1351,20 +1360,32 @@ class Markdown:
 
         tokens = []
         split_tokens = self._sorta_html_tokenize_re.split(text)
-        is_html_markup = False
-        for index, token in enumerate(split_tokens):
-            if is_html_markup and not self._is_auto_link(token) and not _is_code_span(index, token):
+        index = 0
+        while index < len(split_tokens):
+            is_html_markup = index % 2 != 0
+            token = split_tokens[index]
+            is_code = _is_code_span(index, token)
+
+            if is_html_markup and not self._is_auto_link(token) and not is_code:
                 is_comment = _is_comment(token)
                 if is_comment:
                     tokens.append(self._hash_span(self._sanitize_html(is_comment.group(1))))
                     # sanitise but leave comment body intact for further markdown processing
                     tokens.append(self._sanitize_html(is_comment.group(2)))
                     tokens.append(self._hash_span(self._sanitize_html(is_comment.group(3))))
+                elif self._is_unescaped_re.match(token) is None:
+                    # if the HTML is escaped then escape any special chars and add the token as-is
+                    tokens.append(self._escape_special_chars(token))
                 else:
                     tokens.append(self._hash_span(self._sanitize_html(token)))
+            elif is_html_markup and is_code:
+                # code span contents are hashed, so should be safe to just add directly
+                tokens.extend(split_tokens[index: index + 3])
+                index += 3
+                continue
             else:
                 tokens.append(self._encode_incomplete_tags(token))
-            is_html_markup = not is_html_markup
+            index += 1
         return ''.join(tokens)
 
     def _unhash_html_spans(self, text: str, spans=True, code=False) -> str:
@@ -2187,6 +2208,7 @@ class Markdown:
         # Smart processing for ampersands and angle brackets that need
         # to be encoded.
         text = _AMPERSAND_RE.sub('&amp;', text)
+        text = _ESCAPED_AMPERSAND_RE.sub(r'&amp;\1', text)
 
         # Encode naked <'s
         text = self._naked_lt_re.sub('&lt;', text)
@@ -2206,10 +2228,25 @@ class Markdown:
         if self._is_auto_link(text):
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
+        # protect code blocks. code blocks may have stuff like `C:\<folder>` in which is NOT a tag
+        # and will get encoded anyway in _encode_code
+        hashes = {}
+        for span in self._code_span_re.findall(text):
+            # the regex matches 2 groups: the syntax and the context. Reconstruct the entire match for easier processing
+            span = span[0] + span[1] + span[0]
+            hashed = _hash_text(span)
+            hashes[hashed] = span
+            text = text.replace(span, hashed)
+
         def incomplete_tags_sub(match):
             return match.group().replace('<', '&lt;')
 
-        return self._incomplete_tags_re.sub(incomplete_tags_sub, text)
+        text = self._incomplete_tags_re.sub(incomplete_tags_sub, text)
+
+        for hashed, original in hashes.items():
+            text = text.replace(hashed, original)
+
+        return text
 
     def _encode_backslash_escapes(self, text: str) -> str:
         for ch, escape in list(self._escape_table.items()):
@@ -3047,8 +3084,10 @@ class FencedCodeBlocks(Extra):
         if '```' not in text:
             return False
         if self.md.stage == Stage.PREPROCESS and not self.md.safe_mode:
+            # if safe mode is off then run before HASH_HTML and not worry about the tags getting messed up
             return True
         if self.md.stage == Stage.LINK_DEFS and self.md.safe_mode:
+            # if safe mode is on then run after HASH_HTML is done
             return True
         return self.md.stage == Stage.BLOCK_GAMUT
 
@@ -3127,7 +3166,19 @@ class FencedCodeBlocks(Extra):
 
         tags = self.tags(lexer_name)
 
-        return "\n{}{}{}\n{}{}\n".format(leading_indent, tags[0], codeblock, leading_indent, tags[1])
+        # when not in safe-mode, we convert fenced code blocks before Stage.HASH_HTML, which means the text
+        # ends up as `\n\nmd5-...\n\n`, thanks to the hashing stages adding in some newlines
+        # in safe mode, we run fenced code blocks AFTER the hashing, so we don't end up with that same
+        # `\n\n` wrap. We can correct that here
+        surrounding_newlines = '\n\n' if self.md.safe_mode else '\n'
+
+        return (
+            f'{surrounding_newlines}'
+            f'{leading_indent}{tags[0]}'
+            f'{codeblock}'
+            f'\n{leading_indent}{tags[1]}'
+            f'{surrounding_newlines}'
+        )
 
     def run(self, text):
         return self.fenced_code_block_re.sub(self.sub, text)
