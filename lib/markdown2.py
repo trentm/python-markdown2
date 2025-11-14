@@ -2322,6 +2322,9 @@ class Markdown:
         Args:
             text: the text to hash
             hash_table: the dict to insert the hash into. If omitted will default to `self.html_spans`
+
+        Returns:
+            The hashed text
         '''
         key = _hash_text(text)
         if hash_table is not None:
@@ -2566,9 +2569,7 @@ class ItalicAndBoldProcessor(Extra):
 
     def sub_hash(self, match: re.Match) -> str:
         substr = match.string[match.start(): match.end()]
-        key = _hash_text(substr)
-        self.hash_table[key] = substr
-        return key
+        return self.md._hash_span(substr, self.hash_table)
 
     def test(self, text):
         if self.md.order < Stage.ITALIC_AND_BOLD:
@@ -3303,8 +3304,7 @@ class LinkPatterns(Extra):
                         .replace('*', self.md._escape_table['*'])
                         .replace('_', self.md._escape_table['_']))
                 link = '<a href="{}">{}</a>'.format(escaped_href, text[start:end])
-                hash = _hash_text(link)
-                link_from_hash[hash] = link
+                hash = self.md._hash_span(link, link_from_hash)
                 text = text[:start] + hash + text[end:]
         for hash, link in list(link_from_hash.items()):
             text = text.replace(hash, link)
