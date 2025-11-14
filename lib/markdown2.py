@@ -2232,7 +2232,7 @@ class Markdown:
         text = self._naked_gt_re.sub('&gt;', text)
         return text
 
-    _incomplete_tags_re = re.compile(r"<(!--|/?\w+?(?!\w)\s*?.+?(?:[\s/]+?|$))")
+    _incomplete_tags_re = re.compile(r"\\*<(!--|/?\w+?(?!\w)\s*?.+?(?:[\s/]+?|$))")
 
     def _encode_incomplete_tags(self, text: str) -> str:
         if self.safe_mode not in ("replace", "escape"):
@@ -2242,7 +2242,11 @@ class Markdown:
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
         def incomplete_tags_sub(match):
-            return match.group().replace('<', '&lt;')
+            text = match.group()
+            # ensure that we handle escaped incomplete tags properly by consuming and replacing the escapes
+            if not self._is_unescaped_re.match(text):
+                text = text.replace('\\<', '&lt;')
+            return text.replace('<', '&lt;')
 
         text = self._incomplete_tags_re.sub(incomplete_tags_sub, text)
 
