@@ -1358,6 +1358,14 @@ class Markdown:
                 return
             return re.match(r'(<!--)(.*)(-->)', token)
 
+        # protect raw code spans from processing, as they can often contain anything that looks like HTML and
+        # trips up the regex. These are encoded and processed later on anyway
+        code_hashes = {}
+        text = self._code_span_re.sub(
+            lambda m: self._hash_span(m.string[m.start(): m.end()], code_hashes),
+            text
+        )
+
         tokens = []
         split_tokens = self._sorta_html_tokenize_re.split(text)
         index = 0
@@ -1386,7 +1394,12 @@ class Markdown:
             else:
                 tokens.append(self._encode_incomplete_tags(token))
             index += 1
-        return ''.join(tokens)
+
+        text = ''.join(tokens)
+        # put markdown code spans back into the text for processing
+        for key, code in code_hashes.items():
+            text = text.replace(key, code)
+        return text
 
     def _unhash_html_spans(self, text: str, spans=True, code=False) -> str:
         '''
@@ -2228,23 +2241,10 @@ class Markdown:
         if self._is_auto_link(text):
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
-        # protect code blocks. code blocks may have stuff like `C:\<folder>` in which is NOT a tag
-        # and will get encoded anyway in _encode_code
-        hashes = {}
-        for span in self._code_span_re.findall(text):
-            # the regex matches 2 groups: the syntax and the context. Reconstruct the entire match for easier processing
-            span = span[0] + span[1] + span[0]
-            hashed = _hash_text(span)
-            hashes[hashed] = span
-            text = text.replace(span, hashed)
-
         def incomplete_tags_sub(match):
             return match.group().replace('<', '&lt;')
 
         text = self._incomplete_tags_re.sub(incomplete_tags_sub, text)
-
-        for hashed, original in hashes.items():
-            text = text.replace(hashed, original)
 
         return text
 
@@ -2314,13 +2314,20 @@ class Markdown:
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
-    def _hash_span(self, text: str) -> str:
+    def _hash_span(self, text: str, hash_table: Optional[dict] = None) -> str:
         '''
         Wrapper around `_hash_text` that also adds the hash to `self.hash_spans`,
         meaning it will be automatically unhashed during conversion.
+
+        Args:
+            text: the text to hash
+            hash_table: the dict to insert the hash into. If omitted will default to `self.html_spans`
         '''
         key = _hash_text(text)
-        self.html_spans[key] = text
+        if hash_table is not None:
+            hash_table[key] = text
+        else:
+            self.html_spans[key] = text
         return key
 
     @staticmethod
