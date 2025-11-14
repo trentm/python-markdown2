@@ -3136,7 +3136,7 @@ class FencedCodeBlocks(Extra):
                                                **formatter_opts)
 
         # add back the indent to all lines
-        return "\n%s\n" % self.md._uniform_indent(colored, leading_indent, True)
+        return self.md._uniform_indent(colored, leading_indent, True)
 
     def tags(self, lexer_name: str) -> tuple[str, str]:
         '''
@@ -3161,12 +3161,20 @@ class FencedCodeBlocks(Extra):
         codeblock = match.group(3)
         codeblock = codeblock[:-1]  # drop one trailing newline
 
+        # figure out what newlines were already surrounding the code block and preserve them in the output
+        leading_newlines = match.string[match.start(): match.regs[1][0]]
+        trailing_newlines = re.search(r'\n*$', match.group()).group()
+
         # Use pygments only if not using the highlightjs-lang extra
         if lexer_name and "highlightjs-lang" not in self.md.extras:
             lexer = self.md._get_pygments_lexer(lexer_name)
             if lexer:
-                leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
-                return self._code_block_with_lexer_sub(codeblock, leading_indent, lexer)
+                leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
+                return (
+                    leading_newlines
+                    + self._code_block_with_lexer_sub(codeblock, leading_indent, lexer)
+                    + trailing_newlines
+                )
 
         # Fenced code blocks need to be outdented before encoding, and then reapplied
         leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
@@ -3178,18 +3186,12 @@ class FencedCodeBlocks(Extra):
 
         tags = self.tags(lexer_name)
 
-        # when not in safe-mode, we convert fenced code blocks before Stage.HASH_HTML, which means the text
-        # ends up as `\n\nmd5-...\n\n`, thanks to the hashing stages adding in some newlines
-        # in safe mode, we run fenced code blocks AFTER the hashing, so we don't end up with that same
-        # `\n\n` wrap. We can correct that here
-        surrounding_newlines = '\n\n' if self.md.safe_mode else '\n'
-
         return (
-            f'{surrounding_newlines}'
+            f'{leading_newlines}'
             f'{leading_indent}{tags[0]}'
             f'{codeblock}'
             f'\n{leading_indent}{tags[1]}'
-            f'{surrounding_newlines}'
+            f'{trailing_newlines}'
         )
 
     def run(self, text):
