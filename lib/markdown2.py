@@ -1358,6 +1358,14 @@ class Markdown:
                 return
             return re.match(r'(<!--)(.*)(-->)', token)
 
+        # protect raw code spans from processing, as they can often contain anything that looks like HTML and
+        # trips up the regex. These are encoded and processed later on anyway
+        code_hashes = {}
+        text = self._code_span_re.sub(
+            lambda m: self._hash_span(m.string[m.start(): m.end()], code_hashes),
+            text
+        )
+
         tokens = []
         split_tokens = self._sorta_html_tokenize_re.split(text)
         index = 0
@@ -1386,7 +1394,12 @@ class Markdown:
             else:
                 tokens.append(self._encode_incomplete_tags(token))
             index += 1
-        return ''.join(tokens)
+
+        text = ''.join(tokens)
+        # put markdown code spans back into the text for processing
+        for key, code in code_hashes.items():
+            text = text.replace(key, code)
+        return text
 
     def _unhash_html_spans(self, text: str, spans=True, code=False) -> str:
         '''
@@ -2219,7 +2232,7 @@ class Markdown:
         text = self._naked_gt_re.sub('&gt;', text)
         return text
 
-    _incomplete_tags_re = re.compile(r"<(!--|/?\w+?(?!\w)\s*?.+?(?:[\s/]+?|$))")
+    _incomplete_tags_re = re.compile(r"\\*<(!--|/?\w+?(?!\w)\s*?.+?(?:[\s/]+?|$))")
 
     def _encode_incomplete_tags(self, text: str) -> str:
         if self.safe_mode not in ("replace", "escape"):
@@ -2228,23 +2241,14 @@ class Markdown:
         if self._is_auto_link(text):
             return text  # this is not an incomplete tag, this is a link in the form <http://x.y.z>
 
-        # protect code blocks. code blocks may have stuff like `C:\<folder>` in which is NOT a tag
-        # and will get encoded anyway in _encode_code
-        hashes = {}
-        for span in self._code_span_re.findall(text):
-            # the regex matches 2 groups: the syntax and the context. Reconstruct the entire match for easier processing
-            span = span[0] + span[1] + span[0]
-            hashed = _hash_text(span)
-            hashes[hashed] = span
-            text = text.replace(span, hashed)
-
         def incomplete_tags_sub(match):
-            return match.group().replace('<', '&lt;')
+            text = match.group()
+            # ensure that we handle escaped incomplete tags properly by consuming and replacing the escapes
+            if not self._is_unescaped_re.match(text):
+                text = text.replace('\\<', '&lt;')
+            return text.replace('<', '&lt;')
 
         text = self._incomplete_tags_re.sub(incomplete_tags_sub, text)
-
-        for hashed, original in hashes.items():
-            text = text.replace(hashed, original)
 
         return text
 
@@ -2314,13 +2318,23 @@ class Markdown:
         # Remove one level of line-leading tabs or spaces
         return self._outdent_re.sub('', text)
 
-    def _hash_span(self, text: str) -> str:
+    def _hash_span(self, text: str, hash_table: Optional[dict] = None) -> str:
         '''
         Wrapper around `_hash_text` that also adds the hash to `self.hash_spans`,
         meaning it will be automatically unhashed during conversion.
+
+        Args:
+            text: the text to hash
+            hash_table: the dict to insert the hash into. If omitted will default to `self.html_spans`
+
+        Returns:
+            The hashed text
         '''
         key = _hash_text(text)
-        self.html_spans[key] = text
+        if hash_table is not None:
+            hash_table[key] = text
+        else:
+            self.html_spans[key] = text
         return key
 
     @staticmethod
@@ -2559,9 +2573,7 @@ class ItalicAndBoldProcessor(Extra):
 
     def sub_hash(self, match: re.Match) -> str:
         substr = match.string[match.start(): match.end()]
-        key = _hash_text(substr)
-        self.hash_table[key] = substr
-        return key
+        return self.md._hash_span(substr, self.hash_table)
 
     def test(self, text):
         if self.md.order < Stage.ITALIC_AND_BOLD:
@@ -3124,7 +3136,7 @@ class FencedCodeBlocks(Extra):
                                                **formatter_opts)
 
         # add back the indent to all lines
-        return "\n%s\n" % self.md._uniform_indent(colored, leading_indent, True)
+        return self.md._uniform_indent(colored, leading_indent, True)
 
     def tags(self, lexer_name: str) -> tuple[str, str]:
         '''
@@ -3149,12 +3161,20 @@ class FencedCodeBlocks(Extra):
         codeblock = match.group(3)
         codeblock = codeblock[:-1]  # drop one trailing newline
 
+        # figure out what newlines were already surrounding the code block and preserve them in the output
+        leading_newlines = match.string[match.start(): match.regs[1][0]]
+        trailing_newlines = re.search(r'\n*$', match.group()).group()
+
         # Use pygments only if not using the highlightjs-lang extra
         if lexer_name and "highlightjs-lang" not in self.md.extras:
             lexer = self.md._get_pygments_lexer(lexer_name)
             if lexer:
-                leading_indent = ' '*(len(match.group(1)) - len(match.group(1).lstrip()))
-                return self._code_block_with_lexer_sub(codeblock, leading_indent, lexer)
+                leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
+                return (
+                    leading_newlines
+                    + self._code_block_with_lexer_sub(codeblock, leading_indent, lexer)
+                    + trailing_newlines
+                )
 
         # Fenced code blocks need to be outdented before encoding, and then reapplied
         leading_indent = ' ' * (len(match.group(1)) - len(match.group(1).lstrip()))
@@ -3166,18 +3186,12 @@ class FencedCodeBlocks(Extra):
 
         tags = self.tags(lexer_name)
 
-        # when not in safe-mode, we convert fenced code blocks before Stage.HASH_HTML, which means the text
-        # ends up as `\n\nmd5-...\n\n`, thanks to the hashing stages adding in some newlines
-        # in safe mode, we run fenced code blocks AFTER the hashing, so we don't end up with that same
-        # `\n\n` wrap. We can correct that here
-        surrounding_newlines = '\n\n' if self.md.safe_mode else '\n'
-
         return (
-            f'{surrounding_newlines}'
+            f'{leading_newlines}'
             f'{leading_indent}{tags[0]}'
             f'{codeblock}'
             f'\n{leading_indent}{tags[1]}'
-            f'{surrounding_newlines}'
+            f'{trailing_newlines}'
         )
 
     def run(self, text):
@@ -3296,8 +3310,7 @@ class LinkPatterns(Extra):
                         .replace('*', self.md._escape_table['*'])
                         .replace('_', self.md._escape_table['_']))
                 link = '<a href="{}">{}</a>'.format(escaped_href, text[start:end])
-                hash = _hash_text(link)
-                link_from_hash[hash] = link
+                hash = self.md._hash_span(link, link_from_hash)
                 text = text[:start] + hash + text[end:]
         for hash, link in list(link_from_hash.items()):
             text = text.replace(hash, link)
