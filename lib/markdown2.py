@@ -2596,124 +2596,175 @@ class ItalicAndBoldProcessor2(Extra):
 
     def run(self, text):
         for em_type in '*_':
-            opens = []
-            unused_opens = {}
-            tokens = []
-            index = 0
+            nesting = True
+            while nesting:
+                nesting = False
 
-            delim_runs = tuple(re.finditer(r'([%s]+)' % em_type, text))
-            for delim_run in delim_runs:
-                # first check if it is opening (left flanking)
-                # or closing (right flanking) run
-                run = delim_run.string[max(0, delim_run.start() - 1): delim_run.end() + 1]
-                syntax = delim_run.group(1)
-                syntax_re = syntax.replace('*', r'\*')
+                opens = []
+                buffer = []
+                unused_opens = {}
+                tokens = []
+                index = 0
 
-                left = (
-                    # not followed by whitespace
-                    re.match(r'.*%s\S' % syntax_re, run, re.S)
-                    and (
-                        # either not followed by punctuation
-                        re.match(r'.*%s[\s\w]' % syntax_re, run, re.S)
-                        # or followed by punct and preceded by punct/whitespace
-                        or re.match(r'(^|[\s\W])%s([^\s\w]|$)' % syntax_re, run, re.S | re.M)
+                for delim_run in re.finditer(r'([%s]+)' % em_type, text):
+                    # first check if it is opening (left flanking)
+                    # or closing (right flanking) run
+                    run = delim_run.string[max(0, delim_run.start() - 1): delim_run.end() + 1]
+                    syntax = delim_run.group(1)
+                    syntax_re = syntax.replace('*', r'\*')
+
+                    left = (
+                        # not followed by whitespace
+                        re.match(r'.*%s\S' % syntax_re, run, re.S)
+                        and (
+                            # either not followed by punctuation
+                            re.match(r'.*%s[\s\w]' % syntax_re, run, re.S)
+                            # or followed by punct and preceded by punct/whitespace
+                            or re.match(r'(^|[\s\W])%s([^\s\w]|$)' % syntax_re, run, re.S | re.M)
+                        )
                     )
-                )
 
-                right =  (
-                    # not preceded by whitespace
-                    re.match(r'\S%s.*' % syntax_re, run, re.S)
-                    and (
-                        # either not preceded by punct
-                        re.match(r'[\s\w]%s.*' % syntax_re, run, re.S)
-                        # or preceded by punct and followed by whitespace or punct
-                        or re.match(r'[^\s\w]%s(\s|[^\s\w]|$)' % syntax_re, run, re.S | re.M)
+                    right =  (
+                        # not preceded by whitespace
+                        re.match(r'\S%s.*' % syntax_re, run, re.S)
+                        and (
+                            # either not preceded by punct
+                            re.match(r'[\s\w]%s.*' % syntax_re, run, re.S)
+                            # or preceded by punct and followed by whitespace or punct
+                            or re.match(r'[^\s\w]%s(\s|[^\s\w]|$)' % syntax_re, run, re.S | re.M)
+                        )
                     )
-                )
 
-                if not (left or right):
-                    continue
+                    if not (left or right):
+                        continue
 
-                if left and right:
-                    if opens:
-                        # if we have open tags prioritize closing them
-                        left = False
-                    else:
-                        # if we don't, let's open a new one
-                        right = False
+                    if not right or not opens:
+                        if left:
+                            opens.append(delim_run)
+                        continue
 
-                if left:
-                    opens.append(delim_run)
-                    continue
+                    syntax = delim_run.group(1)
 
-                # close. figure out how
-                if not opens:
-                    tokens.append(delim_run.string[index: delim_run.end()])
-                    index = delim_run.end()
-                    continue
+                    open = opens.pop(-1)
+                    # if the opening run was joined to a previous closing run (eg: **strong***em*)
+                    # then re-use that previous closing run, but ignore the part that was used to
+                    # close the previous emphasis
+                    open_offset = unused_opens.pop(open, 0)
+                    open_start = open.start() + open_offset
+                    open_syntax = open.group(1)[open_offset:]
 
-                # get the opening run
-                open = opens.pop(-1)
-                # if the opening run was joined to a previous closing run (eg: **strong***em*)
-                # then re-use that previous closing run, but ignore the part that was used to
-                # close the previous emphasis
-                open_offset = unused_opens.pop(open, 0)
-                open_syntax = open.group(1)[open_offset:]
-                open_start = open.start() + open_offset
+                    if open.start() < index:
+                        # this happens with things like `*(**foo**)*`. We process LTR so the strong gets
+                        # processed first (since that has the first closing delimiter). We now have
+                        # `*(<strong>foo</strong>)*` and now we get round to processing the em.
+                        # It's hard compare the match (against the original text var) to the processed text
+                        # so it's easier to just note down that nesting is detected and re-run the loop
+                        nesting = True
+                        continue
 
-                # add everything between last emphasis and this one
-                tokens.append(delim_run.string[index: open_start])
-                body = delim_run.string[open.end(): delim_run.start()]
-                if not all(
-                    self.md._tag_is_closed(tag, body)
-                    for tag in re.findall(rf'</?({self.md._span_tags})', body)
-                ):
-                    tokens.append(delim_run.string[open_start: delim_run.end()])
-                    index = delim_run.end()
-                    continue
+                    prev_open = None
 
-                if len(open_syntax) > len(syntax):
-                    opens.append(open)
-                    unused_opens[open] = open_offset
-                    opens.append(delim_run)
-                    unused_opens[delim_run] = 0
-                    continue
+                    if len(open_syntax) < len(syntax):
+                        # if closing syntax is longer then maybe we can close multiple openers that are queued up
+                        if opens:
+                            prev_open = opens.pop(-1)
+                            prev_open_offset = unused_opens.pop(open, 0)
+                            prev_open_start = prev_open.start() + prev_open_offset
+                            prev_open_syntax = prev_open.group(1)[prev_open_offset:]
 
-                # calc what type of emphasis based on the lowest common
-                # length of the delimiter run
-                length = min(3, min(len(open_syntax), len(syntax)))
-                if length == 3:
-                    tokens.append('<em><strong>')
-                    tokens.append(body)
-                    tokens.append('</strong></em>')
-                else:
-                    tag = 'strong' if length == 2 else 'em'
+                            # check the new expanded body doesn't cross span borders
+                            if not all(
+                                self.md._tag_is_closed(tag, delim_run.string[prev_open.end(): open.start()])
+                                for tag in re.findall(
+                                    rf'</?({self.md._span_tags})',
+                                    delim_run.string[prev_open.end(): open.start()]
+                                )
+                            ):
+                                opens.append(prev_open)
+                                prev_open = None
+                        else:
+                            unused_opens[open] = open_offset
+                            opens.append(open)
+                            unused_opens[delim_run] = 0
+                            opens.append(delim_run)
+                            continue
+                    elif len(open_syntax) > len(syntax):
+                        # if the opening syntax is bigger than this close won't close all of it.
+                        # Queue both up for later processing
+                        opens.append(open)
+                        unused_opens[open] = open_offset
+                        if left:
+                            opens.append(delim_run)
+                            unused_opens[delim_run] = 0
+                        continue
+
+                    body = delim_run.string[open.end(): delim_run.start()]
+
+                    # ensure the body does not cross span borders
+                    if not all(
+                        self.md._tag_is_closed(tag, body)
+                        for tag in re.findall(rf'</?({self.md._span_tags})', body)
+                    ):
+                        continue
+
+                    # put all the new processing in a buffer array that gets added to `tokens` anyway.
+                    # Not the most efficient but it's convenient having a separate list of everything
+                    # processed and added in the previous iteration
+                    buffer = []
+
+                    # add all the text leading up to the opening delimiter
+                    buffer.append(delim_run.string[index: prev_open_start if prev_open else open_start])
+
+                    # calc what type of emphasis based on the lowest common
+                    # length of the delimiter run
+                    length = min(3, min(len(open_syntax), len(syntax)))
                     # add any part of the open that we don't consume
                     # eg: **one*
-                    tokens.append(open_syntax[:-length])
-                    tokens.append(f'<{tag}>')
-                    tokens.append(body)
-                    tokens.append(f'</{tag}>')
+                    buffer.append(open_syntax[:-length])
+                    if length == 3:
+                        buffer.append('<em><strong>')
+                        buffer.append(body)
+                        buffer.append('</strong></em>')
+                    else:
+                        tag = 'strong' if length == 2 else 'em'
+                        # prev_open is defined if this closing syntax is closing multiple openers at once
+                        if prev_open:
+                            if len(prev_open_syntax) == 3:
+                                prev_tag = 'strong' if tag == 'em' else 'em'
+                            else:
+                                prev_tag = 'strong' if len(prev_open_syntax) == 2 else 'em'
+                            buffer.append(f'<{prev_tag}>')
 
-                # if our closing syntax is longer than our opening that
-                # means it's joined onto a previous emphasis
-                # eg: **strong***em*
-                # This means the current delim_run is not completely "spent".
-                # Mark this closing run as an opening run for the next em but
-                # record in `unused_opens` how mmany chars from the run we've
-                # already used
-                if len(syntax) > len(open_syntax):
-                    opens.append(delim_run)
-                    unused_opens[delim_run] = length
-                    index = delim_run.start() + length
-                else:
-                    tokens.append(delim_run.group(1)[length:])
+                            if len(prev_open_syntax) == 3:
+                                buffer.append(f'<{tag}>')
+
+                            buffer.append(delim_run.string[prev_open.end(): open.start()])
+
+                            if len(prev_open_syntax) == 3:
+                                buffer.append(f'</{tag}>')
+                            else:
+                                buffer.append(f'<{tag}>')
+
+                            buffer.append(body)
+
+                            if len(prev_open_syntax) != 3:
+                                buffer.append(f'</{tag}>')
+                            buffer.append(f'</{prev_tag}>')
+                        else:
+                            buffer.append(f'<{tag}>')
+                            buffer.append(body)
+                            buffer.append(f'</{tag}>')
+
+                    # If both syntaxes are equal length then that's easy. Remove the open run as it's fully
+                    # processed and consumed, and move on
                     index = delim_run.end()
 
-            if index < len(text):
-                tokens.append(text[index:])
+                    tokens.extend(buffer)
 
-            text = ''.join(tokens)
+                if index < len(text):
+                    tokens.append(text[index:])
+
+                text = ''.join(tokens)
 
         return text
 
