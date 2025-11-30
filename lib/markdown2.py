@@ -1123,8 +1123,14 @@ class Markdown:
         return result
 
     def _tag_is_closed(self, tag_name: str, text: str) -> bool:
-        # super basic check if number of open tags == number of closing tags
-        return len(re.findall('<%s(?:.*?)>' % tag_name, text)) == len(re.findall('</%s>' % tag_name, text))
+        # check if number of open tags == number of close tags
+        if len(re.findall('<%s(?:.*?)>' % tag_name, text)) != len(re.findall('</%s>' % tag_name, text)):
+            return False
+
+        # check that close tag position is AFTER open tag
+        close_index = text.find(f'</{tag_name}')
+        open_index = text.find(f'<{tag_name}')
+        return open_index != -1 and close_index != -1 and open_index < close_index
 
     @mark_stage(Stage.LINK_DEFS)
     def _strip_link_definitions(self, text: str) -> str:
@@ -2066,8 +2072,11 @@ class Markdown:
             return f'{prefix}<{syntax}>{contents}</{syntax}>'
 
         # <strong> must go first:
-        text = self._strong_re.sub(sub, text)
-        text = self._em_re.sub(sub, text)
+        # text = self._strong_re.sub(sub, text)
+        # text = self._em_re.sub(sub, text)
+        iab = ItalicAndBoldProcessor2(self, None)
+        if iab.test(text):
+            text = iab.run(text)
         return text
 
     _block_quote_base = r'''
@@ -2579,6 +2588,138 @@ class ItalicAndBoldProcessor(Extra):
         if self.md.order < Stage.ITALIC_AND_BOLD:
             return '*' in text or '_' in text
         return self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
+
+
+class ItalicAndBoldProcessor2(Extra):
+    name = 'iabp-2'
+    order = (Stage.ITALIC_AND_BOLD,), tuple()
+
+    def run(self, text):
+        for em_type in '*_':
+            opens = []
+            unused_opens = {}
+            tokens = []
+            index = 0
+
+            delim_runs = tuple(re.finditer(r'([%s]+)' % em_type, text))
+            for delim_run in delim_runs:
+                # first check if it is opening (left flanking)
+                # or closing (right flanking) run
+                run = delim_run.string[max(0, delim_run.start() - 1): delim_run.end() + 1]
+                syntax = delim_run.group(1)
+                syntax_re = syntax.replace('*', r'\*')
+
+                left = (
+                    # not followed by whitespace
+                    re.match(r'.*%s\S' % syntax_re, run, re.S)
+                    and (
+                        # either not followed by punctuation
+                        re.match(r'.*%s[\s\w]' % syntax_re, run, re.S)
+                        # or followed by punct and preceded by punct/whitespace
+                        or re.match(r'(^|[\s\W])%s([^\s\w]|$)' % syntax_re, run, re.S | re.M)
+                    )
+                )
+
+                right =  (
+                    # not preceded by whitespace
+                    re.match(r'\S%s.*' % syntax_re, run, re.S)
+                    and (
+                        # either not preceded by punct
+                        re.match(r'[\s\w]%s.*' % syntax_re, run, re.S)
+                        # or preceded by punct and followed by whitespace or punct
+                        or re.match(r'[^\s\w]%s(\s|[^\s\w]|$)' % syntax_re, run, re.S | re.M)
+                    )
+                )
+
+                if not (left or right):
+                    continue
+
+                if left and right:
+                    if opens:
+                        # if we have open tags prioritize closing them
+                        left = False
+                    else:
+                        # if we don't, let's open a new one
+                        right = False
+
+                if left:
+                    opens.append(delim_run)
+                    continue
+
+                # close. figure out how
+                if not opens:
+                    tokens.append(delim_run.string[index: delim_run.end()])
+                    index = delim_run.end()
+                    continue
+
+                # get the opening run
+                open = opens.pop(-1)
+                # if the opening run was joined to a previous closing run (eg: **strong***em*)
+                # then re-use that previous closing run, but ignore the part that was used to
+                # close the previous emphasis
+                open_offset = unused_opens.pop(open, 0)
+                open_syntax = open.group(1)[open_offset:]
+                open_start = open.start() + open_offset
+
+                # add everything between last emphasis and this one
+                tokens.append(delim_run.string[index: open_start])
+                body = delim_run.string[open.end(): delim_run.start()]
+                if not all(
+                    self.md._tag_is_closed(tag, body)
+                    for tag in re.findall(rf'</?({self.md._span_tags})', body)
+                ):
+                    tokens.append(delim_run.string[open_start: delim_run.end()])
+                    index = delim_run.end()
+                    continue
+
+                if len(open_syntax) > len(syntax):
+                    opens.append(open)
+                    unused_opens[open] = open_offset
+                    opens.append(delim_run)
+                    unused_opens[delim_run] = 0
+                    continue
+
+                # calc what type of emphasis based on the lowest common
+                # length of the delimiter run
+                length = min(3, min(len(open_syntax), len(syntax)))
+                if length == 3:
+                    tokens.append('<em><strong>')
+                    tokens.append(body)
+                    tokens.append('</strong></em>')
+                else:
+                    tag = 'strong' if length == 2 else 'em'
+                    # add any part of the open that we don't consume
+                    # eg: **one*
+                    tokens.append(open_syntax[:-length])
+                    tokens.append(f'<{tag}>')
+                    tokens.append(body)
+                    tokens.append(f'</{tag}>')
+
+                # if our closing syntax is longer than our opening that
+                # means it's joined onto a previous emphasis
+                # eg: **strong***em*
+                # This means the current delim_run is not completely "spent".
+                # Mark this closing run as an opening run for the next em but
+                # record in `unused_opens` how mmany chars from the run we've
+                # already used
+                if len(syntax) > len(open_syntax):
+                    opens.append(delim_run)
+                    unused_opens[delim_run] = length
+                    index = delim_run.start() + length
+                else:
+                    tokens.append(delim_run.group(1)[length:])
+                    index = delim_run.end()
+
+            if index < len(text):
+                tokens.append(text[index:])
+
+            text = ''.join(tokens)
+
+        return text
+
+
+    def test(self, text):
+        return text.count('*') > 1 or text.count('_') > 1
 
 
 class _LinkProcessorExtraOpts(TypedDict, total=False):
@@ -3420,14 +3561,21 @@ class MiddleWordEm(ItalicAndBoldProcessor):
         options.setdefault('allowed', True)
         super().__init__(md, options)
 
+        escaped_hashes = '|'.join(md._escape_table.values())
+
         self.middle_word_em_re = re.compile(
             r'''
             (?<!^)         # To be middle of a word, it cannot be at the start of the input
             (?<![*_\W])    # cannot be preceeded by em char or non word char (must be in middle of word)
+            (?<!%s)        # cannot be preceeded by a hashed escape char either
             ([*_])         # em char
             (?=\S)         # must be followed by non-whitespace char
-            (?![*_]|$|\W)  # cannot be followed by another em char, EOF or a non-word char
-            ''', re.X | re.M
+            (?!
+                [*_]|$|\W  # cannot be followed by another em char, EOF or a non-word char
+                |%s        # Also cannot be followed by any of the escaped non-word chars
+            )
+            ''' % (escaped_hashes, escaped_hashes),
+            re.X | re.M
         )
 
         # add a prefix to it so we don't interfere with escaped/hashed chars from other stages
