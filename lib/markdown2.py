@@ -2595,131 +2595,133 @@ class ItalicAndBoldProcessor2(Extra):
     order = (Stage.ITALIC_AND_BOLD,), tuple()
 
     def run(self, text):
-        for em_type in '*_':
-            nesting = True
-            while nesting:
-                nesting = False
+        nesting = True
+        while nesting:
+            nesting = False
 
-                opens = []
-                unused_opens = {}
-                unused_closes = []
-                tokens = []
-                index = 0
+            opens = {'*': [], '_': []}
+            unused_opens = {'*': {}, '_': {}}
+            unused_closes = {'*': [], '_': []}
+            tokens = []
+            index = 0
 
-                delim_runs = {
-                    delim_run: self.delimiter_left_or_right(delim_run)
-                    for delim_run in re.finditer(r'([%s]+)' % em_type, text)
-                }
+            delim_runs = {
+                delim_run: self.delimiter_left_or_right(delim_run)
+                for delim_run in re.finditer(r'(\*+|_+)', text)
+            }
 
-                for delim_run, (left, right) in delim_runs.items():
-                    syntax = delim_run.group(1)
+            for delim_run, (left, right) in delim_runs.items():
+                syntax = delim_run.group(1)
+                em_type = syntax[0]
 
-                    if not (left or right):
-                        continue
+                if not (left or right):
+                    continue
 
-                    if not right or not opens:
-                        if left:
-                            opens.append(delim_run)
-                        continue
+                if not right or not opens[em_type]:
+                    if left:
+                        opens[em_type].append(delim_run)
+                    continue
 
-                    syntax = delim_run.group(1)
+                syntax = delim_run.group(1)
 
-                    open = opens.pop(-1)
-                    # if the opening run was joined to a previous closing run (eg: **strong***em*)
-                    # then re-use that previous closing run, but ignore the part that was used to
-                    # close the previous emphasis
-                    open_offset = unused_opens.pop(open, 0)
-                    open_start = open.start() + open_offset
-                    open_syntax = open.group(1)[open_offset:]
+                # grab the open run. If it crosses a span, keep looking backwards
+                while opens[em_type] and self.body_crosses_span_borders(opens[em_type][-1], delim_run):
+                    opens[em_type].pop(-1)
+                if not opens[em_type]:
+                    continue
+                open = opens[em_type].pop(-1)
 
-                    if open.start() < index:
-                        # this happens with things like `*(**foo**)*`. We process LTR so the strong gets
-                        # processed first (since that has the first closing delimiter). We now have
-                        # `*(<strong>foo</strong>)*` and now we get round to processing the em.
-                        # It's hard compare the match (against the original text var) to the processed text
-                        # so it's easier to just note down that nesting is detected and re-run the loop
-                        nesting = True
-                        continue
+                # if the opening run was joined to a previous closing run (eg: **strong***em*)
+                # then re-use that previous closing run, but ignore the part that was used to
+                # close the previous emphasis
+                open_offset = unused_opens[em_type].pop(open, 0)
+                open_start = open.start() + open_offset
+                open_syntax = open.group(1)[open_offset:]
 
-                    middle = None
+                if open.start() < index:
+                    # this happens with things like `*(**foo**)*`. We process LTR so the strong gets
+                    # processed first (since that has the first closing delimiter). We now have
+                    # `*(<strong>foo</strong>)*` and now we get round to processing the em.
+                    # It's hard compare the match (against the original text var) to the processed text
+                    # so it's easier to just note down that nesting is detected and re-run the loop
+                    nesting = True
+                    continue
 
-                    if len(open_syntax) != len(syntax):
-                        if len(open_syntax) < len(syntax) and opens:
-                            # since we are detecting a previous open, we are expanding the em span to the left
-                            # so we should check if we're covering additional chars that we don't cross an
-                            # existing span border
-                            if not self.body_crosses_span_borders(opens[-1], open):
-                                middle = open
+                middle = None
 
-                                open = opens.pop(-1)
-                                open_offset = unused_opens.pop(open, 0)
-                                open_start = open.start() + open_offset
-                        elif len(open_syntax) > len(syntax) and unused_closes:
-                            # check if there is a previous closing delim run in the current body
-                            # since this is already within the body we don't need to do a cross-span border check
-                            # as we're not expanding into new ground and that is covered later
-                            middle = next((i for i in unused_closes if open.end() < i.start() < delim_run.start()), None)
+                if len(open_syntax) != len(syntax):
+                    if len(open_syntax) < len(syntax) and opens[em_type]:
+                        # since we are detecting a previous open, we are expanding the em span to the left
+                        # so we should check if we're covering additional chars that we don't cross an
+                        # existing span border
+                        if not self.body_crosses_span_borders(opens[em_type][-1], open):
+                            middle = open
+
+                            open = opens[em_type].pop(-1)
+                            open_offset = unused_opens[em_type].pop(open, 0)
+                            open_start = open.start() + open_offset
+                    elif len(open_syntax) > len(syntax) and unused_closes[em_type]:
+                        # check if there is a previous closing delim run in the current body
+                        # since this is already within the body we don't need to do a cross-span border check
+                        # as we're not expanding into new ground and that is covered later
+                        middle = next((i for i in unused_closes[em_type] if open.end() < i.start() < delim_run.start()), None)
+                    else:
+                        try:
+                            next_delim_run = tuple(delim_runs.keys())[tuple(delim_runs.keys()).index(delim_run) + 1]
+                        except IndexError:
+                            next_delim_run = None
+
+                        if next_delim_run is None:
+                            # if there is no follow up delimiter run then no point leaving this unused. Process now
+                            pass
+                        elif len(open_syntax) < len(syntax) and (
+                            # if this run can be an opener, but the next run won't close both of them
+                            (left and not delim_runs[next_delim_run][1])
+                            # if the next run is not an opener and won't consume this run
+                            and not delim_runs[next_delim_run][0]
+                        ):
+                            pass
+                        elif len(open_syntax) > len(syntax) and (
+                            # if this run can be an closer, but the next run is not a fresh opener
+                            (right and not delim_runs[next_delim_run][0])
+                            # if the next run is not a closer
+                            and not delim_runs[next_delim_run][1]
+                        ):
+                            pass
+                        elif delim_runs[next_delim_run][1] and len(open_syntax) == len(next_delim_run.group(1)):
+                            # of the next run is a closer and matches the length of the opener then that is probably
+                            # a better closer than this run - eg: **foo*bar** or *foo**bar*
+                            opens[em_type].append(open)
+                            continue
                         else:
-                            try:
-                                next_delim_run = tuple(delim_runs.keys())[tuple(delim_runs.keys()).index(delim_run) + 1]
-                            except IndexError:
-                                next_delim_run = None
-
-                            if next_delim_run is None:
-                                # if there is no follow up delimiter run then no point leaving this unused. Process now
-                                pass
-                            elif len(open_syntax) < len(syntax) and (
-                                # if this run can be an opener, but the next run won't close both of them
-                                (left and not delim_runs[next_delim_run][1])
-                                # if the next run is not an opener and won't consume this run
-                                and not delim_runs[next_delim_run][0]
-                            ):
-                                pass
-                            elif len(open_syntax) > len(syntax) and (
-                                # if this run can be an closer, but the next run is not a fresh opener
-                                (right and not delim_runs[next_delim_run][0])
-                                # if the next run is not a closer
-                                and not delim_runs[next_delim_run][1]
-                            ):
-                                pass
-                            elif delim_runs[next_delim_run][1] and len(open_syntax) == len(next_delim_run.group(1)):
-                                # of the next run is a closer and matches the length of the opener then that is probably
-                                # a better closer than this run - eg: **foo*bar** or *foo**bar*
-                                opens.append(open)
-                                continue
+                            # if there are no unused opens or closes to use up then this is just imbalanced
+                            # mark as unused and leave for later processing
+                            unused_opens[em_type][open] = open_offset
+                            opens[em_type].append(open)
+                            if left:
+                                unused_opens[em_type][delim_run] = 0
+                                opens[em_type].append(delim_run)
                             else:
-                                # if there are no unused opens or closes to use up then this is just imbalanced
-                                # mark as unused and leave for later processing
-                                unused_opens[open] = open_offset
-                                opens.append(open)
-                                if left:
-                                    unused_opens[delim_run] = 0
-                                    opens.append(delim_run)
-                                else:
-                                    unused_closes.append(delim_run)
-                                continue
+                                unused_closes[em_type].append(delim_run)
+                            continue
 
-                    # ensure the body does not cross span borders
-                    if self.body_crosses_span_borders(open, delim_run):
-                        continue
+                # add all the text leading up to the opening delimiter
+                tokens.append(delim_run.string[index: open_start])
 
-                    # add all the text leading up to the opening delimiter
-                    tokens.append(delim_run.string[index: open_start])
+                span, close_syntax_used_chars = self.process_span(open, delim_run, open_offset, middle)
+                tokens.extend(span)
+                if close_syntax_used_chars < len(syntax):
+                    # if we didn't use up the entire closing delimiter mark it as unused
+                    unused_opens[em_type][delim_run] = close_syntax_used_chars
+                    opens[em_type].append(delim_run)
 
-                    span, close_syntax_used_chars = self.process_span(open, delim_run, open_offset, middle)
-                    tokens.extend(span)
-                    if close_syntax_used_chars < len(syntax):
-                        # if we didn't use up the entire closing delimiter mark it as unused
-                        unused_opens[delim_run] = close_syntax_used_chars
-                        opens.append(delim_run)
+                # Move index to end of the used delim run
+                index = delim_run.start() + close_syntax_used_chars
 
-                    # Move index to end of the used delim run
-                    index = delim_run.start() + close_syntax_used_chars
+            if index < len(text):
+                tokens.append(text[index:])
 
-                if index < len(text):
-                    tokens.append(text[index:])
-
-                text = ''.join(tokens)
+            text = ''.join(tokens)
 
         return text
 
