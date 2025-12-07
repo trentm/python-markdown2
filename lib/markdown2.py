@@ -2046,35 +2046,7 @@ class Markdown:
 
     @mark_stage(Stage.ITALIC_AND_BOLD)
     def _do_italics_and_bold(self, text: str) -> str:
-        def sub(match: re.Match):
-            '''
-            regex sub function that checks that the match isn't matching across spans.
-            The span shouldn't be across a closing or opening HTML tag, although spans within
-            the span is acceptable.
-            '''
-            contents: str = match.group(2)
-            # the strong re also checks for leading em chars, so the match may cover some additional text
-            prefix = match.string[match.start(): match.regs[1][0]]
-            # look for all possible span HTML tags
-            for tag in re.findall(rf'</?({self._span_tags})', contents):
-                # if it's unbalanced then that violates the rules
-                if not self._tag_is_closed(tag, contents):
-                    return prefix + match.group(1) + contents + match.group(1)
-
-                # if it is balanced, but the closing tag is before the opening then
-                # the text probably looks like `_</strong>abcdef<strong>_`, which is across 2 spans
-                close_index = contents.find(f'</{tag}')
-                open_index = contents.find(f'<{tag}')
-                if close_index != -1 and close_index < open_index:
-                    return prefix + match.group(1) + contents + match.group(1)
-
-            syntax = 'strong' if len(match.group(1)) == 2 else 'em'
-            return f'{prefix}<{syntax}>{contents}</{syntax}>'
-
-        # <strong> must go first:
-        # text = self._strong_re.sub(sub, text)
-        # text = self._em_re.sub(sub, text)
-        iab = ItalicAndBoldProcessor2(self, None)
+        iab = GFMItalicAndBoldProcessor(self, None)
         if iab.test(text):
             text = iab.run(text)
         return text
@@ -2590,8 +2562,8 @@ class ItalicAndBoldProcessor(Extra):
         return self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
 
 
-class ItalicAndBoldProcessor2(Extra):
-    name = 'iabp-2'
+class GFMItalicAndBoldProcessor(Extra):
+    name = 'gfm-italic-and-bold-processor'
     order = (Stage.ITALIC_AND_BOLD,), tuple()
 
     def run(self, text):
@@ -2649,6 +2621,7 @@ class ItalicAndBoldProcessor2(Extra):
 
                 middle = None
 
+                # if the delimiter runs don't match then we need to figure out how to resolve this
                 if len(open_syntax) != len(syntax):
                     if len(open_syntax) < len(syntax) and opens[em_type]:
                         # since we are detecting a previous open, we are expanding the em span to the left
@@ -2659,7 +2632,12 @@ class ItalicAndBoldProcessor2(Extra):
 
                             open = opens[em_type].pop(-1)
                             open_offset = unused_opens[em_type].pop(open, 0)
+                            open_syntax = open.group(1)[open_offset:]
                             open_start = open.start() + open_offset
+
+                            if len(open_syntax) == len(syntax):
+                                # if it turns out the previous open is a perfect match then ignore the middle part
+                                middle = None
                     elif len(open_syntax) > len(syntax) and unused_closes[em_type]:
                         # check if there is a previous closing delim run in the current body
                         # since this is already within the body we don't need to do a cross-span border check
@@ -2676,7 +2654,10 @@ class ItalicAndBoldProcessor2(Extra):
                             pass
                         elif len(open_syntax) < len(syntax) and (
                             # if this run can be an opener, but the next run won't close both of them
-                            (left and not delim_runs[next_delim_run][1])
+                            (left and (
+                                not delim_runs[next_delim_run][1]
+                                or len(next_delim_run.group(1)) < len(open_syntax) + len(syntax)
+                            ))
                             # if the next run is not an opener and won't consume this run
                             and not delim_runs[next_delim_run][0]
                         ):
@@ -2688,11 +2669,10 @@ class ItalicAndBoldProcessor2(Extra):
                             and not delim_runs[next_delim_run][1]
                         ):
                             pass
-                        elif delim_runs[next_delim_run][1] and len(open_syntax) == len(next_delim_run.group(1)):
-                            # of the next run is a closer and matches the length of the opener then that is probably
-                            # a better closer than this run - eg: **foo*bar** or *foo**bar*
-                            opens[em_type].append(open)
-                            continue
+                        elif len(open_syntax) < len(syntax) and len(syntax) >= 3:
+                            # if closing syntax is bigger and its >= three long then focus on closing any
+                            # open em spans
+                            pass
                         else:
                             # if there are no unused opens or closes to use up then this is just imbalanced
                             # mark as unused and leave for later processing
@@ -2743,16 +2723,16 @@ class ItalicAndBoldProcessor2(Extra):
         close_syntax = close.group(1)
 
         # calculate what em type the inner and outer emphasis is
-        outer_syntax_length = min(3, min(len(open_syntax), len(close_syntax)))
+        outer_syntax_length = min(len(open_syntax), len(close_syntax))
         inner_syntax_length = min(max(len(open_syntax), len(close_syntax)), len(middle_syntax)) if middle else 0
         # add anything from the opening syntax that will not be consumed
         # eg: **one*
         tokens.append(open_syntax[:-(outer_syntax_length + inner_syntax_length)])
 
-        if outer_syntax_length == 3:
-            tokens.append('<em><strong>')
-        else:
-            tokens.append(f'<{"strong" if outer_syntax_length == 2 else "em"}>')
+        tags = []
+        tags += ['<em>'] * (outer_syntax_length % 2)
+        tags += ['<strong>'] * (outer_syntax_length // 2)
+        tokens.append(''.join(tags))
 
         if middle:
             # outer_tag = 'strong' if outer_syntax_length == 2 else 'em'
@@ -2779,10 +2759,7 @@ class ItalicAndBoldProcessor2(Extra):
             # if no middle em then it's easy. Just add the whole text body
             tokens.append(close.string[open.end(): close.start()])
 
-        if outer_syntax_length == 3:
-            tokens.append('</strong></em>')
-        else:
-            tokens.append(f'</{"strong" if outer_syntax_length == 2 else "em"}>')
+        tokens.append(''.join(reversed(tags)).replace('<', '</'))
 
         # figure out how many chars from the closing delimiter we've actually used
         close_delim_chars_used = outer_syntax_length
