@@ -3432,7 +3432,7 @@ class CodeFriendly(GFMItalicAndBoldProcessor):
                     text = text.replace(key, substr)
         return text
 
-    def process_span(self, open: re.Match, close: re.Match, offset: int, middle: re.Match | None = None):
+    def process_span(self, open: re.Match, close: re.Match, offset: int, middle: Optional[re.Match] = None):
         text = open.string[open.start(): close.end()]
         open_syntax = open.group(1)[offset:]
         close_syntax = close.group(1)
