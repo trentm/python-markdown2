@@ -121,7 +121,7 @@ import sys
 from collections import defaultdict, OrderedDict
 from abc import ABC, abstractmethod
 import functools
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from hashlib import sha256
 from random import random
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, TypedDict, Union
@@ -2044,11 +2044,13 @@ class Markdown:
     )
     _em_re = re.compile(r"(\*|_)(?=\S)(.*?\S)\1", re.S)
 
+    _iab_processor = None
     @mark_stage(Stage.ITALIC_AND_BOLD)
     def _do_italics_and_bold(self, text: str) -> str:
-        iab = GFMItalicAndBoldProcessor(self, None)
-        if iab.test(text):
-            text = iab.run(text)
+        if not self._iab_processor:
+            self._iab_processor = GFMItalicAndBoldProcessor(self, None)
+        if self._iab_processor.test(text):
+            text = self._iab_processor.run(text)
         return text
 
     _block_quote_base = r'''
@@ -2595,14 +2597,13 @@ class GFMItalicAndBoldProcessor(Extra):
             index = 0
             '''Number of chars of `text` that has been processed so far'''
 
-            # do a quick scan for all delimiter runs, filtering for those that can open/close emphasis
-            delim_runs = OrderedDict()
-            for delim_run in re.finditer(r'(\*+|_+)', text):
-                left, right = self.delimiter_left_or_right(delim_run)
-                if left or right:
-                    delim_runs[delim_run] = (left, right)
+            delim_runs_iter = re.finditer(r'(\*+|_+)', text)
+            next_delim_run = self._next_run(delim_runs_iter)
 
-            for delim_run, (left, right) in delim_runs.items():
+            while next_delim_run:
+                delim_run, left, right = next_delim_run
+                next_delim_run = self._next_run(delim_runs_iter)
+
                 syntax = delim_run.group(1)
                 em_type = syntax[0]
 
@@ -2656,7 +2657,7 @@ class GFMItalicAndBoldProcessor(Extra):
                             open_syntax = open.group(1)[open_offset:]
                             open_start = open.start() + open_offset
                     elif not self.should_process_imbalanced_delimiter_runs(
-                        open, delim_run, delim_runs, unused_opens[em_type]
+                        open, delim_run, unused_opens[em_type], next_delim_run
                     ):
                         # if we shouldn't process them now, save these opens for a future pass
                         unused_opens[em_type][open] = open_offset
@@ -2808,8 +2809,8 @@ class GFMItalicAndBoldProcessor(Extra):
 
     def should_process_imbalanced_delimiter_runs(
         self, open: re.Match, close: re.Match,
-        delim_runs: Dict[re.Match, Tuple[bool, bool]],
-        unused_opens: Dict[re.Match, int]
+        unused_opens: Dict[re.Match, int],
+        next_delim_run: Optional[Tuple[re.Match, Optional[re.Match], Optional[re.Match]]] = None
     ):
         '''
         Check if an imbalanced delimiter run should be consumed now, or left for a later pass
@@ -2817,43 +2818,39 @@ class GFMItalicAndBoldProcessor(Extra):
         Args:
             open: the opening delimiter run
             close: the closing delimiter run
-            delim_runs: a mapping of all of the delimiter runs in the text to a tuple of whether
-                they are opening or closing runs
             unused_opens: a mapping of unused opens within the text to their offset values
+            next_delim_run: the next delimiter run after the closing run
         '''
         open_offset = unused_opens.get(open, 0)
         open_syntax = open.group(1)[open_offset:]
 
         syntax = close.group(1)
-        left, right = delim_runs[close]
+        left, right = self.delimiter_left_or_right(close)
 
         if len(open_syntax) < len(syntax) and len(syntax) >= 3:
             # if closing syntax is bigger and its >= three long then focus on closing any
             # open em spans
             return True
 
-        try:
-            next_delim_run = tuple(delim_runs.keys())[tuple(delim_runs.keys()).index(close) + 1]
-        except IndexError:
-            # if there is no follow up delimiter run then no point leaving this unused. Process now
+        if next_delim_run is None:
             return True
 
         if len(open_syntax) < len(syntax) and (
             # if this run can be an opener, but the next run won't close both of them
             (left and (
-                not delim_runs[next_delim_run][1]
-                or len(next_delim_run.group(1)) < len(open_syntax) + len(syntax)
+                not next_delim_run[2]
+                or len(next_delim_run[0].group(1)) < len(open_syntax) + len(syntax)
             ))
             # if the next run is not an opener and won't consume this run
-            and not delim_runs[next_delim_run][0]
+            and not next_delim_run[1]
         ):
             return True
 
         if len(open_syntax) > len(syntax) and (
             # if this run can be a closer, but the next run is not a fresh opener
-            (right and not delim_runs[next_delim_run][0])
+            (right and not next_delim_run[1])
             # if the next run is not a closer
-            and not delim_runs[next_delim_run][1]
+            and not next_delim_run[2]
         ):
             return True
 
@@ -2862,8 +2859,22 @@ class GFMItalicAndBoldProcessor(Extra):
         return False
 
     def delimiter_left_or_right(self, delim_run: re.Match):
+        '''
+        Determine if a delimiter run is left or right flanking
+
+        Returns:
+            Tuple of bools that mean left and right flanking respectively
+        '''
         run = delim_run.string[max(0, delim_run.start() - 1): delim_run.end() + 1]
-        syntax = delim_run.group(1)
+
+        return self._delimiter_left_or_right(run, delim_run.group(1))
+
+    @functools.lru_cache(maxsize=512)
+    def _delimiter_left_or_right(self, run: str, syntax: str):
+        '''
+        Cached version of `delimiter_left_or_right` that massively speeds things up when dealing
+        with many repetetive delimiter runs - eg: in a ReDoS scenario
+        '''
         syntax_re = syntax.replace('*', r'\*')
 
         left = (
@@ -2891,11 +2902,44 @@ class GFMItalicAndBoldProcessor(Extra):
         return left, right
 
     def body_crosses_span_borders(self, open: re.Match, close: re.Match):
-        for tag in re.findall(rf'</?({self.md._span_tags})', open.string[open.end(): close.start()]):
-            if not self.md._tag_is_closed(tag, open.string[open.end(): close.start()]):
+        '''
+        Checks if the body of an emphasis crosses a span border
+
+        Args:
+            open: the opening delimiter run
+            close: the closing delimiter run
+
+        Returns:
+            True if the emphasis crosses a span border (invalid). False if not
+        '''
+        return self._body_crosses_span_borders(open.string[open.end(): close.start()])
+
+    @functools.lru_cache(maxsize=64)
+    def _body_crosses_span_borders(self, text: str):
+        '''Cached version of `body_crosses_span_borders`'''
+        for tag in re.findall(rf'</?({self.md._span_tags})', text):
+            if not self.md._tag_is_closed(tag, text):
                 return True
 
         return False
+
+    def _next_run(self, delim_runs_iter: Iterator[re.Match]):
+        '''
+        Gets the next delimiter run from an iterator of delimiter runs
+
+        Returns:
+            A tuple containing the run, and matches dictating whether it is left or right flanking
+            respectively. Returns nothing if no valid runs left
+        '''
+        next_delim_run: Optional[Tuple[re.Match, bool, bool]] = None
+        try:
+            while not next_delim_run:
+                delim_run = next(delim_runs_iter)
+                left, right = self.delimiter_left_or_right(delim_run)
+                if left or right:
+                    return (delim_run, left, right)
+        except StopIteration:
+            return
 
     def test(self, text):
         return text.count('*') > 1 or text.count('_') > 1
