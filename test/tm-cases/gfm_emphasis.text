@@ -258,3 +258,11 @@ _a `_`_
 __a<http://foo.bar/?q=__>
 
 **foo*bar**
+
+_foo **bar** baz._bim
+
+**__foo** bar **__baz** bim *bam*
+
+**foo*bar***
+
+***foo*bar**
