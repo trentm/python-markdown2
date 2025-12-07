@@ -2563,6 +2563,10 @@ class ItalicAndBoldProcessor(Extra):
 
 
 class GFMItalicAndBoldProcessor(Extra):
+    '''
+    An upgraded version of the `ItalicAndBoldProcessor` that covers far more edge cases and gets close
+    to Github Flavoured Markdown compliance.
+    '''
     name = 'gfm-italic-and-bold-processor'
     order = (Stage.ITALIC_AND_BOLD,), tuple()
 
@@ -2572,24 +2576,39 @@ class GFMItalicAndBoldProcessor(Extra):
             nesting = False
 
             opens = {'*': [], '_': []}
+            '''Mapping of em type to a list of opening runs of that em type'''
             unused_opens = {'*': {}, '_': {}}
+            '''
+            Mapping of em type to another mapping of unused opening runs of that em type.
+            An unused run is one that has been skipped, or only partially consumed (eg: **foo*) and
+            could be consumed by another closing run. The inner mapping is a mapping of the
+            delimiter run to an offset number, which is the number of characters from that run that
+            have been consumed so far
+            '''
             unused_closes = {'*': [], '_': []}
+            '''
+            Mapping of em type to a list of closing delimiter runs that have not been fully consumed.
+            EG: *foo*bar*
+            '''
             tokens = []
+            '''List of processed spans of text that will be joined to form the new `text`'''
             index = 0
+            '''Number of chars of `text` that has been processed so far'''
 
-            delim_runs = {
-                delim_run: self.delimiter_left_or_right(delim_run)
-                for delim_run in re.finditer(r'(\*+|_+)', text)
-            }
+            # do a quick scan for all delimiter runs, filtering for those that can open/close emphasis
+            delim_runs = OrderedDict()
+            for delim_run in re.finditer(r'(\*+|_+)', text):
+                left, right = self.delimiter_left_or_right(delim_run)
+                if left or right:
+                    delim_runs[delim_run] = (left, right)
 
             for delim_run, (left, right) in delim_runs.items():
                 syntax = delim_run.group(1)
                 em_type = syntax[0]
 
-                if not (left or right):
-                    continue
-
+                # if not a closing run, or there are no opens to consume
                 if not right or not opens[em_type]:
+                    # if it can also be an opening run
                     if left:
                         opens[em_type].append(delim_run)
                     continue
@@ -2623,75 +2642,42 @@ class GFMItalicAndBoldProcessor(Extra):
 
                 # if the delimiter runs don't match then we need to figure out how to resolve this
                 if len(open_syntax) != len(syntax):
-                    if len(open_syntax) < len(syntax) and opens[em_type]:
-                        # since we are detecting a previous open, we are expanding the em span to the left
-                        # so we should check if we're covering additional chars that we don't cross an
-                        # existing span border
-                        if not self.body_crosses_span_borders(opens[em_type][-1], open):
-                            middle = open
+                    has_middle = self.has_middle(
+                        open, delim_run, opens[em_type],
+                        unused_opens[em_type], unused_closes[em_type]
+                    )
 
-                            open = opens[em_type].pop(-1)
+                    if has_middle is not False:
+                        middle = has_middle[1]
+                        if has_middle[0] != open:
+                            # only re-assign and re-calc opening offsets if that run HAS changed
+                            open = has_middle[0]
                             open_offset = unused_opens[em_type].pop(open, 0)
                             open_syntax = open.group(1)[open_offset:]
                             open_start = open.start() + open_offset
-
-                            if len(open_syntax) == len(syntax):
-                                # if it turns out the previous open is a perfect match then ignore the middle part
-                                middle = None
-                    elif len(open_syntax) > len(syntax) and unused_closes[em_type]:
-                        # check if there is a previous closing delim run in the current body
-                        # since this is already within the body we don't need to do a cross-span border check
-                        # as we're not expanding into new ground and that is covered later
-                        middle = next((i for i in unused_closes[em_type] if open.end() < i.start() < delim_run.start()), None)
-                    else:
-                        try:
-                            next_delim_run = tuple(delim_runs.keys())[tuple(delim_runs.keys()).index(delim_run) + 1]
-                        except IndexError:
-                            next_delim_run = None
-
-                        if next_delim_run is None:
-                            # if there is no follow up delimiter run then no point leaving this unused. Process now
-                            pass
-                        elif len(open_syntax) < len(syntax) and (
-                            # if this run can be an opener, but the next run won't close both of them
-                            (left and (
-                                not delim_runs[next_delim_run][1]
-                                or len(next_delim_run.group(1)) < len(open_syntax) + len(syntax)
-                            ))
-                            # if the next run is not an opener and won't consume this run
-                            and not delim_runs[next_delim_run][0]
-                        ):
-                            pass
-                        elif len(open_syntax) > len(syntax) and (
-                            # if this run can be an closer, but the next run is not a fresh opener
-                            (right and not delim_runs[next_delim_run][0])
-                            # if the next run is not a closer
-                            and not delim_runs[next_delim_run][1]
-                        ):
-                            pass
-                        elif len(open_syntax) < len(syntax) and len(syntax) >= 3:
-                            # if closing syntax is bigger and its >= three long then focus on closing any
-                            # open em spans
-                            pass
+                    elif not self.should_process_imbalanced_delimiter_runs(
+                        open, delim_run, delim_runs, unused_opens[em_type]
+                    ):
+                        # if we shouldn't process them now, save these opens for a future pass
+                        unused_opens[em_type][open] = open_offset
+                        opens[em_type].append(open)
+                        if left:
+                            unused_opens[em_type][delim_run] = 0
+                            opens[em_type].append(delim_run)
                         else:
-                            # if there are no unused opens or closes to use up then this is just imbalanced
-                            # mark as unused and leave for later processing
-                            unused_opens[em_type][open] = open_offset
-                            opens[em_type].append(open)
-                            if left:
-                                unused_opens[em_type][delim_run] = 0
-                                opens[em_type].append(delim_run)
-                            else:
-                                unused_closes[em_type].append(delim_run)
-                            continue
+                            unused_closes[em_type].append(delim_run)
+                        continue
 
                 # add all the text leading up to the opening delimiter
                 tokens.append(delim_run.string[index: open_start])
 
                 span, close_syntax_used_chars = self.process_span(open, delim_run, open_offset, middle)
                 tokens.extend(span)
-                if close_syntax_used_chars < len(syntax):
-                    # if we didn't use up the entire closing delimiter mark it as unused
+
+                if close_syntax_used_chars is None:
+                    close_syntax_used_chars = len(syntax)
+                elif close_syntax_used_chars < len(syntax):
+                    # if we didn't use up the entire closing delimiter, mark it as unused
                     unused_opens[em_type][delim_run] = close_syntax_used_chars
                     opens[em_type].append(delim_run)
 
@@ -2708,13 +2694,17 @@ class GFMItalicAndBoldProcessor(Extra):
     def process_span(
             self, open: re.Match, close: re.Match,
             offset: int, middle: Optional[re.Match] = None
-        ):
+        ) -> Tuple[List[str], Optional[int]]:
         '''
         Args:
             open: the match against the opening delimiter run
             close: the match against the closing delimiter run
             offset: the number of chars from the opening delimiter that should be skipped when processing
             middle: an optional delimiter run in the middle of the span
+
+        Returns:
+            A list of processed tokens, and then the number of chars from the closing syntax that were
+            consumed. If the latter item is None, then assume all chars were consumed
         '''
         tokens = []
 
@@ -2768,6 +2758,108 @@ class GFMItalicAndBoldProcessor(Extra):
             close_delim_chars_used += inner_syntax_length
 
         return tokens, close_delim_chars_used
+
+    def has_middle(
+        self, open: re.Match, close: re.Match, opens: List[re.Match],
+        unused_opens: Dict[re.Match, int], unused_closes: List[re.Match]
+    ) -> Union[Tuple[re.Match, Optional[re.Match]], Literal[False]]:
+        '''
+        Check if an emphasis span has a middle delimiter run, which may change the outer tags
+
+        Args:
+            open: the current opening delimiter run
+            close: the closing delimiter run
+            opens: a list of all opening delimiter runs in the text
+            unused_opens: a mapping of unused opens within the text to their offset values
+            unused_closes: a list of unused closes within the text
+
+        Returns:
+            False if there is no middle run. Otherwise, a tuple of the new opening run and the optional
+            middle span. The middle span may be None if it is invalid
+        '''
+        open_offset = unused_opens.get(open, 0)
+        open_syntax = open.group(1)[open_offset:]
+
+        syntax = close.group(1)
+
+        if len(open_syntax) < len(syntax) and opens:
+            # expand the em span to the left, meaning we're covering additional chars.
+            # check we don't cross an existing span border
+            if not self.body_crosses_span_borders(opens[-1], open):
+                middle = open
+
+                open = opens.pop(-1)
+                open_offset = unused_opens.pop(open, 0)
+                open_syntax = open.group(1)[open_offset:]
+
+                if len(open_syntax) == len(syntax):
+                    # if it turns out the previous open is a perfect match then ignore the middle part
+                    # eg: **foo*bar**
+                    middle = None
+        elif len(open_syntax) > len(syntax) and unused_closes:
+            # check if there is a previous closing delim run in the current body
+            # since this is already within the body we don't need to do a cross-span border check
+            # as we're not expanding into new ground and that is covered later
+            middle = next((i for i in unused_closes if open.end() < i.start() < close.start()), None)
+        else:
+            return False
+
+        return open, middle
+
+    def should_process_imbalanced_delimiter_runs(
+        self, open: re.Match, close: re.Match,
+        delim_runs: Dict[re.Match, Tuple[bool, bool]],
+        unused_opens: Dict[re.Match, int]
+    ):
+        '''
+        Check if an imbalanced delimiter run should be consumed now, or left for a later pass
+
+        Args:
+            open: the opening delimiter run
+            close: the closing delimiter run
+            delim_runs: a mapping of all of the delimiter runs in the text to a tuple of whether
+                they are opening or closing runs
+            unused_opens: a mapping of unused opens within the text to their offset values
+        '''
+        open_offset = unused_opens.get(open, 0)
+        open_syntax = open.group(1)[open_offset:]
+
+        syntax = close.group(1)
+        left, right = delim_runs[close]
+
+        if len(open_syntax) < len(syntax) and len(syntax) >= 3:
+            # if closing syntax is bigger and its >= three long then focus on closing any
+            # open em spans
+            return True
+
+        try:
+            next_delim_run = tuple(delim_runs.keys())[tuple(delim_runs.keys()).index(close) + 1]
+        except IndexError:
+            # if there is no follow up delimiter run then no point leaving this unused. Process now
+            return True
+
+        if len(open_syntax) < len(syntax) and (
+            # if this run can be an opener, but the next run won't close both of them
+            (left and (
+                not delim_runs[next_delim_run][1]
+                or len(next_delim_run.group(1)) < len(open_syntax) + len(syntax)
+            ))
+            # if the next run is not an opener and won't consume this run
+            and not delim_runs[next_delim_run][0]
+        ):
+            return True
+
+        if len(open_syntax) > len(syntax) and (
+            # if this run can be a closer, but the next run is not a fresh opener
+            (right and not delim_runs[next_delim_run][0])
+            # if the next run is not a closer
+            and not delim_runs[next_delim_run][1]
+        ):
+            return True
+
+        # if there are no unused opens or closes to use up then this is just imbalanced.
+        # mark as unused and leave for later processing
+        return False
 
     def delimiter_left_or_right(self, delim_run: re.Match):
         run = delim_run.string[max(0, delim_run.start() - 1): delim_run.end() + 1]
@@ -3269,37 +3361,60 @@ class Breaks(Extra):
         return text
 
 
-class CodeFriendly(ItalicAndBoldProcessor):
+class CodeFriendly(GFMItalicAndBoldProcessor):
     '''
     Disable _ and __ for em and strong.
     '''
     name = 'code-friendly'
+    order = (Stage.ITALIC_AND_BOLD,), (Stage.ITALIC_AND_BOLD,)
 
     def __init__(self, md, options):
         super().__init__(md, options)
 
         # add a prefix to it so we don't interfere with escaped/hashed chars from other stages
-        self.hash_table[_hash_text(self.name + '_')] = '_'
-        self.hash_table[_hash_text(self.name + '__')] = '__'
+        self.hash_table = {
+            _hash_text(self.name + '_'): '_',
+            _hash_text(self.name + '__'): '__'
+        }
 
-    def sub(self, match: re.Match) -> str:
-        syntax = match.group(1)
-        # use match.regs because strong/em regex may include preceding text in the match as well
-        text: str = match.string[match.regs[1][0]: match.end()]
-        if '_' in syntax:
+    def run(self, text):
+        if self.md.order < Stage.ITALIC_AND_BOLD:
+            text = super().run(text)
+        else:
+            orig_text = ''
+            while orig_text != text:
+                orig_text = text
+                for key, substr in self.hash_table.items():
+                    text = text.replace(key, substr)
+        return text
+
+    def process_span(self, open: re.Match, close: re.Match, offset: int, middle: re.Match | None = None):
+        text = open.string[open.start(): close.end()]
+        open_syntax = open.group(1)[offset:]
+        close_syntax = close.group(1)
+
+        if len(open_syntax) > 2 or open_syntax != close_syntax:
+            return [text], None
+
+        if '_' in open_syntax:
             # if using _this_ syntax, hash it to avoid processing, but don't hash the contents incase of nested syntax
-            text = text.replace(syntax, _hash_text(self.name + syntax))
-            return text
+            text = text.replace(open_syntax, _hash_text(self.name + open_syntax))
+            return [text], None
         elif '_' in text:
             # if the text within the bold/em markers contains '_' then hash those chars to protect them from em_re
             text = (
-                text[len(syntax): -len(syntax)]
+                text[len(open_syntax): -len(close_syntax)]
                 .replace('__', _hash_text(self.name + '__'))
                 .replace('_', _hash_text(self.name + '_'))
             )
-            return syntax + text + syntax
-        # if no underscores are present, the text is fine and we can just leave it alone
-        return super().sub(match)
+            return [open_syntax, text, close_syntax], None
+
+        return super().process_span(open, close, offset, middle)
+
+    def test(self, text: str):
+        return super().test(text) or (
+            self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
+        )
 
 
 class FencedCodeBlocks(Extra):
@@ -3623,7 +3738,7 @@ class Mermaid(FencedCodeBlocks):
         return super().tags(lexer_name)
 
 
-class MiddleWordEm(ItalicAndBoldProcessor):
+class MiddleWordEm(GFMItalicAndBoldProcessor):
     '''
     Allows or disallows emphasis syntax in the middle of words,
     defaulting to allow. Disabling this means that `this_text_here` will not be
@@ -3666,8 +3781,10 @@ class MiddleWordEm(ItalicAndBoldProcessor):
         )
 
         # add a prefix to it so we don't interfere with escaped/hashed chars from other stages
-        self.hash_table['_'] = _hash_text(self.name + '_')
-        self.hash_table['*'] = _hash_text(self.name + '*')
+        self.hash_table = {
+            '_': _hash_text(self.name + '_'),
+            '*': _hash_text(self.name + '*')
+        }
 
     def run(self, text):
         if self.options['allowed']:
@@ -3691,6 +3808,11 @@ class MiddleWordEm(ItalicAndBoldProcessor):
 
         syntax = match.group(1)
         return self.hash_table[syntax]
+
+    def test(self, text: str):
+        return super().test(text) or (
+            self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
+        )
 
 
 class Numbering(Extra):
