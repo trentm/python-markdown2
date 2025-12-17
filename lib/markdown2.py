@@ -2786,17 +2786,19 @@ class GFMItalicAndBoldProcessor(Extra):
         if len(open_syntax) < len(syntax) and opens:
             # expand the em span to the left, meaning we're covering additional chars.
             # check we don't cross an existing span border
-            if not self.body_crosses_span_borders(opens[-1], open):
-                middle = open
+            if self.body_crosses_span_borders(opens[-1], open):
+                return False
 
-                open = opens.pop(-1)
-                open_offset = unused_opens.pop(open, 0)
-                open_syntax = open.group(1)[open_offset:]
+            middle = open
 
-                if len(open_syntax) == len(syntax):
-                    # if it turns out the previous open is a perfect match then ignore the middle part
-                    # eg: **foo*bar**
-                    middle = None
+            open = opens.pop(-1)
+            open_offset = unused_opens.pop(open, 0)
+            open_syntax = open.group(1)[open_offset:]
+
+            if len(open_syntax) == len(syntax):
+                # if it turns out the previous open is a perfect match then ignore the middle part
+                # eg: **foo*bar**
+                middle = None
         elif len(open_syntax) > len(syntax) and unused_closes:
             # check if there is a previous closing delim run in the current body
             # since this is already within the body we don't need to do a cross-span border check
