@@ -6,6 +6,7 @@
 - [pull #640] Fix code friendly extra stopping other syntax being processed (#638)
 - [pull #644] Fix a number of em/strong issues (#641, #642, #643)
 - [pull #659] Fix a number of safemode issues (#647)
+- [pull #665] Rewrite emphasis and strong processing to be more GFM compliant
 
 
 ## python-markdown2 2.5.4
