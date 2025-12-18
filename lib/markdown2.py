@@ -2574,7 +2574,9 @@ class GFMItalicAndBoldProcessor(Extra):
 
     def run(self, text):
         nesting = True
-        while nesting:
+        orig_text = ""
+        while nesting and orig_text != _hash_text(text):
+            orig_text = _hash_text(text)
             nesting = False
 
             opens = {'*': [], '_': []}
