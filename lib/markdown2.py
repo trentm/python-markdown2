@@ -133,7 +133,7 @@ from os import urandom
 _safe_mode = Literal['replace', 'escape']
 _extras_dict = dict[str, Any]
 _extras_param = Union[list[str], _extras_dict]
-_link_patterns = Iterable[tuple[re.Pattern, Union[str, Callable[[re.Match], str]]]]
+_link_patterns = Iterable[tuple[re.Pattern[str], Union[str, Callable[[re.Match[str]], str]]]]
 
 # ---- globals
 
@@ -714,7 +714,7 @@ class Markdown:
         (?P<content>.*?\1End:)
         """, re.IGNORECASE | re.MULTILINE | re.DOTALL | re.VERBOSE)
 
-    def _emacs_vars_oneliner_sub(self, match: re.Match) -> str:
+    def _emacs_vars_oneliner_sub(self, match: re.Match[str]) -> str:
         if match.group(1).strip() == '-*-' and match.group(4).strip() == '-*-':
             lead_ws = re.findall(r'^\s*', match.group(1))[0]
             tail_ws = re.findall(r'\s*$', match.group(4))[0]
@@ -904,7 +904,7 @@ class Markdown:
         r'''\s+markdown=("1"|'1')''')
     def _hash_html_block_sub(
         self,
-        match: Union[re.Match, str],
+        match: Union[re.Match[str], str],
         raw: bool = False
     ) -> str:
         if isinstance(match, str):
@@ -1160,7 +1160,7 @@ class Markdown:
             """ % less_than_tab, re.X | re.M | re.U)
         return _link_def_re.sub(self._extract_link_def_sub, text)
 
-    def _extract_link_def_sub(self, match: re.Match) -> str:
+    def _extract_link_def_sub(self, match: re.Match[str]) -> str:
         id, url, title = match.groups()
         key = id.lower()    # Link IDs are case-insensitive
         self.urls[key] = self._encode_amps_and_angles(url)
@@ -1168,7 +1168,7 @@ class Markdown:
             self.titles[key] = title
         return ""
 
-    def _extract_footnote_def_sub(self, match: re.Match) -> str:
+    def _extract_footnote_def_sub(self, match: re.Match[str]) -> str:
         id, text = match.groups()
         text = _dedent(text, skip_first_line=not text.startswith('\n')).strip()
         normed_id = re.sub(r'\W', '-', id)
@@ -1613,7 +1613,7 @@ class Markdown:
     _h_re = re.compile(_h_re_base % '*', re.X | re.M)
     _h_re_tag_friendly = re.compile(_h_re_base % '+', re.X | re.M)
 
-    def _h_sub(self, match: re.Match) -> str:
+    def _h_sub(self, match: re.Match[str]) -> str:
         '''Handles processing markdown headers'''
         if match.group(1) is not None and match.group(3) == "-":
             return match.group(1)
@@ -1646,7 +1646,7 @@ class Markdown:
         </h\1>
     ''', re.X | re.M)
 
-    def _h_tag_sub(self, match: re.Match) -> str:
+    def _h_tag_sub(self, match: re.Match[str]) -> str:
         '''Different to `_h_sub` in that this function handles existing HTML headers'''
         text = match.string[match.start(): match.end()]
         h_level = int(match.group(1))
@@ -1696,7 +1696,7 @@ class Markdown:
     _marker_ul = '(?:[%s])' % _marker_ul_chars
     _marker_ol = r'(?:\d+\.)'
 
-    def _list_sub(self, match: re.Match) -> str:
+    def _list_sub(self, match: re.Match[str]) -> str:
         lst = match.group(1)
         lst_type = match.group(4) in self._marker_ul_chars and "ul" or "ol"
 
@@ -1791,7 +1791,7 @@ class Markdown:
 
     _task_list_warpper_str = r'<input type="checkbox" class="task-list-item-checkbox" %sdisabled> %s'
 
-    def _task_list_item_sub(self, match: re.Match) -> str:
+    def _task_list_item_sub(self, match: re.Match[str]) -> str:
         marker = match.group(1)
         item_text = match.group(2)
         if marker in ['[x]','[X]']:
@@ -1803,7 +1803,7 @@ class Markdown:
         return ''
 
     _last_li_endswith_two_eols = False
-    def _list_item_sub(self, match: re.Match) -> str:
+    def _list_item_sub(self, match: re.Match[str]) -> str:
         item = match.group(4)
         leading_line = match.group(1)
         if leading_line or "\n\n" in item or self._last_li_endswith_two_eols:
@@ -1914,7 +1914,7 @@ class Markdown:
         formatter = HtmlCodeFormatter(**formatter_opts)
         return pygments.highlight(codeblock, lexer, formatter)
 
-    def _code_block_sub(self, match: re.Match) -> str:
+    def _code_block_sub(self, match: re.Match[str]) -> str:
         codeblock = match.group(1)
         codeblock = self._outdent(codeblock)
         codeblock = self._detab(codeblock)
@@ -1982,7 +1982,7 @@ class Markdown:
             (?!`)
         ''', re.X | re.S)
 
-    def _code_span_sub(self, match: re.Match) -> str:
+    def _code_span_sub(self, match: re.Match[str]) -> str:
         c = match.group(2).strip(" \t")
         c = self._encode_code(c)
         return "<code{}>{}</code>".format(self._html_class_str_from_tag("code"), c)
@@ -2068,10 +2068,10 @@ class Markdown:
     _bq_one_level_re_spoiler = re.compile('^[ \t]*>[ \t]*?![ \t]?', re.M)
     _bq_all_lines_spoilers = re.compile(r'\A(?:^[ \t]*>[ \t]*?!.*[\n\r]*)+\Z', re.M)
     _html_pre_block_re = re.compile(r'(\s*<pre>.+?</pre>)', re.S)
-    def _dedent_two_spaces_sub(self, match: re.Match) -> str:
+    def _dedent_two_spaces_sub(self, match: re.Match[str]) -> str:
         return re.sub(r'(?m)^  ', '', match.group(1))
 
-    def _block_quote_sub(self, match: re.Match) -> str:
+    def _block_quote_sub(self, match: re.Match[str]) -> str:
         bq = match.group(1)
         is_spoiler = 'spoiler' in self.extras and self._bq_all_lines_spoilers.match(bq)
         # trim one level of quoting
@@ -2241,7 +2241,7 @@ class Markdown:
         return text
 
     _auto_link_re = re.compile(r'<((https?|ftp):[^\'">\s]+)>', re.I)
-    def _auto_link_sub(self, match: re.Match) -> str:
+    def _auto_link_sub(self, match: re.Match[str]) -> str:
         g1 = match.group(1)
         return '<a href="{}">{}</a>'.format(self._protect_url(g1), g1)
 
@@ -2255,7 +2255,7 @@ class Markdown:
           )
           >
         """, re.I | re.X | re.U)
-    def _auto_email_link_sub(self, match: re.Match) -> str:
+    def _auto_email_link_sub(self, match: re.Match[str]) -> str:
         return self._encode_email_address(
             self._unescape_special_chars(match.group(1)))
 
@@ -2394,7 +2394,7 @@ class Markdown:
         return ''.join(blocks)
 
     @staticmethod
-    def _match_overlaps_substr(text, match: re.Match, substr: str) -> bool:
+    def _match_overlaps_substr(text: str, match: re.Match[str], substr: str) -> bool:
         '''
         Checks if a regex match overlaps with a substring in the given text.
         '''
@@ -2536,7 +2536,7 @@ class ItalicAndBoldProcessor(Extra):
         super().__init__(md, options)
         self.hash_table = {}
 
-    def run(self, text):
+    def run(self, text: str):
         if self.md.order < Stage.ITALIC_AND_BOLD:
             text = self.strong_re.sub(self.sub, text)
             text = self.em_re.sub(self.sub, text)
@@ -2550,15 +2550,15 @@ class ItalicAndBoldProcessor(Extra):
         return text
 
     @abstractmethod
-    def sub(self, match: re.Match) -> str:
+    def sub(self, match: re.Match[str]) -> str:
         # do nothing. Let `Markdown._do_italics_and_bold` do its thing later
         return match.string[match.start(): match.end()]
 
-    def sub_hash(self, match: re.Match) -> str:
+    def sub_hash(self, match: re.Match[str]) -> str:
         substr = match.string[match.start(): match.end()]
         return self.md._hash_span(substr, self.hash_table)
 
-    def test(self, text):
+    def test(self, text: str):
         if self.md.order < Stage.ITALIC_AND_BOLD:
             return '*' in text or '_' in text
         return self.hash_table and re.search(r'md5-[0-9a-z]{32}', text)
@@ -2572,7 +2572,7 @@ class GFMItalicAndBoldProcessor(Extra):
     name = 'gfm-italic-and-bold-processor'
     order = (Stage.ITALIC_AND_BOLD,), tuple()
 
-    def run(self, text):
+    def run(self, text: str):
         nesting = True
         orig_text = ""
         while nesting and orig_text != _hash_text(text):
@@ -2695,8 +2695,8 @@ class GFMItalicAndBoldProcessor(Extra):
         return text
 
     def process_span(
-            self, open: re.Match, close: re.Match,
-            offset: int, middle: Optional[re.Match] = None
+            self, open: re.Match[str], close: re.Match[str],
+            offset: int, middle: Optional[re.Match[str]] = None
         ) -> Tuple[List[str], Optional[int]]:
         '''
         Args:
@@ -2763,9 +2763,9 @@ class GFMItalicAndBoldProcessor(Extra):
         return tokens, close_delim_chars_used
 
     def has_middle(
-        self, open: re.Match, close: re.Match, opens: List[re.Match],
-        unused_opens: Dict[re.Match, int], unused_closes: List[re.Match]
-    ) -> Union[Tuple[re.Match, Optional[re.Match]], Literal[False]]:
+        self, open: re.Match[str], close: re.Match[str], opens: List[re.Match[str]],
+        unused_opens: Dict[re.Match[str], int], unused_closes: List[re.Match[str]]
+    ) -> Union[Tuple[re.Match[str], Optional[re.Match[str]]], Literal[False]]:
         '''
         Check if an emphasis span has a middle delimiter run, which may change the outer tags
 
@@ -2812,9 +2812,9 @@ class GFMItalicAndBoldProcessor(Extra):
         return open, middle
 
     def should_process_imbalanced_delimiter_runs(
-        self, open: re.Match, close: re.Match,
-        unused_opens: Dict[re.Match, int],
-        next_delim_run: Optional[Tuple[re.Match, Optional[re.Match], Optional[re.Match]]] = None
+        self, open: re.Match[str], close: re.Match[str],
+        unused_opens: Dict[re.Match[str], int],
+        next_delim_run: Optional[Tuple[re.Match[str], Optional[re.Match[str]], Optional[re.Match[str]]]] = None
     ):
         '''
         Check if an imbalanced delimiter run should be consumed now, or left for a later pass
@@ -2862,7 +2862,7 @@ class GFMItalicAndBoldProcessor(Extra):
         # mark as unused and leave for later processing
         return False
 
-    def delimiter_left_or_right(self, delim_run: re.Match):
+    def delimiter_left_or_right(self, delim_run: re.Match[str]):
         '''
         Determine if a delimiter run is left or right flanking
 
@@ -2905,7 +2905,7 @@ class GFMItalicAndBoldProcessor(Extra):
 
         return left, right
 
-    def body_crosses_span_borders(self, open: re.Match, close: re.Match):
+    def body_crosses_span_borders(self, open: re.Match[str], close: re.Match[str]):
         '''
         Checks if the body of an emphasis crosses a span border
 
@@ -2927,7 +2927,7 @@ class GFMItalicAndBoldProcessor(Extra):
 
         return False
 
-    def _next_run(self, delim_runs_iter: Iterator[re.Match]):
+    def _next_run(self, delim_runs_iter: Iterator[re.Match[str]]):
         '''
         Gets the next delimiter run from an iterator of delimiter runs
 
@@ -2935,7 +2935,7 @@ class GFMItalicAndBoldProcessor(Extra):
             A tuple containing the run, and matches dictating whether it is left or right flanking
             respectively. Returns nothing if no valid runs left
         '''
-        next_delim_run: Optional[Tuple[re.Match, bool, bool]] = None
+        next_delim_run: Optional[Tuple[re.Match[str], bool, bool]] = None
         try:
             while not next_delim_run:
                 delim_run = next(delim_runs_iter)
@@ -2945,7 +2945,7 @@ class GFMItalicAndBoldProcessor(Extra):
         except StopIteration:
             return
 
-    def test(self, text):
+    def test(self, text: str):
         return text.count('*') > 1 or text.count('_') > 1
 
 
@@ -3002,7 +3002,7 @@ class LinkProcessor(Extra):
             url = self.md._strip_anglebrackets.sub(r'\1', url)
         return text, url, title, end_idx
 
-    def process_link_shortrefs(self, text: str, link_text: str, start_idx: int) -> Tuple[Optional[re.Match], str]:
+    def process_link_shortrefs(self, text: str, link_text: str, start_idx: int) -> Tuple[Optional[re.Match[str]], str]:
         '''
         Detects shortref links within a string and converts them to normal references
 
@@ -3280,7 +3280,7 @@ class LinkProcessor(Extra):
 
         return text
 
-    def test(self, text):
+    def test(self, text: str):
         return '(' in text or '[' in text
 
 
@@ -3307,10 +3307,10 @@ class Admonitions(Extra):
         re.IGNORECASE | re.MULTILINE | re.VERBOSE
     )
 
-    def test(self, text):
+    def test(self, text: str):
         return self.admonitions_re.search(text) is not None
 
-    def sub(self, match: re.Match) -> str:
+    def sub(self, match: re.Match[str]) -> str:
         lead_indent, admonition_name, title, body = match.groups()
 
         admonition_type = '<strong>%s</strong>' % admonition_name
@@ -3338,7 +3338,7 @@ class Admonitions(Extra):
         # now indent the whole admonition back to where it started
         return self.md._uniform_indent(admonition, lead_indent, False)
 
-    def run(self, text):
+    def run(self, text: str):
         return self.admonitions_re.sub(self.sub, text)
 
 
@@ -3361,10 +3361,10 @@ class Alerts(Extra):
     ''', re.X
     )
 
-    def test(self, text):
+    def test(self, text: str):
         return "<blockquote>" in text
 
-    def sub(self, match: re.Match) -> str:
+    def sub(self, match: re.Match[str]) -> str:
         typ = match["type"].lower()
         heading = f"<em>{match['type'].title()}</em>"
         contents = match["contents"].strip()
@@ -3373,7 +3373,7 @@ class Alerts(Extra):
         else:
             return f'<div class="alert {typ}">\n{heading}\n<p>{contents}\n</div>'
 
-    def run(self, text):
+    def run(self, text: str):
         return self.alert_re.sub(self.sub, text)
 
 
@@ -3390,7 +3390,7 @@ class Breaks(Extra):
     order = (), (Stage.ITALIC_AND_BOLD,)
     options: _BreaksExtraOpts
 
-    def run(self, text):
+    def run(self, text: str):
         on_backslash = self.options.get('on_backslash', False)
         on_newline = self.options.get('on_newline', False)
 
@@ -3425,7 +3425,7 @@ class CodeFriendly(GFMItalicAndBoldProcessor):
             _hash_text(self.name + '__'): '__'
         }
 
-    def run(self, text):
+    def run(self, text: str):
         if self.md.order < Stage.ITALIC_AND_BOLD:
             text = super().run(text)
         else:
@@ -3436,7 +3436,7 @@ class CodeFriendly(GFMItalicAndBoldProcessor):
                     text = text.replace(key, substr)
         return text
 
-    def process_span(self, open: re.Match, close: re.Match, offset: int, middle: Optional[re.Match] = None):
+    def process_span(self, open: re.Match[str], close: re.Match[str], offset: int, middle: Optional[re.Match[str]] = None):
         text = open.string[open.start(): close.end()]
         open_syntax = open.group(1)[offset:]
         close_syntax = close.group(1)
@@ -3483,7 +3483,7 @@ class FencedCodeBlocks(Extra):
         \1[ \t]*\n                      # closing fence
         ''', re.M | re.X | re.S)
 
-    def test(self, text):
+    def test(self, text: str):
         if '```' not in text:
             return False
         if self.md.stage == Stage.PREPROCESS and not self.md.safe_mode:
@@ -3547,7 +3547,7 @@ class FencedCodeBlocks(Extra):
             code_class = self.md._html_class_str_from_tag('code')
         return ('<pre{}><code{}>'.format(pre_class, code_class), '</code></pre>')
 
-    def sub(self, match: re.Match) -> str:
+    def sub(self, match: re.Match[str]) -> str:
         lexer_name = match.group(2)
         codeblock = match.group(3)
         codeblock = codeblock[:-1]  # drop one trailing newline
@@ -3585,7 +3585,7 @@ class FencedCodeBlocks(Extra):
             f'{trailing_newlines}'
         )
 
-    def run(self, text):
+    def run(self, text: str):
         return self.fenced_code_block_re.sub(self.sub, text)
 
 
@@ -3618,7 +3618,7 @@ class Latex(Extra):
         self.code_blocks[placeholder] = match.group(0)
         return placeholder
 
-    def run(self, text):
+    def run(self, text: str):
         try:
             import latex2mathml.converter
             self.converter = latex2mathml.converter
@@ -3651,7 +3651,7 @@ class LinkPatterns(Extra):
 
     _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
 
-    def run(self, text):
+    def run(self, text: str):
         link_from_hash = {}
         for regex, repl in self.options:
             replacements = []
@@ -3707,7 +3707,7 @@ class LinkPatterns(Extra):
             text = text.replace(hash, link)
         return text
 
-    def test(self, text):
+    def test(self, text: str):
         return True
 
 
@@ -3721,8 +3721,8 @@ class MarkdownInHTML(Extra):
     name = 'markdown-in-html'
     order = (), (Stage.HASH_HTML,)
 
-    def run(self, text):
-        def callback(block):
+    def run(self, text: str):
+        def callback(block: str):
             indent, block = self.md._uniform_outdent(block)
             block = self.md._hash_html_block_sub(block)
             block = self.md._uniform_indent(block, indent, include_empty_lines=True, indent_empty_lines=False)
@@ -3730,7 +3730,7 @@ class MarkdownInHTML(Extra):
 
         return self.md._strict_tag_block_sub(text, self.md._block_tags_a, callback, True)
 
-    def test(self, text):
+    def test(self, text: str):
         return True
 
 
@@ -3772,7 +3772,7 @@ class MarkdownFileLinks(LinkProcessor):
 
         return super().run(text)
 
-    def test(self, text):
+    def test(self, text: str):
         return super().test(text) and '.md' in text
 
 
@@ -3780,7 +3780,7 @@ class Mermaid(FencedCodeBlocks):
     name = 'mermaid'
     order = (FencedCodeBlocks,), ()
 
-    def tags(self, lexer_name):
+    def tags(self, lexer_name: str):
         if lexer_name == 'mermaid':
             return ('<pre class="mermaid-pre"><div class="mermaid">', '</div></pre>')
         return super().tags(lexer_name)
@@ -3834,7 +3834,7 @@ class MiddleWordEm(GFMItalicAndBoldProcessor):
             '*': _hash_text(self.name + '*')
         }
 
-    def run(self, text):
+    def run(self, text: str):
         if self.options['allowed']:
             # if middle word em is allowed, do nothing. This extra's only use is to prevent them
             return text
@@ -3850,7 +3850,7 @@ class MiddleWordEm(GFMItalicAndBoldProcessor):
 
         return text
 
-    def sub(self, match: re.Match):
+    def sub(self, match: re.Match[str]):
         if match.re != self.middle_word_em_re:
             return super().sub(match)
 
@@ -3872,7 +3872,7 @@ class Numbering(Extra):
     name = 'numbering'
     order = (Stage.LINK_DEFS,), ()
 
-    def run(self, text):
+    def run(self, text: str):
         # First pass to define all the references
         regex_defns = re.compile(r'''
             \[\#(\w+) # the counter.  Open square plus hash plus a word \1
@@ -3937,10 +3937,10 @@ class PyShell(Extra):
     name = 'pyshell'
     order = (), (Stage.LISTS,)
 
-    def test(self, text):
+    def test(self, text: str):
         return ">>>" in text
 
-    def sub(self, match: re.Match) -> str:
+    def sub(self, match: re.Match[str]) -> str:
         if "fenced-code-blocks" in self.md.extras:
             dedented = _dedent(match.group(0))
             return self.md.extra_classes['fenced-code-blocks'].run("```pycon\n" + dedented + "```\n")
@@ -3953,7 +3953,7 @@ class PyShell(Extra):
              + '\n')
         return s
 
-    def run(self, text):
+    def run(self, text: str):
         less_than_tab = self.md.tab_width - 1
         _pyshell_block_re = re.compile(r"""
             ^([ ]{0,%d})>>>[ ].*\n  # first line
@@ -3994,7 +3994,7 @@ class SmartyPants(Extra):
                 "&#8217;%s" % c.capitalize())
         return text
 
-    def run(self, text):
+    def run(self, text: str):
         """Fancifies 'single quotes', "double quotes", and apostrophes.
         Converts --, ---, and ... into en dashes, em dashes, and ellipses.
 
@@ -4027,7 +4027,7 @@ class SmartyPants(Extra):
 
         return text
 
-    def test(self, text):
+    def test(self, text: str):
         return any(i in text for i in (
             "'",
             '"',
@@ -4046,10 +4046,10 @@ class Strike(Extra):
 
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
 
-    def run(self, text):
+    def run(self, text: str):
         return self._strike_re.sub(r"<s>\1</s>", text)
 
-    def test(self, text):
+    def test(self, text: str):
         return '~~' in text
 
 
@@ -4062,7 +4062,7 @@ class Tables(Extra):
     name = 'tables'
     order = (), (Stage.LISTS,)
 
-    def run(self, text):
+    def run(self, text: str):
         """Copying PHP-Markdown and GFM table syntax. Some regex borrowed from
         https://github.com/michelf/php-markdown/blob/lib/Michelf/Markdown.php#L2538
         """
@@ -4091,7 +4091,7 @@ class Tables(Extra):
             ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
         return table_re.sub(self.sub, text)
 
-    def sub(self, match: re.Match) -> str:
+    def sub(self, match: re.Match[str]) -> str:
         trim_space_re = r'^\s+|\s+$'
         trim_bar_re = r'^\||\|$'
         split_bar_re = r'^\||(?<![\`\\])\|'
@@ -4146,10 +4146,10 @@ class TelegramSpoiler(Extra):
 
     _tg_spoiler_re = re.compile(r"\|\|\s?(.+?)\s?\|\|", re.S)
 
-    def run(self, text):
+    def run(self, text: str):
         return self._tg_spoiler_re.sub(r"<tg-spoiler>\1</tg-spoiler>", text)
 
-    def test(self, text):
+    def test(self, text: str):
         return '||' in text
 
 
@@ -4162,10 +4162,10 @@ class Underline(Extra):
 
     _underline_re = re.compile(r"(?<!<!)--(?!>)(?=\S)(.+?)(?<=\S)(?<!<!)--(?!>)", re.S)
 
-    def run(self, text):
+    def run(self, text: str):
         return self._underline_re.sub(r"<u>\1</u>", text)
 
-    def test(self, text):
+    def test(self, text: str):
         return '--' in text
 
 
@@ -4188,11 +4188,11 @@ class Wavedrom(Extra):
     order = (Stage.CODE_BLOCKS, FencedCodeBlocks), ()
     options: _WavedromExtraOpts
 
-    def test(self, text):
+    def test(self, text: str):
         match = FencedCodeBlocks.fenced_code_block_re.search(text)
         return match is None or match.group(2) == 'wavedrom'
 
-    def sub(self, match: re.Match) -> str:
+    def sub(self, match: re.Match[str]) -> str:
         # dedent the block for processing
         lead_indent, waves = self.md._uniform_outdent(match.group(3))
         # default tags to wrap the wavedrom block in
@@ -4217,7 +4217,7 @@ class Wavedrom(Extra):
             lead_indent, include_empty_lines=True
         )
 
-    def run(self, text):
+    def run(self, text: str):
         return FencedCodeBlocks.fenced_code_block_re.sub(self.sub, text)
 
 
@@ -4229,7 +4229,7 @@ class WikiTables(Extra):
     name = 'wiki-tables'
     order = (Tables,), ()
 
-    def run(self, text):
+    def run(self, text: str):
         less_than_tab = self.md.tab_width - 1
         wiki_table_re = re.compile(r'''
             (?:(?<=\n\n)|\A\n?)            # leading blank line
@@ -4238,7 +4238,7 @@ class WikiTables(Extra):
             ''' % less_than_tab, re.M | re.X)
         return wiki_table_re.sub(self.sub, text)
 
-    def sub(self, match: re.Match) -> str:
+    def sub(self, match: re.Match[str]) -> str:
         ttext = match.group(0).strip()
         rows = []
         for line in ttext.splitlines(0):
@@ -4379,7 +4379,7 @@ def _curry(function: Callable, *args, **kwargs) -> Callable:
 
 
 # Recipe: regex_from_encoded_pattern (1.0)
-def _regex_from_encoded_pattern(s: str) -> re.Pattern:
+def _regex_from_encoded_pattern(s: str) -> re.Pattern[str]:
     """'foo'    -> re.compile(re.escape('foo'))
        '/foo/'  -> re.compile('foo')
        '/foo/i' -> re.compile('foo', re.I)
@@ -4527,7 +4527,7 @@ class _memoized:
         return self.func.__doc__
 
 
-def _xml_oneliner_re_from_tab_width(tab_width: int) -> re.Pattern:
+def _xml_oneliner_re_from_tab_width(tab_width: int) -> re.Pattern[str]:
     """Standalone XML processing instruction regex."""
     return re.compile(r"""
         (?:
@@ -4549,7 +4549,7 @@ def _xml_oneliner_re_from_tab_width(tab_width: int) -> re.Pattern:
 _xml_oneliner_re_from_tab_width = _memoized(_xml_oneliner_re_from_tab_width)
 
 
-def _hr_tag_re_from_tab_width(tab_width: int) -> re.Pattern:
+def _hr_tag_re_from_tab_width(tab_width: int) -> re.Pattern[str]:
     return re.compile(r"""
         (?:
             (?<=\n\n)       # Starting after a blank line
