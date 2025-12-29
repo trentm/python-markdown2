@@ -514,12 +514,7 @@ class Markdown:
         text = self._run_block_gamut(text)
 
         if "footnotes" in self.extras:
-            def footnote_sub(match):
-                normed_id = match.group(1)
-                self.footnote_ids.append(normed_id)
-                return str(len(self.footnote_ids))
-
-            text = re.sub(r'%s-(.*?)(?=</a></sup>)' % self._footnote_marker, footnote_sub, text)
+            text = self._do_footnote_marker(text)
             text = self._add_footnotes(text)
 
         text = self.postprocess(text)
@@ -571,6 +566,15 @@ class Markdown:
         if "metadata" in self.extras:
             rv.metadata = self.metadata
         return rv
+
+    def _do_footnote_marker(self, text):
+        def footnote_sub(match):
+            normed_id = match.group(1)
+            if normed_id not in self.footnote_ids:
+                self.footnote_ids.append(normed_id)
+            return str(len(self.footnote_ids))
+
+        return re.sub(r'%s-(.*?)(?=</a></sup>)' % self._footnote_marker, footnote_sub, text)
 
     @mark_stage(Stage.POSTPROCESS)
     def postprocess(self, text: str) -> str:
@@ -2170,7 +2174,12 @@ class Markdown:
                 if i != 0:
                     footer.append('')
                 footer.append('<li id="fn-%s">' % id)
-                footer.append(self._run_block_gamut(self.footnotes[id]))
+                footer.append(
+                    # handle any nested footnote markers
+                    self._do_footnote_marker(
+                        self._run_block_gamut(self.footnotes[id])
+                    )
+                )
                 try:
                     backlink = ('<a href="#fnref-%s" ' +
                             'class="footnoteBackLink" ' +
