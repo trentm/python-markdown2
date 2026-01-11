@@ -555,12 +555,12 @@ def _one_line_summary_from_text(text, length=78,
 def test_cases():
     """This is called by test.py to build up the test cases."""
     TMTestCase.generate_tests()
-    yield TMTestCase
+    TMTestCase()
     MarkdownTestTestCase.generate_tests()
-    yield MarkdownTestTestCase
+    MarkdownTestTestCase()
     PHPMarkdownTestCase.generate_tests()
-    yield PHPMarkdownTestCase
+    PHPMarkdownTestCase()
     PHPMarkdownExtraTestCase.generate_tests()
-    yield PHPMarkdownExtraTestCase
-    yield DirectTestCase
-    yield DocTestsTestCase
+    PHPMarkdownExtraTestCase()
+    DirectTestCase()
+    DocTestsTestCase()
