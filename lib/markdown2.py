@@ -1655,7 +1655,7 @@ class Markdown:
         text = match.string[match.start(): match.end()]
         h_level = int(match.group(1))
         # extract id= attr from tag, trying to account for regex "misses"
-        id_attr = (re.match(r'.*?id=(\S+)?.*', match.group(2) or '') or '')
+        id_attr = (re.match(r'.*?id="(\S+)?".*', match.group(2) or '') or '')
         if id_attr:
             # if id attr exists, extract that
             id_attr = id_attr.group(1) or ''
