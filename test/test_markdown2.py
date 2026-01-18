@@ -313,6 +313,24 @@ versions of markdown2.py this was pathologically slow:</p>
         self.assertEqual(expected_toc_html, md.convert(html).toc_html)
     test_toc_with_persistent_object.tags = ["toc", "issue208"]
 
+    def test_toc_with_inline_code(self):
+        """
+        Tests that the toc does not contain a hash entry when the header is inline code.
+        """
+        md = markdown2.Markdown(extras={
+            "header-ids": {"mixed": True,},
+            "toc": {"depth": 1},
+        })
+        html = """
+# `bla`
+        """
+        expected_toc_html = """<ul>
+  <li><a href="#bla"><code>bla</code></a></li>
+</ul>
+"""
+        self.assertEqual(expected_toc_html, md.convert(html).toc_html)
+    test_toc_with_inline_code.tags = ["toc", "issue675"]
+
 
 class DocTestsTestCase(unittest.TestCase):
     def test_api(self):
