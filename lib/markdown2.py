@@ -3620,7 +3620,7 @@ class Latex(Extra):
         return self.converter.convert(match.group(1))
 
     def _convert_double_match(self, match):
-        return self.converter.convert(match.group(1).replace(r"\n", ''), display="block")
+        return self.converter.convert(match.group(1).replace("\n", ''), display="block")
 
     def code_placeholder(self, match):
         placeholder = f"<!--CODE_BLOCK_{len(self.code_blocks)}-->"
