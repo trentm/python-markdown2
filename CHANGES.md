@@ -1,5 +1,10 @@
 # python-markdown2 Changelog
 
+## python-markdown2 2.5.6 (not yet released)
+
+(nothing yet)
+
+
 ## python-markdown2 2.5.5
 
 - [pull #639] Fix middle-word-em interfering with strongs (#637)
