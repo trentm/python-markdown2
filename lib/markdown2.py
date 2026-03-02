@@ -1460,7 +1460,7 @@ class Markdown:
           [ ]?          # one optional space
           (?:\n[ ]*)?   # one optional newline followed by spaces
           \[
-            (?P<id>.*?)
+            (?P<id>[^\[\]]*?)
           \]
         ''', re.X | re.S)
 
@@ -3179,7 +3179,6 @@ class LinkProcessor(Extra):
                 start_idx = text.index('[', curr_pos)
             except ValueError:
                 break
-            text_length = len(text)
 
             # Find the matching closing ']'.
             # Markdown.pl allows *matching* brackets in link text so we
@@ -3190,7 +3189,7 @@ class LinkProcessor(Extra):
 
             for p in range(
                 start_idx + 1,
-                min(start_idx + MAX_LINK_TEXT_SENTINEL, text_length)
+                min(start_idx + MAX_LINK_TEXT_SENTINEL, len(text))
             ):
                 ch = text[p]
                 if ch == ']':
