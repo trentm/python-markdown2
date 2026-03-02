@@ -8,6 +8,7 @@
 - [pull #659] Fix a number of safemode issues (#647)
 - [pull #665] Rewrite emphasis and strong processing to be more GFM compliant
 - [pull #672] Fix nested footnote references (#664)
+- [pull #681] Forbid square brackets in reference link IDs
 
 
 ## python-markdown2 2.5.4
