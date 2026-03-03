@@ -6,6 +6,7 @@ include CHANGES.md
 include Makefile
 include setup.py
 include setup.cfg
+include tox.ini
 
 include bin/markdown2
 include test/api.doctests
