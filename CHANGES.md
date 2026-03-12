@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.5.6 (not yet released)
 
-(nothing yet)
+- [pull #687] Fix AssertionError hashing HTML blocks spread over multiple lines (#686)
 
 
 ## python-markdown2 2.5.5
