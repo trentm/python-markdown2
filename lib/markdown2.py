@@ -2036,16 +2036,7 @@ class Markdown:
         self._code_table[text] = hashed
         return hashed
 
-    _strong_re = re.compile(r'''
-        (?:_{1,}|\*{1,})?  # ignore any leading em chars because we want to wrap `<strong>` as tightly around the text as possible
-                           # eg: `***abc***` -> `*<strong>abc</strong>*` instead of `<strong>*abc*</strong>`
-                           # Makes subsequent <em> processing easier
-        (\*\*|__)(?=\S)    # strong syntax - must be followed by a non whitespace char
-        (.+?)              # the strong text itself
-        (?<=\S)\1          # closing syntax - must be preceeded by non whitespace char
-        ''',
-        re.S | re.X
-    )
+    _strong_re = _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]?)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.*?\S)\1", re.S)
 
     _iab_processor = None
