@@ -3270,6 +3270,9 @@ class LinkProcessor(Extra):
                 .replace('_', self.md._escape_table['_'])
             )
             if title:
+                if self.md.safe_mode:
+                    # expose code span contents for escaping - fix #691
+                    title = self.md._unhash_html_spans(title, spans=False, code=True)
                 title = (
                     _xml_escape_attr(title)
                     .replace('*', self.md._escape_table['*'])
