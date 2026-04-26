@@ -7,7 +7,6 @@ import re
 from glob import glob
 import operator
 import shutil
-import codecs
 
 
 TMP = "tmp-"
@@ -16,16 +15,16 @@ def gen_aspn_cases(limit=0):
     base_dir = TMP+'aspn-cases'
     if exists(base_dir):
         print("'%s' exists, skipping" % base_dir)
-        return 
+        return
     os.makedirs(base_dir)
     sys.stdout.write("generate %s" % base_dir); sys.stdout.flush()
     recipes_path = expanduser("~/as/code.as.com/db/aspn/recipes.pprint")
-    recipe_dicts = eval(open(recipes_path).read())
+    with open(recipes_path) as f:
+        recipe_dicts = eval(f.read())
     for i, r in enumerate(recipe_dicts):
         sys.stdout.write('.'); sys.stdout.flush()
-        f = codecs.open(join(base_dir, "r%04d.text" % i), "w", "utf-8")
-        f.write(r["desc"])
-        f.close()
+        with open(join(base_dir, "r%04d.text" % i), "w", encoding="utf-8") as f:
+            f.write(r["desc"])
 
         for j, c in enumerate(sorted(r["comments"],
                         key=operator.itemgetter("pub_date"))):
@@ -36,10 +35,8 @@ def gen_aspn_cases(limit=0):
                     headline += '.'
                 headline = _markdown_from_aspn_html(headline).strip()
                 text = "**" + headline + "**  " + text
-            f = codecs.open(join(base_dir, "r%04dc%02d.text" % (i, j)),
-                            'w', "utf-8")
-            f.write(text)
-            f.close()
+            with open(join(base_dir, "r%04dc%02d.text" % (i, j)), 'w', encoding="utf-8") as f:
+                f.write(text)
 
         if limit and i >= limit:
             break
@@ -49,7 +46,7 @@ def gen_test_cases():
     base_dir = TMP+"test-cases"
     if exists(base_dir):
         print("'%s' exists, skipping" % base_dir)
-        return 
+        return
     os.makedirs(base_dir)
     print("generate %s" % base_dir)
     for test_cases_dir in glob(join("..", "test", "*-cases")):
@@ -106,10 +103,10 @@ def _markdown_from_aspn_html(html):
         if title is None:
             replacement = '[{}]({})'.format(content, escaped_href)
         else:
-            replacement = '[{}]({} "{}")'.format(content, escaped_href, 
+            replacement = '[{}]({} "{}")'.format(content, escaped_href,
                                              title.replace('"', "'"))
         markdown = markdown[:start] + replacement + markdown[end:]
-        
+
     markdown = markdown.replace("&nbsp;", ' ')
 
     # <pre> part 1: Pull out <pre>-blocks and put in placeholders
@@ -179,18 +176,18 @@ def _markdown_from_aspn_html(html):
 # Recipe: dedent (0.1.2)
 def _dedentlines(lines, tabsize=8, skip_first_line=False):
     """_dedentlines(lines, tabsize=8, skip_first_line=False) -> dedented lines
-    
+
         "lines" is a list of lines to dedent.
         "tabsize" is the tab width to use for indent width calculations.
         "skip_first_line" is a boolean indicating if the first line should
             be skipped for calculating the indent width and for dedenting.
             This is sometimes useful for docstrings and similar.
-    
+
     Same as dedent() except operates on a sequence of lines. Note: the
     lines list is modified **in-place**.
     """
     DEBUG = False
-    if DEBUG: 
+    if DEBUG:
         print("dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
               % (tabsize, skip_first_line))
     indents = []
@@ -255,7 +252,7 @@ def _dedent(text, tabsize=8, skip_first_line=False):
         "skip_first_line" is a boolean indicating if the first line should
             be skipped for calculating the indent width and for dedenting.
             This is sometimes useful for docstrings and similar.
-    
+
     textwrap.dedent(s), but don't expand tabs to spaces
     """
     lines = text.splitlines(1)

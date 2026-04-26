@@ -114,7 +114,6 @@ __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
 import argparse
-import codecs
 import logging
 import re
 import sys
@@ -179,9 +178,8 @@ def markdown_path(
     footnote_return_symbol: Optional[str] = None,
     use_file_vars: bool = False
 ) -> 'UnicodeWithAttrs':
-    fp = codecs.open(path, 'r', encoding)
-    text = fp.read()
-    fp.close()
+    with open(path, 'r', encoding=encoding) as f:
+        text = f.read()
     return Markdown(html4tags=html4tags, tab_width=tab_width,
                     safe_mode=safe_mode, extras=extras,
                     link_patterns=link_patterns,
@@ -4766,9 +4764,8 @@ def main(argv=None):
         if path == '-':
             text = sys.stdin.read()
         else:
-            fp = codecs.open(path, 'r', opts.encoding)
-            text = fp.read()
-            fp.close()
+            with open(path, 'r', encoding=opts.encoding) as f:
+                text = f.read()
         if opts.compare:
             from subprocess import PIPE, Popen
             print("==== Markdown.pl ====")

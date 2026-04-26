@@ -12,7 +12,6 @@ Limitations:
 
 __version__ = "1.0.0"
 
-import codecs
 import re
 import sys
 from collections import defaultdict
@@ -100,7 +99,8 @@ def tables_align_columns(path):
         table_str = '\n'.join(('| ' + ' | '.join(r) + ' |') for r in table)
         return table_str + '\n'
 
-    text = codecs.open(path, 'rb', 'utf8').read()
+    with open(path, 'rb', encoding='utf8') as f:
+        text = f.read()
 
     less_than_tab = 3
     table_re = re.compile(r'''

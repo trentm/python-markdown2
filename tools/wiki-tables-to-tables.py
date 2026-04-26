@@ -33,7 +33,6 @@ Limitations:
 
 __version__ = "1.0.0"
 
-import codecs
 import re
 import sys
 
@@ -77,7 +76,8 @@ def wiki_tables_to_tables(path):
         table_str = '\n'.join(('| ' + ' | '.join(r) + ' |') for r in table)
         return table_str + '\n'
 
-    text = codecs.open(path, 'rb', 'utf8').read()
+    with open(path, 'rb', encoding='utf8') as f:
+        text = f.read()
 
     # If there is a leading markdown2 metadata block with;
     #    markdown2extras: ..., wiki-tables, ...

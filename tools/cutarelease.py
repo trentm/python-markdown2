@@ -19,7 +19,6 @@ import sys
 import os
 from os.path import exists, basename, splitext
 import re
-import codecs
 import logging
 import optparse
 import json
@@ -146,9 +145,8 @@ def cutarelease(project_name, version_files, dry_run=False):
     changes_txt = changes_txt.replace(" (not yet released)", "", 1)
     if not dry_run and changes_txt != changes_txt_before:
         log.info("prepare `%s' for release", changes_path)
-        f = codecs.open(changes_path, 'w', 'utf-8')
-        f.write(changes_txt)
-        f.close()
+        with open(changes_path, 'w', encoding='utf-8') as f:
+            f.write(changes_txt)
         run('git commit %s -m "prepare for %s release"'
             % (changes_path, version))
 
@@ -196,14 +194,14 @@ def cutarelease(project_name, version_files, dry_run=False):
     changes_txt = changes_txt.replace(marker + '\n',
         "{}\n\n(nothing yet)\n\n\n{}\n".format(next_verline, marker))
     if not dry_run:
-        f = codecs.open(changes_path, 'w', 'utf-8')
-        f.write(changes_txt)
-        f.close()
+        with open(changes_path, 'w', encoding='utf-8') as f:
+            f.write(changes_txt)
 
     # - update version file
     next_version_tuple = _tuple_from_version(next_version)
     for i, ver_file in enumerate(version_files):
-        ver_content = codecs.open(ver_file, 'r', 'utf-8').read()
+        with open(ver_file, 'r', encoding='utf-8') as f:
+            ver_content = f.read()
         ver_file_type, ver_info = parsed_version_files[i]
         if ver_file_type == "json":
             marker = '"version": "%s"' % version
@@ -232,9 +230,8 @@ def cutarelease(project_name, version_files, dry_run=False):
             raise Error("unknown ver_file_type: %r" % ver_file_type)
         if not dry_run:
             log.info("update version to '%s' in '%s'", next_version, ver_file)
-            f = codecs.open(ver_file, 'w', 'utf-8')
-            f.write(ver_content)
-            f.close()
+            with open(ver_file, 'w', encoding='utf-8') as f:
+                f.write(ver_content)
 
     if not dry_run:
         run('git commit {} {} -m "prep for future dev"'.format(
@@ -319,9 +316,8 @@ def _parse_version_file(version_file):
         if version_file_type in aliases:
             version_file_type = aliases[version_file_type]
 
-    f = codecs.open(version_file, 'r', 'utf-8')
-    content = f.read()
-    f.close()
+    with open(version_file, 'r', encoding='utf-8') as f:
+        content = f.read()
 
     if not version_file_type:
         # Guess the type.
@@ -410,7 +406,8 @@ def parse_changelog(changes_path):
     """
     if not exists(changes_path):
         raise Error("changelog file '%s' not found" % changes_path)
-    content = codecs.open(changes_path, 'r', 'utf-8').read()
+    with open(changes_path, 'r', encoding='utf-8') as f:
+        content = f.read()
 
     parser = re.compile(
         r'^##\s*(?P<verline>[^\n]*?)\s*$(?P<body>.*?)(?=^##|\Z)',

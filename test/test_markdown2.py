@@ -51,16 +51,19 @@ class _MarkdownTestCase(unittest.TestCase):
 
     def _assertMarkdownPath(self, text_path, encoding="utf-8", opts=None,
             toc_html_path=None, metadata_path=None):
-        text = codecs.open(text_path, 'r', encoding=encoding).read()
+        with open(text_path, 'r', encoding=encoding) as f:
+            text = f.read()
         html_path = splitext(text_path)[0] + ".html"
-        html = codecs.open(html_path, 'r', encoding=encoding).read()
+        with open(html_path, 'r', encoding=encoding) as f:
+            html = f.read()
         extra = {}
         if toc_html_path:
-            extra["toc_html"] = codecs.open(toc_html_path, 'r', encoding=encoding).read()
+            with open(toc_html_path, 'r', encoding=encoding) as f:
+                extra["toc_html"] = f.read()
             extra["toc_html_path"] = toc_html_path
         if metadata_path:
-            extra["metadata"] = json_loads(
-                codecs.open(metadata_path, 'r', encoding=encoding).read())
+            with open(metadata_path, 'r', encoding=encoding) as f:
+                extra["metadata"] = json_loads(f.read())
             extra["metadata_path"] = metadata_path
         self._assertMarkdown(text, html, text_path, html_path, opts=opts, **extra)
 
@@ -152,7 +155,8 @@ class _MarkdownTestCase(unittest.TestCase):
             if exists(opts_path):
                 try:
                     with warnings.catch_warnings(record=True) as caught_warnings:
-                        opts = eval(open(opts_path).read())
+                        with open(opts_path) as f:
+                            opts = eval(f.read())
                     for warning in caught_warnings:
                         print("WARNING: loading %s generated warning: %s - lineno %d" % (opts_path, warning.message, warning.lineno), file=sys.stderr)
                 except Exception:
@@ -175,10 +179,11 @@ class _MarkdownTestCase(unittest.TestCase):
             tags_path = splitext(text_path)[0] + ".tags"
             if exists(tags_path):
                 tags = []
-                for line in open(tags_path):
-                    if '#' in line: # allow comments in .tags files
-                        line = line[:line.index('#')]
-                    tags += line.split()
+                with open(tags_path) as f:
+                    for line in f:
+                        if '#' in line: # allow comments in .tags files
+                            line = line[:line.index('#')]
+                        tags += line.split()
                 test_func.tags = tags
 
             name = splitext(basename(text_path))[0]
