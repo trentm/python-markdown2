@@ -12,6 +12,10 @@ test:
 testone:
 	cd test && python test.py -- -knownfailure
 
+.PHONY: testwarn
+testwarn:
+	cd test && python -Wd test.py -- -knownfailure
+
 .PHONY: testredos
 testredos:
 	python test/test_redos.py
