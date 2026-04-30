@@ -5,6 +5,7 @@
 - [pull #687] Fix AssertionError hashing HTML blocks spread over multiple lines (#686)
 - [pull #692] Fix XSS from code spans in link titles (#691)
 - [pull #695] Fix XSS issue from incomplete tags with no attributes (#694)
+- [pull #700] Fix XSS from code spans in image alt text (#699)
 
 
 ## python-markdown2 2.5.5

@@ -3279,6 +3279,10 @@ class LinkProcessor(Extra):
                     curr_pos = start_idx + 1
                     continue
 
+                if link_text and self.md.safe_mode:
+                    # expose code span contents for escaping - fix #699
+                    link_text = self.md._unhash_html_spans(link_text, spans=False, code=True)
+
                 start_idx -= 1
                 result, skip = self.process_image(url, title_str, link_text)
             elif start_idx >= anchor_allowed_pos:
