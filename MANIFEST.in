@@ -6,6 +6,7 @@ include CHANGES.md
 include Makefile
 include setup.py
 include setup.cfg
+include lib/py.typed
 
 include bin/markdown2
 include test/api.doctests
