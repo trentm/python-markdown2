@@ -3,3 +3,5 @@
 ![`" onerror="alert(1)//`]()
 
 ![A](B "<C D="E" onerror=alert(origin) >")
+
+[x](javascript&#58;alert(origin))
