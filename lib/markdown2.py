@@ -3271,6 +3271,8 @@ class LinkProcessor(Extra):
                     .replace('*', self.md._escape_table['*'])
                     .replace('_', self.md._escape_table['_'])
                 )
+                if self.md.safe_mode:
+                    title = self.md._hash_span(title)
                 title_str = f' title="{title}"'
             else:
                 title_str = ''
