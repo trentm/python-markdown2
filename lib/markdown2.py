@@ -1540,7 +1540,7 @@ class Markdown:
         # html encoded colon in a URL still functions as a normal colon, so need to detect those
         protocol_seperators = [':', '&#x3a;', '&#58;', '&colon;']
         # dot seperated hostname, optional port number, not followed by protocol seperator
-        domain = r'(?:[{}]+(?:\.[{}]+)*)(?:(?<!tel):\d+/?)?(?![^:/]*(?:{})/*)'.format(safe, safe, '|'.join(protocol_seperators))
+        domain = r'(?:[{}]+(?:\.[{}]+)*)(?:(?<!tel)(?<!javascript):\d+/?)?(?![^:/]*(?:{})/*)'.format(safe, safe, '|'.join(protocol_seperators))
         fragment = r'[%s]*' % (safe + less_safe)
 
         return re.compile(r'^(?:({})?({})({})|(#|\.{{,2}}/)({}))$'.format(self._safe_protocols, domain, fragment, fragment), re.I)

@@ -5,3 +5,5 @@
 ![A](B "<C D="E" onerror=alert(origin) >")
 
 [x](javascript&#58;alert(origin))
+
+[x](javascript:1/alert(origin))
