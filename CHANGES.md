@@ -8,6 +8,8 @@
 - [pull #700] Fix XSS from code spans in image alt text (#699)
 - [pull #701] Allow boolean attribute syntax in `markdown-in-html` extra
 - [pull #704] Fix XSS from smuggling spans into image attributes (#702, #703)
+- Add ``auto-language`` extra for automatic language detection in fenced
+  code blocks (issue #361)
 
 
 ## python-markdown2 2.5.5

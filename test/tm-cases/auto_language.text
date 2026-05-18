@@ -1,0 +1,19 @@
+A Python code block without a language tag:
+
+```
+def hello():
+    print("Hello")
+```
+
+A JavaScript code block without a language tag:
+
+```
+const x = 42;
+console.log(x);
+```
+
+An explicitly tagged code block should be left as-is:
+
+```bash
+echo hello
+```
