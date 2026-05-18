@@ -92,8 +92,9 @@ as a script:
 '<p><em>boo!</em></p>\n'
 ```
 There are a number of currently implemented extras for tables, footnotes,
-syntax coloring of `<pre>`-blocks, auto-linking patterns, table of contents,
-Smarty Pants (for fancy quotes, dashes, etc.) and more. See the [Extras
+syntax coloring of `<pre>`-blocks, automatic language detection for fenced
+code blocks, auto-linking patterns, table of contents, Smarty Pants (for
+fancy quotes, dashes, etc.) and more. See the [Extras
 wiki page](https://github.com/trentm/python-markdown2/wiki/Extras) for full
 details.
 

@@ -4319,12 +4319,325 @@ class WikiTables(Extra):
         return '||' in text
 
 
+class AutoLanguage(Extra):
+    """
+    Automatically detect the programming language of fenced code blocks
+    that don't have an explicit language tag. Uses heuristic pattern
+    matching to identify common languages (Python, JavaScript, HTML,
+    CSS, SQL, Bash, Java, Go, Rust, Ruby, PHP, JSON, YAML, C/C++).
+
+    When combined with ``fenced-code-blocks`` and Pygments, this enables
+    syntax highlighting for code blocks without manual language markers.
+    """
+    name = 'auto-language'
+    order = (FencedCodeBlocks,), ()
+
+    _fenced_no_lang_re = re.compile(r'''
+        (?:\n+|\A\n?|(?<=\n))
+        (^[ \t]*`{3,})[ \t]*\n      # opening fence, no language
+        (.*?)                        # code content
+        \1[ \t]*\n                  # closing fence
+        ''', re.M | re.X | re.S)
+
+    def run(self, text: str):
+        def add_lang(match):
+            fence = match.group(1)
+            code = match.group(2)
+            # Preserve leading context (newlines) so FencedCodeBlocks
+            # can still match the modified block.
+            leading = match.string[match.start():match.regs[1][0]]
+            lang = detect_language(code)
+            if lang:
+                return f"{leading}{fence}{lang}\n{code}{fence}\n"
+            return match.group(0)
+
+        return self._fenced_no_lang_re.sub(add_lang, text)
+
+    def test(self, text: str) -> bool:
+        return '```' in text
+
+
+def detect_language(code: str):
+    """
+    Detect the programming language of a code snippet using heuristic
+    pattern scoring. Returns a Pygments-compatible language name, or
+    None if no language could be determined with sufficient confidence.
+    """
+    if not code or not code.strip():
+        return None
+
+    scores = {}
+
+    # -- Python --
+    s = 0
+    if re.search(r'^\s*(def\s+\w+\s*\(|class\s+\w+.*:)',
+                 code, re.M):
+        s += 4
+    if re.search(r'^\s*(import\s+\w+|from\s+\w+\s+import\b)',
+                 code, re.M):
+        s += 4
+    if re.search(r'\bself\.', code):
+        s += 3
+    if re.search(
+        r'^\s*(elif\s+|else:|except\s|finally:|try:|with\s|yield\b|raise\s)',
+        code, re.M
+    ):
+        s += 2
+    if re.search(r'\b(print|range|len|enumerate|zip|isinstance|hasattr)\(',
+                 code):
+        s += 1
+    if re.search(r'\b(lambda\s|__\w+__)', code):
+        s += 2
+    if re.search(r'\bNone\b', code):
+        s += 1
+    if re.search(r'^\s*@\w+', code, re.M):
+        s += 2
+    if re.search(r'\b(?:__name__|__main__)\b', code):
+        s += 2
+    scores['python'] = s
+
+    # -- JavaScript / TypeScript --
+    s = 0
+    if re.search(r'\b(?:const|let|var)\s+\w+\s*=', code):
+        s += 3
+    if re.search(r'\bfunction\s+\w+\s*\(', code):
+        s += 3
+    if re.search(r'=>\s*\{', code):
+        s += 3
+    if re.search(r'\bconsole\.(?:log|error|warn)\(', code):
+        s += 2
+    if re.search(r'\bdocument\.\w+', code):
+        s += 2
+    if re.search(
+        r'\b(?:require|module\.exports|export\s+(?:default\s+)?)\b',
+        code
+    ):
+        s += 2
+    if re.search(r'\bnew\s+\w+\s*\(', code):
+        s += 1
+    if re.search(r'\bnull\b', code):
+        s += 1
+    # TypeScript type annotations
+    if re.search(r':\s*(?:string|number|boolean|void)\b', code):
+        s += 2
+    scores['javascript'] = s
+
+    # -- HTML --
+    s = 0
+    if re.search(r'<!DOCTYPE\s+html', code, re.I):
+        s += 5
+    if re.search(
+        r'</?(?:html|head|body|div|span|p|table|tr|td|th|a|ul|ol|li|h[1-6])\b',
+        code, re.I
+    ):
+        s += 3
+    if re.search(
+        r'<(?:script|style|meta|link|title|form|input|button|select'
+        r'|textarea|label|img|br|hr)\b',
+        code, re.I
+    ):
+        s += 2
+    if re.search(r'<[!/]?\w+', code):
+        s += 1
+    scores['html'] = s
+
+    # -- CSS --
+    s = 0
+    if re.search(r'[.#][\w-]+\s*\{', code):
+        s += 3
+    if re.search(
+        r'(?:color|margin|padding|font-size|background|border|width'
+        r'|height|display|position)\s*:',
+        code
+    ):
+        s += 3
+    if re.search(r'@(?:media|keyframes|import|charset)\b', code):
+        s += 2
+    if re.search(r'!important', code):
+        s += 2
+    scores['css'] = s
+
+    # -- SQL --
+    s = 0
+    if re.search(
+        r'\b(?:SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM'
+        r'|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE)\b',
+        code, re.I
+    ):
+        s += 5
+    if re.search(
+        r'\b(?:FROM|WHERE|JOIN|GROUP\s+BY|ORDER\s+BY|HAVING|LIMIT'
+        r'|OFFSET)\b',
+        code, re.I
+    ):
+        s += 2
+    if re.search(r'\b(?:COUNT|SUM|AVG|MAX|MIN)\s*\(', code, re.I):
+        s += 2
+    if re.search(
+        r'\b(?:PRIMARY\s+KEY|FOREIGN\s+KEY|REFERENCES|NOT\s+NULL'
+        r'|AUTO_INCREMENT)\b',
+        code, re.I
+    ):
+        s += 2
+    scores['sql'] = s
+
+    # -- Bash / Shell --
+    s = 0
+    if re.search(r'^#!(?:/bin/|/usr/bin/)(?:ba)?sh', code):
+        s += 5
+    if re.search(r'\b(?:echo|export|source|alias|unset|readonly)\b',
+                 code):
+        s += 2
+    if re.search(r'\$\{?\w+\}?', code):
+        s += 1
+    if re.search(r'\b(?:chmod|chown|mkdir|rmdir|grep|awk|sed|curl|wget)\b',
+                 code):
+        s += 2
+    if re.search(r'\[\[?\s+\$?\w+\s+-[a-z]+\s', code):
+        s += 2
+    if re.search(r';\s*then\b|;\s*do\b|;\s*done\b|;\s*fi\b', code):
+        s += 2
+    scores['bash'] = s
+
+    # -- Java --
+    s = 0
+    if re.search(
+        r'\bpublic\s+(?:class|static\s+void|interface|enum)\b', code
+    ):
+        s += 4
+    if re.search(r'\bSystem\.(?:out|err)\.print', code):
+        s += 3
+    if re.search(
+        r'\b(?:private|protected|public)\s+\w+\s+\w+\s*\(', code
+    ):
+        s += 2
+    if re.search(
+        r'\b(?:String|Integer|Boolean|Double|void|int|boolean|double)'
+        r'\s+\w+\s*[=;(]',
+        code
+    ):
+        s += 1
+    scores['java'] = s
+
+    # -- Go --
+    s = 0
+    if re.search(r'^package\s+\w+', code, re.M):
+        s += 4
+    if re.search(
+        r'\bfunc\s+(?:\(\s*\w+\s+\*?\w+\s*\)\s+)?\w+\s*\(', code
+    ):
+        s += 3
+    if re.search(r'\btype\s+\w+\s+struct\b', code):
+        s += 3
+    if re.search(r':=\s+', code):
+        s += 2
+    if re.search(r'\bfmt\.\w+', code):
+        s += 2
+    if re.search(r'\b(?:go|defer|chan|goroutine)\b', code):
+        s += 2
+    if re.search(r'\bimport\s+\(', code):
+        s += 2
+    if re.search(r'\berr(?:or)?\s*!=\s*nil\b', code):
+        s += 2
+    scores['go'] = s
+
+    # -- Rust --
+    s = 0
+    if re.search(r'\bfn\s+\w+\s*[<(]', code):
+        s += 3
+    if re.search(
+        r'\b(?:let\s+mut|println!|vec!|format!|panic!)\b', code
+    ):
+        s += 3
+    if re.search(
+        r'\b(?:impl|struct|enum|trait|match|where)\b', code
+    ):
+        s += 2
+    if re.search(r'::\s*\w+\s*\(', code):
+        s += 1
+    scores['rust'] = s
+
+    # -- Ruby --
+    s = 0
+    if re.search(r'\bdef\s+\w+\s*$', code, re.M):
+        s += 3
+    if re.search(r'\b(?:puts|print)\s+', code):
+        s += 2
+    if re.search(r'\bend\b', code):
+        s += 1
+    if re.search(r'\.each\s+do\b', code):
+        s += 2
+    if re.search(
+        r'\b(?:require|include|extend|attr_accessor)\b', code
+    ):
+        s += 2
+    scores['ruby'] = s
+
+    # -- PHP --
+    s = 0
+    if re.search(r'<\?php', code):
+        s += 5
+    if re.search(r'\$\w+', code):
+        s += 1
+    if re.search(r'\b(?:echo|function|class)\b', code):
+        s += 1
+    scores['php'] = s
+
+    # -- JSON --
+    s = 0
+    if re.match(r'^\s*[\[{]', code) and re.search(r'[}\]]\s*$', code):
+        s += 2
+        try:
+            import json
+            json.loads(code)
+            s += 5
+        except (json.JSONDecodeError, ValueError):
+            s -= 1
+    scores['json'] = s
+
+    # -- YAML --
+    s = 0
+    if re.search(r'^---\s*$', code, re.M):
+        s += 3
+    if re.search(r'^\w+:\s', code, re.M):
+        s += 2
+    if re.search(r'^\s+-\s+\w+', code, re.M):
+        s += 2
+    scores['yaml'] = s
+
+    # -- C / C++ --
+    s = 0
+    if re.search(r'^\s*#include\s*[<"]', code, re.M):
+        s += 4
+    if re.search(r'\bint\s+main\s*\(', code):
+        s += 3
+    if re.search(
+        r'\b(?:printf|scanf|fprintf|malloc|free|sizeof)\s*\(', code
+    ):
+        s += 2
+    if re.search(r'\b(?:std::|cout|cin|vector|string)\b', code):
+        s += 2
+    if re.search(r'^\s*#define\s+', code, re.M):
+        s += 2
+    scores['cpp'] = s
+
+    if not scores:
+        return None
+
+    best_lang, best_score = max(scores.items(), key=lambda x: x[1])
+    if best_score <= 0:
+        return None
+
+    return best_lang
+
+
 # Register extras
 Admonitions.register()
 Alerts.register()
 Breaks.register()
 CodeFriendly.register()
 FencedCodeBlocks.register()
+AutoLanguage.register()
 Latex.register()
 LinkPatterns.register()
 MarkdownInHTML.register()
