@@ -1421,13 +1421,13 @@ class Markdown:
         '''
         orig = ''
         while text != orig:
+            orig = text
             if spans:
                 for key, sanitized in list(self.html_spans.items()):
                     text = text.replace(key, sanitized)
             if code:
                 for code, key in list(self._code_table.items()):
                     text = text.replace(key, code)
-            orig = text
         return text
 
     def _sanitize_html(self, s: str) -> str:
