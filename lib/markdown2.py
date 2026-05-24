@@ -1128,7 +1128,19 @@ class Markdown:
 
     def _tag_is_closed(self, tag_name: str, text: str) -> bool:
         # check if number of open tags == number of close tags
-        if len(re.findall('<%s(?:.*?)>' % tag_name, text)) != text.count('</%s>' % tag_name):
+        open_count = 0
+        pos = 0
+        open_tag = '<%s' % tag_name
+        while True:
+            pos = text.find(open_tag, pos)
+            if pos == -1:
+                break
+            if text.find('>', pos + len(open_tag)) == -1:
+                return False
+            open_count += 1
+            pos += len(open_tag)
+
+        if open_count != text.count('</%s>' % tag_name):
             return False
 
         # check that close tag position is AFTER open tag
@@ -1303,6 +1315,62 @@ class Markdown:
     # it does this by matching pairs of `\` chars and checking that they're NOT followed by another `\`
     _is_unescaped_re = re.compile(r'^((?:\\\\)*(?!\\))')
 
+    def _sorta_html_tokenize(self, text: str):
+        """Yield (is_html_markup, token) pairs from *text*.
+
+        This replaces the previous ``_sorta_html_tokenize_re.split(text)``
+        approach which was vulnerable to catastrophic backtracking (ReDoS)
+        on malformed HTML fragments.  The new implementation first locates
+        ``<`` characters with a simple linear scan, bounds each candidate
+        token between ``<`` and the next ``>``, then uses the existing
+        regex in ``.match()`` mode on only that bounded substring.  This
+        keeps the regex work O(1) per token instead of O(n) over the
+        full input.
+        """
+        pos = 0
+        while pos < len(text):
+            start = text.find('<', pos)
+            if start == -1:
+                yield False, text[pos:]
+                return
+
+            # Count preceding backslashes to determine if this '<' is escaped.
+            slash_start = start
+            while slash_start > pos and text[slash_start - 1] == '\\':
+                slash_start -= 1
+            if slash_start > pos:
+                yield False, text[pos:slash_start]
+
+            # Determine the extent of the candidate token.
+            if text.startswith('<!--', start):
+                end = text.find('-->', start + 4)
+                if end != -1:
+                    end += 3
+                else:
+                    end = -1
+            elif text.startswith('<?', start):
+                end = text.find('?>', start + 2)
+                if end != -1:
+                    end += 2
+                else:
+                    end = -1
+            else:
+                end = text.find('>', start + 1)
+                if end != -1:
+                    end += 1
+
+            if end == -1:
+                yield False, text[slash_start:]
+                return
+
+            token_match = self._sorta_html_tokenize_re.match(text, slash_start, end)
+            if token_match and token_match.end() == end:
+                yield True, token_match.group(0)
+                pos = end
+            else:
+                yield False, text[slash_start:start + 1]
+                pos = start + 1
+
     @mark_stage(Stage.ESCAPE_SPECIAL)
     def _escape_special_chars(self, text: str) -> str:
         # Python markdown note: the HTML tokenization here differs from
@@ -1312,8 +1380,7 @@ class Markdown:
         # Note, however, that '>' is not allowed in an auto-link URL
         # here.
         escaped = []
-        is_html_markup = False
-        for token in self._sorta_html_tokenize_re.split(text):
+        for is_html_markup, token in self._sorta_html_tokenize(text):
             # check token is preceded by 0 or more PAIRS of escapes, because escape pairs
             # escape themselves and don't affect the token
             if is_html_markup and self._is_unescaped_re.match(token):
@@ -1335,7 +1402,6 @@ class Markdown:
                         token.replace('\\<', '&lt;').replace('\\>', '&gt;')
                     )
                 )
-            is_html_markup = not is_html_markup
         return ''.join(escaped)
 
     def _is_auto_link(self, text):
