@@ -3,3 +3,16 @@
 ![`" onerror="alert(1)//`]()
 
 ![A](B "<C D="E" onerror=alert(origin) >")
+
+[x](javascript&#58;alert(origin))
+
+[x](javascript:1/alert(origin))
+
+- 
+- ![](x '`![](`') onerror=alert(origin) )
+
+![](`<A B="
+" onerror="alert(origin)">`)
+
+![x](<"`"![x][id]
+[id]: x "<A B="" onerror="alert(origin)">`
