@@ -13,3 +13,6 @@
 
 ![](`<A B="
 " onerror="alert(origin)">`)
+
+![x](<"`"![x][id]
+[id]: x "<A B="" onerror="alert(origin)">`

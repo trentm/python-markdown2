@@ -1518,6 +1518,12 @@ class Markdown:
             mime = data_url.group('mime') or ''
             if mime.startswith('image/') and data_url.group('token') == ';base64':
                 charset='base64'
+        else:
+            url = (
+                self._unhash_html_spans(url, code=True)
+                .replace('*', self._escape_table['*'])
+                .replace('_', self._escape_table['_'])
+            )
         url = _html_escape_url(url, safe_mode=self.safe_mode, charset=charset)
         key = _hash_text(url)
         self._escape_table[url] = key
@@ -3236,7 +3242,6 @@ class LinkProcessor(Extra):
                     continue
 
                 text, url, title, url_end_idx = parsed
-                url = self.md._unhash_html_spans(url, code=True)
             # reference anchor or reference img
             else:
                 if not self.options.get('ref', True):
@@ -3255,13 +3260,6 @@ class LinkProcessor(Extra):
                     curr_pos = p
                     continue
 
-            # -- Encode and hash the URL and title to avoid conflicts with italics/bold
-
-            url = (
-                url
-                .replace('*', self.md._escape_table['*'])
-                .replace('_', self.md._escape_table['_'])
-            )
             if title:
                 if self.md.safe_mode:
                     # expose span contents for escaping - fix #691, #703
