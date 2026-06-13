@@ -1104,16 +1104,17 @@ class Markdown:
             block += chunk
 
             if is_markup:
-                if chunk.startswith('%s</' % is_markup.group(1)):
-                    tag_count -= 1
+                if self._tag_is_closed(is_markup.group(3), chunk):
+                    # if close tag is in same line we must ignore these
+                    is_markup = None
                 else:
-                    # if close tag is in same line
-                    if self._tag_is_closed(is_markup.group(3), chunk):
-                        # we must ignore these
-                        is_markup = None
-                    else:
-                        tag_count += 1
-                        current_tag = is_markup.group(3)
+                    # add up all the open/close tags possibly in the same line and add that to the total
+                    current_tag = is_markup.group(3)
+                    tag_count += self._tag_imbalance(current_tag, chunk)
+            elif current_tag != html_tags_re and current_tag in chunk:
+                # if we're looking for a specific tag then check for any opens/closes later on in the
+                # line that may throw off our count
+                tag_count += self._tag_imbalance(current_tag, chunk)
 
             if tag_count == 0:
                 if is_markup:
@@ -1135,6 +1136,26 @@ class Markdown:
         close_index = text.find(f'</{tag_name}')
         open_index = text.find(f'<{tag_name}')
         return open_index != -1 and close_index != -1 and open_index < close_index
+
+    def _tag_imbalance(self, tag_name: str, text: str) -> int:
+        '''
+        Find imbalanced HTML tags in some text
+
+        Args:
+            tag_name: the name of the tag (eg: "ul")
+            text: the text to search
+
+        Returns:
+            0 for balanced tags, positive int for more opening tags than closing, negative int for
+            more closing tags than opening
+        '''
+        count = 0
+        for tag in re.finditer(r'<(/)?%s\b>?' % tag_name, text):
+            if tag.group(1):
+                count -= 1
+            else:
+                count += 1
+        return count
 
     @mark_stage(Stage.LINK_DEFS)
     def _strip_link_definitions(self, text: str) -> str:
