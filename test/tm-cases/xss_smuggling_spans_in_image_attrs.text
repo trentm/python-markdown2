@@ -14,5 +14,7 @@
 ![](`<A B="
 " onerror="alert(origin)">`)
 
+<http://onclick=alert(origin)//![](x)>
+
 ![x](<"`"![x][id]
 [id]: x "<A B="" onerror="alert(origin)">`

@@ -3230,6 +3230,14 @@ class LinkProcessor(Extra):
                 link_text = self.md._hash_html_spans(link_text)
                 link_text = self.md._unhash_html_spans(link_text)
 
+            # check that this link is not inside an autolink
+            if any(
+                autolink.start() < start_idx < p < autolink.end()
+                for autolink in self.md._auto_link_re.finditer(text)
+            ):
+                curr_pos = start_idx + 1
+                continue
+
             # Possibly a footnote ref?
             if "footnotes" in self.md.extras and link_text.startswith("^"):
                 normed_id = re.sub(r'\W', '-', link_text[1:])
