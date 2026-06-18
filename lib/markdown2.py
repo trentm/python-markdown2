@@ -48,6 +48,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * break-on-newline: Alias for the on_newline option in the breaks extra.
 * code-friendly: Disable _ and __ for em and strong.
 * cuddled-lists: Allow lists to be cuddled to the preceding paragraph.
+* emojis: add emoji support using emoji codes
 * fenced-code-blocks: Allows a code block to not have to be indented
   by fencing it with '```' on a line before and after. Based on
   <http://github.github.com/github-flavored-markdown/> with support for
