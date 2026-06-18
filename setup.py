@@ -33,6 +33,7 @@ extras_require = {
     "code_syntax_highlighting": ["pygments>=2.7.3"],
     "wavedrom": ["wavedrom"],
     "latex": ['latex2mathml; python_version>="3.8.1"'],
+    "emojis": ["emoji"]
 }
 # nested listcomp to combine all optional extras into convenient "all" option
 extras_require["all"] = [i for v in tuple(extras_require.values()) for i in v]

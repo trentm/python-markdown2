@@ -3503,6 +3503,33 @@ class CodeFriendly(GFMItalicAndBoldProcessor):
         )
 
 
+class Emojis(Extra):
+    '''
+    Enable emoji support in markdown text using the [emoji library](https://github.com/carpedm20/emoji)
+    '''
+    name = 'emojis'
+    order = (), (Stage.PARAGRAPHS,)
+
+    def __init__(self, md: Markdown, options: Optional[dict]):
+        super().__init__(md, options)
+        self.options.setdefault('language', 'alias')
+
+    def run(self, text):
+        try:
+            import emoji
+        except ImportError:
+            raise ImportError('the "emoji" extra requires the "emoji" package to be installed')
+
+        if self.options:
+            return emoji.emojize(text, **self.options)
+        return emoji.emojize(text)
+
+    def test(self, text):
+        # emoji identifiers can have all sorts of chars (eg: `:A_button_(blood_type):`)
+        # but they all start and end with a colon and don't have spaces in as far as I can see
+        return re.search(r':[\S]+:', text)
+
+
 class FencedCodeBlocks(Extra):
     '''
     Allows a code block to not have to be indented
@@ -4324,6 +4351,7 @@ Admonitions.register()
 Alerts.register()
 Breaks.register()
 CodeFriendly.register()
+Emojis.register()
 FencedCodeBlocks.register()
 Latex.register()
 LinkPatterns.register()
