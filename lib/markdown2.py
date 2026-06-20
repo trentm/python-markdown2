@@ -862,6 +862,10 @@ class Markdown:
             output.append(self._detab_line(line))
         return '\n'.join(output)
 
+    # https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+    # technically "self closing tags" (eg: <hr />) are not real HTML but noone cares
+    _void_tags = 'area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr'
+
     # I broke out the html5 tags here and add them to _block_tags_a and
     # _block_tags_b.  This way html5 tags are easy to keep track of.
     _html5tags = '|address|article|aside|canvas|figcaption|figure|footer|header|main|nav|section|video'
@@ -906,6 +910,7 @@ class Markdown:
     _html_markdown_attr_re = re.compile(
         # markdown attr, with optional assignment to true, must be followed by whitespace/boundary/closing tag chars
         r'''\s+markdown(?:="1"|='1'|=1)?(?![^\s/>\b])''')
+
     def _hash_html_block_sub(
         self,
         match: Union[re.Match[str], str],
@@ -1128,6 +1133,9 @@ class Markdown:
         return result
 
     def _tag_is_closed(self, tag_name: str, text: str) -> bool:
+        if re.match(self._void_tags, tag_name):
+            return True
+
         # check if number of open tags == number of close tags
         if len(re.findall('<%s(?:.*?)>' % tag_name, text)) != text.count('</%s>' % tag_name):
             return False
@@ -1149,6 +1157,9 @@ class Markdown:
             0 for balanced tags, positive int for more opening tags than closing, negative int for
             more closing tags than opening
         '''
+        if re.match(self._void_tags, tag_name):
+            return 0
+
         count = 0
         for tag in re.finditer(r'<(/)?%s\b>?' % tag_name, text):
             if tag.group(1):
