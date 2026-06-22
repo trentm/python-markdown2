@@ -48,6 +48,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * break-on-newline: Alias for the on_newline option in the breaks extra.
 * code-friendly: Disable _ and __ for em and strong.
 * cuddled-lists: Allow lists to be cuddled to the preceding paragraph.
+* emojis: add emoji support using emoji codes
 * fenced-code-blocks: Allows a code block to not have to be indented
   by fencing it with '```' on a line before and after. Based on
   <http://github.github.com/github-flavored-markdown/> with support for
@@ -3503,6 +3504,33 @@ class CodeFriendly(GFMItalicAndBoldProcessor):
         )
 
 
+class Emojis(Extra):
+    '''
+    Enable emoji support in markdown text using the [emoji library](https://github.com/carpedm20/emoji)
+    '''
+    name = 'emojis'
+    order = (), (Stage.PARAGRAPHS,)
+
+    def __init__(self, md: Markdown, options: Optional[dict]):
+        super().__init__(md, options)
+        self.options.setdefault('language', 'alias')
+
+    def run(self, text):
+        try:
+            import emoji
+        except ImportError:
+            raise ImportError('the "emoji" extra requires the "emoji" package to be installed')
+
+        if self.options:
+            return emoji.emojize(text, **self.options)
+        return emoji.emojize(text)
+
+    def test(self, text):
+        # emoji identifiers can have all sorts of chars (eg: `:A_button_(blood_type):`)
+        # but they all start and end with a colon and don't have spaces in as far as I can see
+        return re.search(r':[\S]+:', text)
+
+
 class FencedCodeBlocks(Extra):
     '''
     Allows a code block to not have to be indented
@@ -4324,6 +4352,7 @@ Admonitions.register()
 Alerts.register()
 Breaks.register()
 CodeFriendly.register()
+Emojis.register()
 FencedCodeBlocks.register()
 Latex.register()
 LinkPatterns.register()
