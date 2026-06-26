@@ -3243,7 +3243,8 @@ class LinkProcessor(Extra):
 
             # check that this link is not inside an autolink
             if any(
-                autolink.start() < start_idx < p < autolink.end()
+                autolink.start() < start_idx < autolink.end()
+                or autolink.start() < p < autolink.end()
                 for autolink in self.md._auto_link_re.finditer(text)
             ):
                 curr_pos = start_idx + 1

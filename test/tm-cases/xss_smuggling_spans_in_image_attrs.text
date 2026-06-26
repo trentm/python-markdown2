@@ -16,5 +16,7 @@
 
 <http://onclick=alert(origin)//![](x)>
 
+<http://onclick=alert(origin)//[`Click me`]()>
+
 ![x](<"`"![x][id]
 [id]: x "<A B="" onerror="alert(origin)">`
