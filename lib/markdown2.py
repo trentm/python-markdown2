@@ -3111,8 +3111,15 @@ class LinkProcessor(Extra):
                This section will be skipped by the link processor
         '''
         img_class_str = self.md._html_class_str_from_tag("img")
+        if self.md.safe_mode and not self.md._safe_href.match(url):
+            # Apply the same scheme allowlist that `process_anchor` uses for links.
+            # Without this, `_protect_url` keeps schemes like `javascript:`/`data:` in
+            # the image `src` in safe_mode (inconsistent with `<a href>` handling).
+            safe_src = ""
+        else:
+            safe_src = self.md._protect_url(url)
         result = (
-            f'<img src="{self.md._protect_url(url)}"'
+            f'<img src="{safe_src}"'
             f' alt="{self.md._hash_span(_xml_escape_attr(link_text))}"'
             f'{title_attr}{img_class_str}{self.md.empty_element_suffix}'
         )
