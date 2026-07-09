@@ -412,6 +412,8 @@ class Markdown:
         if "header-ids" in self.extras:
             if not hasattr(self, '_count_from_header_id') or self.extras['header-ids'].get('reset-count', False):
                 self._count_from_header_id = defaultdict(int)
+            if not hasattr(self, '_header_ids_seen') or self.extras['header-ids'].get('reset-count', False):
+                self._header_ids_seen = set()
         if "metadata" in self.extras:
             self.metadata: dict[str, Any] = {}
 
@@ -1582,9 +1584,17 @@ class Markdown:
         if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
 
-        self._count_from_header_id[header_id] += 1
-        if 0 == len(header_id) or self._count_from_header_id[header_id] > 1:
-            header_id += '-%s' % self._count_from_header_id[header_id]
+        base_id = header_id
+        self._count_from_header_id[base_id] += 1
+        if 0 == len(base_id) or self._count_from_header_id[base_id] > 1:
+            header_id = '%s-%s' % (base_id, self._count_from_header_id[base_id])
+        # A suffixed id may still collide with a differently-named header
+        # (e.g. "# Chapter" twice yields "chapter-2", which clashes with
+        # "# Chapter 2"). Keep bumping until the id is genuinely unique.
+        while header_id in self._header_ids_seen:
+            self._count_from_header_id[base_id] += 1
+            header_id = '%s-%s' % (base_id, self._count_from_header_id[base_id])
+        self._header_ids_seen.add(header_id)
 
         return header_id
 
