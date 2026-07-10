@@ -3111,13 +3111,15 @@ class LinkProcessor(Extra):
                This section will be skipped by the link processor
         '''
         img_class_str = self.md._html_class_str_from_tag("img")
-        if self.md.safe_mode and not self.md._safe_href.match(url):
-            # Apply the same scheme allowlist that `process_anchor` uses for links.
-            # Without this, `_protect_url` keeps schemes like `javascript:`/`data:` in
-            # the image `src` in safe_mode (inconsistent with `<a href>` handling).
-            safe_src = ""
-        else:
-            safe_src = self.md._protect_url(url)
+        safe_src = self.md._protect_url(url)
+        if self.md.safe_mode:
+            # Defense-in-depth: strip schemes that are never valid for an image
+            # `src` and only serve as XSS vectors. `data:` images, http(s) and
+            # relative URLs are preserved (and quote-escaped by `_protect_url`),
+            # matching markdown2's existing image handling.
+            normalized = re.sub(r"[\s\x00-\x1f]+", "", url).lower()
+            if normalized.startswith(("javascript:", "vbscript:")):
+                safe_src = ""
         result = (
             f'<img src="{safe_src}"'
             f' alt="{self.md._hash_span(_xml_escape_attr(link_text))}"'
