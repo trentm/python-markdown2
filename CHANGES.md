@@ -9,7 +9,7 @@
 - [pull #701] Allow boolean attribute syntax in `markdown-in-html` extra
 - [pull #704] Fix XSS from smuggling spans into image attributes (#702, #703)
 - [pull #710] Add emoji support (#709)
-- Fix `header-ids` extra generating duplicate ids when a suffixed id collides with another header (#661)
+- [pull #713] Fix `header-ids` extra generating duplicate ids when a suffixed id collides with another header (#661)
 
 
 ## python-markdown2 2.5.5
