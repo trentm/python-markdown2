@@ -116,6 +116,7 @@ __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
 import argparse
+import html
 import logging
 import re
 import sys
@@ -1578,7 +1579,7 @@ class Markdown:
             None to not have an id attribute and to exclude this header from
             the TOC (if the "toc" extra is specified).
         """
-        header_id = _slugify(text)
+        header_id = _slugify(html.unescape(text))
         if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
 
