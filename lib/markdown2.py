@@ -632,12 +632,21 @@ class Markdown:
     def _extract_metadata(self, text: str) -> str:
         if text.startswith("---"):
             fence_splits = re.split(self._meta_data_fence_pattern, text, maxsplit=2)
+            if len(fence_splits) < 3:
+                # A leading '---' with no closing fence is a horizontal rule (or
+                # unterminated front matter), not metadata. re.split returns
+                # fewer than three elements in that case, so leave text as-is.
+                return text
             metadata_content = fence_splits[1]
             tail = fence_splits[2]
         else:
             metadata_split = re.split(self._meta_data_newline, text, maxsplit=1)
             metadata_content = metadata_split[0]
-            tail = metadata_split[1]
+            # There is no blank line to split on when the whole document is a
+            # single block (e.g. a tab-indented code block with no trailing
+            # blank line), so re.split returns a single element and there is
+            # no document body after the metadata.
+            tail = metadata_split[1] if len(metadata_split) > 1 else ""
 
         # _meta_data_pattern only has one capturing group, so we can assume
         # the returned type to be list[str]
