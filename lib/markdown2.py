@@ -4158,18 +4158,21 @@ class Tables(Extra):
             ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
         return table_re.sub(self.sub, text)
 
-    def sub(self, match: re.Match[str]) -> str:
-        trim_space_re = r'^\s+|\s+$'
-        trim_bar_re = r'^\||\|$'
-        split_bar_re = r'^\||(?<![\`\\])\|'
-        escape_bar_re = r'\\\|'
+    @staticmethod
+    def _split_row(row: str) -> list[str]:
+        row = row.strip().removeprefix('|').removesuffix('|')
+        return [
+            re.sub(r'\\\|', '|', cell.strip())
+            for cell in re.split(r'(?<![\`\\])\|', row)
+        ]
 
+    def sub(self, match: re.Match[str]) -> str:
         head, underline, body = match.groups()
 
         # Determine aligns for columns.
-        cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", underline)))]
+        delimiter_cols = self._split_row(underline)
         align_from_col_idx = {}
-        for col_idx, col in enumerate(cols):
+        for col_idx, col in enumerate(delimiter_cols):
             if col[0] == ':' and col[-1] == ':':
                 align_from_col_idx[col_idx] = ' style="text-align:center;"'
             elif col[0] == ':':
@@ -4179,8 +4182,11 @@ class Tables(Extra):
 
         # thead
         hlines = ['<table%s>' % self.md._html_class_str_from_tag('table'), '<thead%s>' % self.md._html_class_str_from_tag('thead'), '<tr>']
-        cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", head)))]
-        for col_idx, col in enumerate(cols):
+        header_cols = self._split_row(head)
+        if len(header_cols) != len(delimiter_cols):
+            return match.group(0)
+        column_count = len(header_cols)
+        for col_idx, col in enumerate(header_cols):
             hlines.append('  <th{}>{}</th>'.format(
                 align_from_col_idx.get(col_idx, ''),
                 self.md._run_span_gamut(col)
@@ -4194,7 +4200,9 @@ class Tables(Extra):
             hlines.append('<tbody>')
             for line in body.split('\n'):
                 hlines.append('<tr>')
-                cols = [re.sub(escape_bar_re, '|', cell.strip()) for cell in re.split(split_bar_re, re.sub(trim_bar_re, "", re.sub(trim_space_re, "", line)))]
+                cols = self._split_row(line)
+                cols.extend([''] * (column_count - len(cols)))
+                cols = cols[:column_count]
                 for col_idx, col in enumerate(cols):
                     hlines.append('  <td{}>{}</td>'.format(
                         align_from_col_idx.get(col_idx, ''),

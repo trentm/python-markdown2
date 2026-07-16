@@ -1,0 +1,17 @@
+| a | b | c |
+| --- | --- |
+| d | e |
+
+a | b
+--- | --- | ---
+d | e
+
+| name | quantity | notes |
+| --- | ---: | :--- |
+| apples | 3 |
+| bananas
+
+item | state
+--- | :---:
+pear | ripe | ignored
+plum | ready | extra | more |
