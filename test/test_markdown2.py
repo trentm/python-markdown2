@@ -295,6 +295,41 @@ versions of markdown2.py this was pathologically slow:</p>
                         'break-on-newline': None}),
             '<p>a<br />\nb</p>\n')
     test_breaks_and_break_on_newline_together.tags = ["breaks", "extras"]
+    
+    def test_metadata_no_blank_line(self):
+        # A single-block document with no blank line (e.g. a tab-indented code
+        # block) gives the metadata extra nothing to split on, so re.split
+        # returns a single element. This used to raise IndexError; it should
+        # render normally with no metadata extracted.
+        result = markdown2.markdown('\tsome indented code', extras=['metadata'])
+        self.assertEqual(result, '<pre><code>some indented code\n</code></pre>\n')
+        self.assertEqual(result.metadata, {})
+    test_metadata_no_blank_line.tags = ["metadata", "issue"]
+
+    def test_metadata_leading_hr_no_closing_fence(self):
+        # A document that opens with '---' (a horizontal rule) but has no
+        # closing '---' fence is not front matter. This used to raise
+        # IndexError; it should render the '---' as an <hr>.
+        result = markdown2.markdown('---\n# My Document\n', extras=['metadata'])
+        self.assertEqual(result, '<hr />\n\n<h1>My Document</h1>\n')
+        self.assertEqual(result.metadata, {})
+    test_metadata_leading_hr_no_closing_fence.tags = ["metadata", "issue"]
+
+    def test_metadata_fenced_front_matter_still_parsed(self):
+        # A complete '---' fenced front-matter block is still extracted.
+        result = markdown2.markdown('---\ntitle: Hi\n---\n# Body\n',
+                                    extras=['metadata'])
+        self.assertEqual(result.metadata, {'title': 'Hi'})
+        self.assertEqual(result, '<h1>Body</h1>\n')
+    test_metadata_fenced_front_matter_still_parsed.tags = ["metadata"]
+
+    def test_metadata_still_parsed_without_fence(self):
+        # The fix must not change how leading key: value metadata is parsed.
+        result = markdown2.markdown('title: Hello\nauthor: Me\n\n# Body\n',
+                                    extras=['metadata'])
+        self.assertEqual(result.metadata, {'title': 'Hello', 'author': 'Me'})
+        self.assertEqual(result, '<h1>Body</h1>\n')
+    test_metadata_still_parsed_without_fence.tags = ["metadata"]
 
     def test_toc_with_persistent_object(self):
         """

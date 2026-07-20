@@ -419,6 +419,8 @@ class Markdown:
         if "header-ids" in self.extras:
             if not hasattr(self, '_count_from_header_id') or self.extras['header-ids'].get('reset-count', False):
                 self._count_from_header_id = defaultdict(int)
+            if not hasattr(self, '_header_ids_seen') or self.extras['header-ids'].get('reset-count', False):
+                self._header_ids_seen = set()
         if "metadata" in self.extras:
             self.metadata: dict[str, Any] = {}
 
@@ -638,12 +640,21 @@ class Markdown:
     def _extract_metadata(self, text: str) -> str:
         if text.startswith("---"):
             fence_splits = re.split(self._meta_data_fence_pattern, text, maxsplit=2)
+            if len(fence_splits) < 3:
+                # A leading '---' with no closing fence is a horizontal rule (or
+                # unterminated front matter), not metadata. re.split returns
+                # fewer than three elements in that case, so leave text as-is.
+                return text
             metadata_content = fence_splits[1]
             tail = fence_splits[2]
         else:
             metadata_split = re.split(self._meta_data_newline, text, maxsplit=1)
             metadata_content = metadata_split[0]
-            tail = metadata_split[1]
+            # There is no blank line to split on when the whole document is a
+            # single block (e.g. a tab-indented code block with no trailing
+            # blank line), so re.split returns a single element and there is
+            # no document body after the metadata.
+            tail = metadata_split[1] if len(metadata_split) > 1 else ""
 
         # _meta_data_pattern only has one capturing group, so we can assume
         # the returned type to be list[str]
@@ -1589,9 +1600,17 @@ class Markdown:
         if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
 
-        self._count_from_header_id[header_id] += 1
-        if 0 == len(header_id) or self._count_from_header_id[header_id] > 1:
-            header_id += '-%s' % self._count_from_header_id[header_id]
+        base_id = header_id
+        self._count_from_header_id[base_id] += 1
+        if 0 == len(base_id) or self._count_from_header_id[base_id] > 1:
+            header_id = '%s-%s' % (base_id, self._count_from_header_id[base_id])
+        # A suffixed id may still collide with a differently-named header
+        # (e.g. "# Chapter" twice yields "chapter-2", which clashes with
+        # "# Chapter 2"). Keep bumping until the id is genuinely unique.
+        while header_id in self._header_ids_seen:
+            self._count_from_header_id[base_id] += 1
+            header_id = '%s-%s' % (base_id, self._count_from_header_id[base_id])
+        self._header_ids_seen.add(header_id)
 
         return header_id
 
