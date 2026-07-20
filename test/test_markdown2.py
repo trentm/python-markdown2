@@ -272,6 +272,30 @@ versions of markdown2.py this was pathologically slow:</p>
             '<h2>%s</h2>\n' % ko)
     test_russian.tags = ["unicode", "issue3"]
 
+    def test_breaks_and_break_on_newline_together(self):
+        # `break-on-newline` is an alias for the breaks extra; supplying both
+        # in the common list form used to raise TypeError during setup.
+        expected = '<p>a<br />\nb</p>\n'
+        self.assertEqual(
+            markdown2.markdown('a\nb', extras=['breaks', 'break-on-newline']),
+            expected)
+        self.assertEqual(
+            markdown2.markdown('a\nb', extras=['break-on-newline', 'breaks']),
+            expected)
+        # Each alone keeps its documented behaviour.
+        self.assertEqual(
+            markdown2.markdown('a\nb', extras=['break-on-newline']), expected)
+        self.assertEqual(
+            markdown2.markdown('a\nb', extras=['breaks']), '<p>a\nb</p>\n')
+        # A breaks dict with other options is preserved, not overwritten.
+        self.assertEqual(
+            markdown2.markdown(
+                'a\\\nb',
+                extras={'breaks': {'on_backslash': True},
+                        'break-on-newline': None}),
+            '<p>a<br />\nb</p>\n')
+    test_breaks_and_break_on_newline_together.tags = ["breaks", "extras"]
+    
     def test_metadata_no_blank_line(self):
         # A single-block document with no blank line (e.g. a tab-indented code
         # block) gives the metadata extra nothing to split on, so re.split

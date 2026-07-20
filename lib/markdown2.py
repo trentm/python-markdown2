@@ -366,7 +366,13 @@ class Markdown:
                 }
 
         if 'break-on-newline' in self.extras:
-            self.extras.setdefault('breaks', {})
+            # `break-on-newline` is an alias for the breaks extra's `on_newline`
+            # option. When both extras are given (e.g. extras=['breaks',
+            # 'break-on-newline']) `breaks` is already a key mapped to None, so
+            # setdefault would leave it None and the assignment below would
+            # raise a TypeError. Normalise to a dict before setting the option.
+            if not isinstance(self.extras.get('breaks'), dict):
+                self.extras['breaks'] = {}
             self.extras['breaks']['on_newline'] = True
 
         if 'link-patterns' in self.extras:
