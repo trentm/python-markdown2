@@ -1,10 +1,11 @@
 from os.path import *
 from pprint import pformat
+import ast
 
 def doit():
     recipes_path = expanduser("recipes.pprint")
     with open(recipes_path) as f:
-        recipe_dicts = eval(f.read())
+        recipe_dicts = ast.literal_eval(f.read())
     for r in recipe_dicts:
         for key in r.keys():
             if key not in ('desc', 'comments'):
