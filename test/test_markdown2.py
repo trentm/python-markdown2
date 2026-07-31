@@ -272,6 +272,18 @@ versions of markdown2.py this was pathologically slow:</p>
             '<h2>%s</h2>\n' % ko)
     test_russian.tags = ["unicode", "issue3"]
 
+    def test_head_and_style_block_tags(self):
+        # `head` and `style` are block-level, but were missing from the
+        # liberal block-tag list, so a single-line `<style>...</style>` (or
+        # `<head>`) got wrapped in a spurious `<p>`.
+        self._assertMarkdown(
+            '<style>body { margin-left: 1.25cm; }</style>',
+            '<style>body { margin-left: 1.25cm; }</style>\n')
+        self._assertMarkdown(
+            '<head><meta charset="UTF-8"></head>',
+            '<head><meta charset="UTF-8"></head>\n')
+    test_head_and_style_block_tags.tags = ["html", "issue331"]
+
     def test_breaks_and_break_on_newline_together(self):
         # `break-on-newline` is an alias for the breaks extra; supplying both
         # in the common list form used to raise TypeError during setup.

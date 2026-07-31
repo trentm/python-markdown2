@@ -901,7 +901,7 @@ class Markdown:
         """ % _block_tags_a,
         re.X | re.M)
 
-    _block_tags_b = 'blockquote|div|dl|fieldset|form|h[1-6]|iframe|math|noscript|ol|p|pre|script|table|ul'
+    _block_tags_b = 'blockquote|div|dl|fieldset|form|h[1-6]|head|iframe|math|noscript|ol|p|pre|script|style|table|ul'
     _block_tags_b += _html5tags
 
     _span_tags = (
