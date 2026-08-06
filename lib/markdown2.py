@@ -881,6 +881,10 @@ class Markdown:
             output.append(self._detab_line(line))
         return '\n'.join(output)
 
+    # https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+    # technically "self closing tags" (eg: <hr />) are not real HTML but noone cares
+    _void_tags = 'area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr'
+
     # I broke out the html5 tags here and add them to _block_tags_a and
     # _block_tags_b.  This way html5 tags are easy to keep track of.
     _html5tags = '|address|article|aside|canvas|figcaption|figure|footer|header|main|nav|section|video'
@@ -925,6 +929,7 @@ class Markdown:
     _html_markdown_attr_re = re.compile(
         # markdown attr, with optional assignment to true, must be followed by whitespace/boundary/closing tag chars
         r'''\s+markdown(?:="1"|='1'|=1)?(?![^\s/>\b])''')
+
     def _hash_html_block_sub(
         self,
         match: Union[re.Match[str], str],
@@ -1123,16 +1128,17 @@ class Markdown:
             block += chunk
 
             if is_markup:
-                if chunk.startswith('%s</' % is_markup.group(1)):
-                    tag_count -= 1
+                if self._tag_is_closed(is_markup.group(3), chunk):
+                    # if close tag is in same line we must ignore these
+                    is_markup = None
                 else:
-                    # if close tag is in same line
-                    if self._tag_is_closed(is_markup.group(3), chunk):
-                        # we must ignore these
-                        is_markup = None
-                    else:
-                        tag_count += 1
-                        current_tag = is_markup.group(3)
+                    # add up all the open/close tags possibly in the same line and add that to the total
+                    current_tag = is_markup.group(3)
+                    tag_count += self._tag_imbalance(current_tag, chunk)
+            elif current_tag != html_tags_re and current_tag in chunk:
+                # if we're looking for a specific tag then check for any opens/closes later on in the
+                # line that may throw off our count
+                tag_count += self._tag_imbalance(current_tag, chunk)
 
             if tag_count == 0:
                 if is_markup:
@@ -1146,6 +1152,9 @@ class Markdown:
         return result
 
     def _tag_is_closed(self, tag_name: str, text: str) -> bool:
+        if re.match(self._void_tags, tag_name):
+            return True
+
         # check if number of open tags == number of close tags
         if len(re.findall('<%s(?:.*?)>' % tag_name, text)) != text.count('</%s>' % tag_name):
             return False
@@ -1154,6 +1163,29 @@ class Markdown:
         close_index = text.find(f'</{tag_name}')
         open_index = text.find(f'<{tag_name}')
         return open_index != -1 and close_index != -1 and open_index < close_index
+
+    def _tag_imbalance(self, tag_name: str, text: str) -> int:
+        '''
+        Find imbalanced HTML tags in some text
+
+        Args:
+            tag_name: the name of the tag (eg: "ul")
+            text: the text to search
+
+        Returns:
+            0 for balanced tags, positive int for more opening tags than closing, negative int for
+            more closing tags than opening
+        '''
+        if re.match(self._void_tags, tag_name):
+            return 0
+
+        count = 0
+        for tag in re.finditer(r'<(/)?%s\b>?' % tag_name, text):
+            if tag.group(1):
+                count -= 1
+            else:
+                count += 1
+        return count
 
     @mark_stage(Stage.LINK_DEFS)
     def _strip_link_definitions(self, text: str) -> str:
@@ -1440,13 +1472,13 @@ class Markdown:
         '''
         orig = ''
         while text != orig:
+            orig = text
             if spans:
                 for key, sanitized in list(self.html_spans.items()):
                     text = text.replace(key, sanitized)
             if code:
                 for code, key in list(self._code_table.items()):
                     text = text.replace(key, code)
-            orig = text
         return text
 
     def _sanitize_html(self, s: str) -> str:
@@ -1537,6 +1569,12 @@ class Markdown:
             mime = data_url.group('mime') or ''
             if mime.startswith('image/') and data_url.group('token') == ';base64':
                 charset='base64'
+        else:
+            url = (
+                self._unhash_html_spans(url, code=True)
+                .replace('*', self._escape_table['*'])
+                .replace('_', self._escape_table['_'])
+            )
         url = _html_escape_url(url, safe_mode=self.safe_mode, charset=charset)
         key = _hash_text(url)
         self._escape_table[url] = key
@@ -1556,8 +1594,10 @@ class Markdown:
         safe = r'-\w'
         # omitted ['"<>] for XSS reasons
         less_safe = r'#/\.!#$%&\(\)\+,/:;=\?@\[\]^`\{\}\|~'
+        # html encoded colon in a URL still functions as a normal colon, so need to detect those
+        protocol_seperators = [':', '&#x3a;', '&#58;', '&colon;']
         # dot seperated hostname, optional port number, not followed by protocol seperator
-        domain = r'(?:[{}]+(?:\.[{}]+)*)(?:(?<!tel):\d+/?)?(?![^:/]*:/*)'.format(safe, safe)
+        domain = r'(?:[{}]+(?:\.[{}]+)*)(?:(?<!tel)(?<!javascript):\d+/?)?(?![^:/]*(?:{})/*)'.format(safe, safe, '|'.join(protocol_seperators))
         fragment = r'[%s]*' % (safe + less_safe)
 
         return re.compile(r'^(?:({})?({})({})|(#|\.{{,2}}/)({}))$'.format(self._safe_protocols, domain, fragment, fragment), re.I)
@@ -3228,6 +3268,15 @@ class LinkProcessor(Extra):
                 link_text = self.md._hash_html_spans(link_text)
                 link_text = self.md._unhash_html_spans(link_text)
 
+            # check that this link is not inside an autolink
+            if any(
+                autolink.start() < start_idx < autolink.end()
+                or autolink.start() < p < autolink.end()
+                for autolink in self.md._auto_link_re.finditer(text)
+            ):
+                curr_pos = start_idx + 1
+                continue
+
             # Possibly a footnote ref?
             if "footnotes" in self.md.extras and link_text.startswith("^"):
                 normed_id = re.sub(r'\W', '-', link_text[1:])
@@ -3261,7 +3310,6 @@ class LinkProcessor(Extra):
                     continue
 
                 text, url, title, url_end_idx = parsed
-                url = self.md._unhash_html_spans(url, code=True)
             # reference anchor or reference img
             else:
                 if not self.options.get('ref', True):
@@ -3280,13 +3328,6 @@ class LinkProcessor(Extra):
                     curr_pos = p
                     continue
 
-            # -- Encode and hash the URL and title to avoid conflicts with italics/bold
-
-            url = (
-                url
-                .replace('*', self.md._escape_table['*'])
-                .replace('_', self.md._escape_table['_'])
-            )
             if title:
                 if self.md.safe_mode:
                     # expose span contents for escaping - fix #691, #703
@@ -3296,6 +3337,8 @@ class LinkProcessor(Extra):
                     .replace('*', self.md._escape_table['*'])
                     .replace('_', self.md._escape_table['_'])
                 )
+                if self.md.safe_mode:
+                    title = self.md._hash_span(title)
                 title_str = f' title="{title}"'
             else:
                 title_str = ''
