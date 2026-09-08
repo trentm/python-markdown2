@@ -220,6 +220,16 @@ class DirectTestCase(_MarkdownTestCase):
     Python-markdown (markdown.py).
     """
 
+    def test_header_ids_from_file_vars(self):
+        md = markdown2.Markdown(use_file_vars=True)
+        modeline = "<!-- -*- markdown-extras: header-ids{} -*- -->\n"
+        for option, heading_id in (
+            ("", "heading"), ("=chapter", "chapter-heading")
+        ):
+            html = md.convert(modeline.format(option) + "# Heading\n")
+            self.assertIn('<h1 id="{}">Heading</h1>'.format(heading_id), html)
+            self.assertEqual(md.convert("# Heading\n"), "<h1>Heading</h1>\n")
+
     def test_slow_hr(self):
         import time
         text = """\
