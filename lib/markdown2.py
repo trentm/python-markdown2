@@ -1397,9 +1397,12 @@ class Markdown:
         return ''.join(escaped)
 
     def _is_auto_link(self, text):
-        if ':' in text and self._auto_link_re.match(text):
-            return True
-        elif '@' in text and self._auto_email_link_re.match(text):
+        if ':' in text:
+            autolink_match = self._auto_link_re.match(text)
+            if autolink_match:
+                return self.safe_mode is None or self._safe_href.match(autolink_match.group(1))
+
+        if '@' in text and self._auto_email_link_re.match(text):
             return True
         return False
 
@@ -1451,7 +1454,10 @@ class Markdown:
                     tokens.append(self._hash_span(self._sanitize_html(is_comment.group(3))))
                 elif self._is_unescaped_re.match(token) is None:
                     # if the HTML is escaped then escape any special chars and add the token as-is
-                    tokens.append(self._escape_special_chars(token))
+                    tokens.append(
+                        # HTML can be snuck into escaped comment bodies - #721
+                        self._sanitize_html(self._escape_special_chars(token))
+                    )
                 else:
                     tokens.append(self._hash_span(self._sanitize_html(token)))
             elif is_html_markup and is_code:
@@ -1493,10 +1499,11 @@ class Markdown:
             return self.html_removed_text
         elif self.safe_mode == "escape":
             replacements = [
-                ('&', '&amp;'),
                 ('<', '&lt;'),
                 ('>', '&gt;'),
             ]
+            # use a smart ampersand sub to avoid re-sanitizing stuff like `&lt;`
+            s = _AMPERSAND_RE.sub('&amp;', s)
             for before, after in replacements:
                 s = s.replace(before, after)
             return s
@@ -1602,7 +1609,8 @@ class Markdown:
         # omitted ['"<>] for XSS reasons
         less_safe = r'#/\.!#$%&\(\)\+,/:;=\?@\[\]^`\{\}\|~'
         # html encoded colon in a URL still functions as a normal colon, so need to detect those
-        protocol_seperators = [':', '&#x3a;', '&#58;', '&colon;']
+        # semicolon at the end is optional in browsers - see #721
+        protocol_seperators = [':', r'&#x3a;?', r'&#58;?', r'&colon;?']
         # dot seperated hostname, optional port number, not followed by protocol seperator
         domain = r'(?:[{}]+(?:\.[{}]+)*)(?:(?<!tel)(?<!javascript):\d+/?)?(?![^:/]*(?:{})/*)'.format(safe, safe, '|'.join(protocol_seperators))
         fragment = r'[%s]*' % (safe + less_safe)

