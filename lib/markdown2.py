@@ -360,13 +360,7 @@ class Markdown:
             else:
                 self._toc_depth = self.extras["toc"].get("depth", 6)
 
-        if 'header-ids' in self.extras:
-            if not isinstance(self.extras['header-ids'], dict):
-                self.extras['header-ids'] = {
-                    'mixed': False,
-                    'prefix': self.extras['header-ids'],
-                    'reset-count': True
-                }
+        self._normalize_header_ids()
 
         if 'break-on-newline' in self.extras:
             # `break-on-newline` is an alias for the breaks extra's `on_newline`
@@ -412,7 +406,17 @@ class Markdown:
         self._setup_extras()
         self._toc = []
 
+    def _normalize_header_ids(self):
+        if 'header-ids' in self.extras:
+            if not isinstance(self.extras['header-ids'], dict):
+                self.extras['header-ids'] = {
+                    'mixed': False,
+                    'prefix': self.extras['header-ids'],
+                    'reset-count': True
+                }
+
     def _setup_extras(self):
+        self._normalize_header_ids()
         if "footnotes" in self.extras:
             # order of insertion matters for footnotes. Use ordered dict for Python < 3.7
             # https://docs.python.org/3/whatsnew/3.7.html#summary-release-highlights
@@ -4883,7 +4887,7 @@ def main(argv=None):
     parser.add_argument("-x", "--extras", action="append",
                       help="Turn on specific extra features (not part of "
                            "the core Markdown spec). See above.")
-    parser.add_argument("--use-file-vars",
+    parser.add_argument("--use-file-vars", action="store_true",
                       help="Look for and use Emacs-style 'markdown-extras' "
                            "file var to turn on extras. See "
                            "<https://github.com/trentm/python-markdown2/wiki/Extras>")
