@@ -230,6 +230,56 @@ class DirectTestCase(_MarkdownTestCase):
             self.assertIn('<h1 id="{}">Heading</h1>'.format(heading_id), html)
             self.assertEqual(md.convert("# Heading\n"), "<h1>Heading</h1>\n")
 
+    def test_many_distinct_code_spans(self):
+        source = '\n\n'.join('`value_%s`' % i for i in range(1000))
+        expected = '\n\n'.join('<p><code>value_%s</code></p>' % i for i in range(1000)) + '\n'
+        self.assertEqual(markdown2.markdown(source), expected)
+
+    def test_unescape_nested_tokens(self):
+        md = markdown2.Markdown()
+        md.reset()
+        inner = r'\1\g<0>\\ *'
+        middle = '<code>%s</code>' % markdown2._hash_text(inner)
+        outer = '<div>%s</div>' % markdown2._hash_text(middle)
+        for entries in ([(inner, markdown2._hash_text(inner)),
+                         (middle, markdown2._hash_text(middle))],
+                        [(middle, markdown2._hash_text(middle)),
+                         (inner, markdown2._hash_text(inner))]):
+            md._code_table = dict(entries)
+            md.html_blocks = {markdown2._hash_text(outer): outer}
+            self.assertEqual(md._unescape_special_chars(markdown2._hash_text(outer)),
+                             '<div><code>%s</code></div>' % inner)
+
+    def test_unescape_special_chars_inside_html(self):
+        md = markdown2.Markdown()
+        md.reset()
+        html = '<div>%s %s</div>' % (md._escape_table['*'], md._escape_table['\\'])
+        token = markdown2._hash_text(html)
+        md.html_blocks[token] = html
+        self.assertEqual(md._unescape_special_chars(token), '<div>* \\</div>')
+
+    def test_unescape_leaves_unknown_tokens_and_plain_text(self):
+        md = markdown2.Markdown()
+        md.reset()
+        text = 'plain \\ text <div>md5-%s</div>' % ('0' * 32)
+        self.assertEqual(md._unescape_special_chars(text), text)
+
+    def test_unescape_repeated_tokens(self):
+        md = markdown2.Markdown()
+        md.reset()
+        value = r'\g<0> * literal'
+        token = markdown2._hash_text(value)
+        md._code_table[value] = token
+        self.assertEqual(md._unescape_special_chars('%s %s' % (token, token)), '%s %s' % (value, value))
+
+    def test_unescape_duplicate_token_priority(self):
+        md = markdown2.Markdown()
+        md.reset()
+        token = md._escape_table['*']
+        md._code_table['code value'] = token
+        md.html_blocks[token] = '<div>HTML value</div>'
+        self.assertEqual(md._unescape_special_chars(token), '*')
+
     def test_slow_hr(self):
         import time
         text = """\
