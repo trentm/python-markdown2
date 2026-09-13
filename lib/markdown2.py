@@ -2371,10 +2371,14 @@ class Markdown:
         hashmap = tuple(self._escape_table.items()) + tuple(self._code_table.items())
         # html_blocks table is in format {hash: item} compared to usual {item: hash}
         hashmap += tuple(tuple(reversed(i)) for i in self.html_blocks.items())
+        replacements = {}
+        for ch, hash in hashmap:
+            replacements.setdefault(hash, ch)
         while True:
             orig_text = text
-            for ch, hash in hashmap:
-                text = text.replace(hash, ch)
+            # Scan once per nesting level instead of once for every stored hash.
+            text = re.sub(r'md5-[0-9a-f]{32}',
+                          lambda match: replacements.get(match[0], match[0]), text)
             if text == orig_text:
                 break
         return text
