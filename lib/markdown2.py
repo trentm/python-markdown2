@@ -4251,7 +4251,10 @@ class Tables(Extra):
 
     @staticmethod
     def _split_row(row: str) -> list[str]:
-        row = row.strip().removeprefix('|').removesuffix('|')
+        row = row.strip().removeprefix('|')
+        # An escaped final pipe belongs to the last cell, not the table border.
+        if not row.endswith(r'\|'):
+            row = row.removesuffix('|')
         return [
             re.sub(r'\\\|', '|', cell.strip())
             for cell in re.split(r'(?<![\`\\])\|', row)
