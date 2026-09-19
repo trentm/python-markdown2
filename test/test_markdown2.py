@@ -230,6 +230,14 @@ class DirectTestCase(_MarkdownTestCase):
             self.assertIn('<h1 id="{}">Heading</h1>'.format(heading_id), html)
             self.assertEqual(md.convert("# Heading\n"), "<h1>Heading</h1>\n")
 
+    def test_footnote_numbers_reset_between_conversions(self):
+        md = markdown2.Markdown(extras=["footnotes"])
+        md.convert("First[^first], second[^second].\n\n"
+                   "[^first]: First note.\n[^second]: Second note.")
+        html = md.convert("Second[^second].\n\n[^second]: Second note.")
+        self.assertIn('<a href="#fn-second">1</a>', html)
+        self.assertIn('<li id="fn-second">', html)
+
     def test_many_distinct_code_spans(self):
         source = '\n\n'.join('`value_%s`' % i for i in range(1000))
         expected = '\n\n'.join('<p><code>value_%s</code></p>' % i for i in range(1000)) + '\n'

@@ -100,6 +100,9 @@ as a script:
 >>> markdown2.markdown("*boo!*", extras=["footnotes"])
 '<p><em>boo!</em></p>\n'
 ```
+The `footnotes` extra keeps the same number when a footnote is referenced more
+than once.
+
 There are a number of currently implemented extras for tables, footnotes,
 syntax coloring of `<pre>`-blocks, auto-linking patterns, table of contents,
 Smarty Pants (for fancy quotes, dashes, etc.) and more. See the [Extras

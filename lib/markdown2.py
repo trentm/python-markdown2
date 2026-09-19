@@ -422,6 +422,7 @@ class Markdown:
             # https://docs.python.org/3/whatsnew/3.7.html#summary-release-highlights
             self.footnotes = OrderedDict()
             self.footnote_ids = []
+            self._footnote_numbers = {}
             self._footnote_marker = _hash_text('<<footnote>>')
         if "header-ids" in self.extras:
             if not hasattr(self, '_count_from_header_id') or self.extras['header-ids'].get('reset-count', False):
@@ -586,9 +587,12 @@ class Markdown:
     def _do_footnote_marker(self, text):
         def footnote_sub(match):
             normed_id = match.group(1)
-            if normed_id not in self.footnote_ids:
+            if normed_id not in self._footnote_numbers:
                 self.footnote_ids.append(normed_id)
-            return str(len(self.footnote_ids))
+                self._footnote_numbers[normed_id] = (
+                    len(self._footnote_numbers) + 1
+                )
+            return str(self._footnote_numbers[normed_id])
 
         return re.sub(r'%s-(.*?)(?=</a></sup>)' % self._footnote_marker, footnote_sub, text)
 

@@ -1,0 +1,9 @@
+First[^first], second[^second], and first again[^first].
+
+- Second again[^second].
+- Third[^third].
+- First again[^first].
+
+[^second]: Second note referencing first[^first].
+[^first]: First note.
+[^third]: Third note referencing second[^second].
