@@ -1618,7 +1618,8 @@ class Markdown:
         less_safe = r'#/\.!#$%&\(\)\+,/:;=\?@\[\]^`\{\}\|~'
         # html encoded colon in a URL still functions as a normal colon, so need to detect those
         # semicolon at the end is optional in browsers - see #721
-        protocol_seperators = [':', r'&#x3a;?', r'&#58;?', r'&colon;?']
+        # numeric references can be zero-padded (&#058, &#x003a) - see #726
+        protocol_seperators = [':', r'&#x0*3a;?', r'&#0*58;?', r'&colon;?']
         # dot seperated hostname, optional port number, not followed by protocol seperator
         domain = r'(?:[{}]+(?:\.[{}]+)*)(?:(?<!tel)(?<!javascript):\d+/?)?(?![^:/]*(?:{})/*)'.format(safe, safe, '|'.join(protocol_seperators))
         fragment = r'[%s]*' % (safe + less_safe)
