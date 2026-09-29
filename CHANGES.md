@@ -2,6 +2,7 @@
 
 ## python-markdown2 2.5.6 (not yet released)
 
+- [pull #XXX] Fix `tables` extra merging cells when a pipe directly follows a code span, as in compact rows like `|`-v`|verbose|`.
 - [pull #725] Fix `tables` extra dropping escaped pipes at the end of header and body rows.
 - [pull #687] Fix AssertionError hashing HTML blocks spread over multiple lines (#686)
 - [pull #692] Fix XSS from code spans in link titles (#691)
