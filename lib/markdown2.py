@@ -4260,10 +4260,16 @@ class Tables(Extra):
         # An escaped final pipe belongs to the last cell, not the table border.
         if not row.endswith(r'\|'):
             row = row.removesuffix('|')
-        return [
-            re.sub(r'\\\|', '|', cell.strip())
-            for cell in re.split(r'(?<![\`\\])\|', row)
-        ]
+        cells, start = [], 0
+        for m in re.finditer(r'(?<!\\)\|', row):
+            # A pipe right after the backtick that opens a code span (`|`) stays in
+            # the cell; one right after a closing backtick is a cell border.
+            if m.start() and row[m.start() - 1] == '`' and row.count('`', 0, m.start()) % 2:
+                continue
+            cells.append(row[start:m.start()])
+            start = m.end()
+        cells.append(row[start:])
+        return [re.sub(r'\\\|', '|', cell.strip()) for cell in cells]
 
     def sub(self, match: re.Match[str]) -> str:
         head, underline, body = match.groups()
