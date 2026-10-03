@@ -4260,12 +4260,19 @@ class Tables(Extra):
         # An escaped final pipe belongs to the last cell, not the table border.
         if not row.endswith(r'\|'):
             row = row.removesuffix('|')
+        code_spans = list(Markdown._code_span_re.finditer(row))
+        code_starts = {m.start(2) for m in code_spans}
+        code_ends = {m.end() for m in code_spans}
         cells, start = [], 0
         for m in re.finditer(r'(?<!\\)\|', row):
-            # A pipe right after the backtick that opens a code span (`|`) stays in
-            # the cell; one right after a closing backtick is a cell border.
-            if m.start() and row[m.start() - 1] == '`' and row.count('`', 0, m.start()) % 2:
-                continue
+            pos = m.start()
+            # A pipe after an opening backtick delimiter stays in the cell.
+            # A pipe after the matching closing delimiter is a cell border.
+            if pos and row[pos - 1] == '`':
+                if pos in code_starts or (
+                    pos not in code_ends and row.count('`', 0, pos) % 2
+                ):
+                    continue
             cells.append(row[start:m.start()])
             start = m.end()
         cells.append(row[start:])
