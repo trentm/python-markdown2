@@ -103,6 +103,10 @@ as a script:
 The `footnotes` extra keeps the same number when a footnote is referenced more
 than once.
 
+The `tables` extra supports code spans delimited by single or multiple backticks,
+including an operator cell such as ```` ``|`` ````. A pipe immediately after the
+closing delimiter separates the next cell.
+
 There are a number of currently implemented extras for tables, footnotes,
 syntax coloring of `<pre>`-blocks, auto-linking patterns, table of contents,
 Smarty Pants (for fancy quotes, dashes, etc.) and more. See the [Extras
