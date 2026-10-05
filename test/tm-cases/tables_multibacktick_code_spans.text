@@ -1,0 +1,8 @@
+| Operator | Meaning |
+| --- | --- |
+| `|` | bitwise or |
+| ``|`` | bitwise or |
+| ````|```` | bitwise or |
+|``x`y``|literal backtick|
+|````x``y````|two literal backticks|
+|``|``|`or`|
