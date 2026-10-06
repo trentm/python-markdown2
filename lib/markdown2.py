@@ -1171,7 +1171,24 @@ class Markdown:
             return True
 
         # check if number of open tags == number of close tags
-        if len(re.findall('<%s(?:.*?)>' % tag_name, text)) != text.count('</%s>' % tag_name):
+        # (a linear scan: `<tag.*?>` re-scans the rest of the line from every
+        # unclosed `<tag` and goes quadratic)
+        open_tag = '<%s' % tag_name
+        open_count = 0
+        line_end = -1
+        pos = text.find(open_tag)
+        while pos != -1:
+            if pos > line_end:
+                line_end = text.find('\n', pos)
+                if line_end == -1:
+                    line_end = len(text)
+            end = text.find('>', pos, line_end)
+            if end == -1:
+                pos = text.find(open_tag, line_end + 1)
+            else:
+                open_count += 1
+                pos = text.find(open_tag, end + 1)
+        if open_count != text.count('</%s>' % tag_name):
             return False
 
         # check that close tag position is AFTER open tag
@@ -1349,8 +1366,7 @@ class Markdown:
                 (?:\w+)         # tag name
                 (?:             # attributes
                     \s+                           # whitespace after tag
-                    (?:[^\t<>"'=/]+:)?
-                    [^<>"'=/]+=                   # attr name
+                    [^\s<>"'=/][^<>"'=/]*=        # attr name, can't start with whitespace
                     (?:"[^"]*?"|'[^']*?'|[^<>"'=/\s]+)  # value, quoted or unquoted. If unquoted, no spaces allowed
                 )*
                 \s*/?>
