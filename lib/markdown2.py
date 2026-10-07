@@ -1873,7 +1873,7 @@ class Markdown:
         (\n)?                   # leading line = \1
         (^[ \t]*)               # leading whitespace = \2
         (?P<marker>{}) [ \t]+   # list marker = \3
-        ((?:.+?)                # list item text = \4
+        ((?:.*?)                # list item text = \4 (may be empty)
         (\n{{1,2}}))              # eols = \5
         (?= \n* (\Z | \2 (?P<next_marker>{}) [ \t]+))
         '''.format(_marker_any, _marker_any),

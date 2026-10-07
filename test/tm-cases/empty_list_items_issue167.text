@@ -1,0 +1,26 @@
+ 1. 
+ 2. 
+
+Empty bullet items:
+
+- 
+- 
+
+An empty item between others:
+
+- foo
+- 
+- bar
+
+An empty numbered item:
+
+1. foo
+2. 
+3. bar
+
+Empty items in a sub-list:
+
+- foo
+    - 
+    - 
+- bar
