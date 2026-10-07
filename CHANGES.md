@@ -17,6 +17,7 @@
 - [pull #720] Add `wiki-links` extra for `[[Page Name]]` style links (#221)
 - [pull #722] Harden URL safety checks and sanitization in safe mode (#721)
 - [pull #728] Fix XSS from zero-padded colon entities in link URLs (#726)
+- [pull #735] Fix `smarty-pants` extra converting quotes inside inline HTML tags and comments (#150)
 
 
 ## python-markdown2 2.5.5
