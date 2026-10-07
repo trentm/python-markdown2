@@ -1,0 +1,5 @@
+An inline image <img src="/path/to/img.png" alt="Alt Text"> keeps its attributes.
+
+A raw <a href="https://example.com/" title='Example'>link</a> and <span class="note">a "quoted" word</span>.
+
+An inline <!-- HTML -- comment --> is left alone, but "quotes" and dashes -- outside it still change.

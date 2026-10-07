@@ -4167,6 +4167,18 @@ class SmartyPants(Extra):
         <http://code.google.com/p/python-markdown2/issues/detail?id=42> for a
         discussion of some diversion from the original SmartyPants.
         """
+        # Swap out inline HTML tags and comments so their attribute quotes
+        # and `--` are left alone (#150). The placeholders are non-space, so
+        # the quote rules see the same context around them as before.
+        tags = {}
+
+        def hash_tag(match: re.Match[str]) -> str:
+            key = _hash_text(match.group(0))
+            tags[key] = match.group(0)
+            return key
+
+        text = self.md._sorta_html_tokenize_re.sub(hash_tag, text)
+
         if "'" in text:  # guard for perf
             text = self.contractions(text)
             text = self._opening_single_quote_re.sub("&#8216;", text)
@@ -4182,11 +4194,8 @@ class SmartyPants(Extra):
         text = text.replace(" . . . ", "&#8230;")
         text = text.replace(". . .", "&#8230;")
 
-        # TODO: Temporary hack to fix https://github.com/trentm/python-markdown2/issues/150
-        if "footnotes" in self.md.extras and "footnote-ref" in text:
-            # Quotes in the footnote back ref get converted to "smart" quotes
-            # Change them back here to ensure they work.
-            text = text.replace('class="footnote-ref&#8221;', 'class="footnote-ref"')
+        for key, tag in tags.items():
+            text = text.replace(key, tag)
 
         return text
 
