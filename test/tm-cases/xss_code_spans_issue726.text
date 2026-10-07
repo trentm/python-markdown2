@@ -1,0 +1,7 @@
+<x![](`<a
+>`)><svg onload=alert(origin)![](`<a
+>`)
+
+Code spans still come out escaped once: `a<b`, `<b>` and `C:\<folder>`
+
+# Header with `a<b` in it

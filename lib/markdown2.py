@@ -1438,10 +1438,17 @@ class Markdown:
             return re.match(r'(<!--)(.*)(-->)', token)
 
         # protect raw code spans from processing, as they can often contain anything that looks like HTML and
-        # trips up the regex. These are encoded and processed later on anyway
+        # trips up the regex. These are encoded and processed later on anyway.
+        # The span gamut doesn't always agree that these are code spans
+        # (eg: a tag spanning lines changes how backticks pair up), so swap
+        # any `<` for a hash that unescapes to `&lt;`. Nothing in here can
+        # then come out as raw HTML (#726), and real code spans still only
+        # get escaped once.
         code_hashes = {}
+        lt_hash = _hash_text('&lt;')
+        self._code_table['&lt;'] = lt_hash
         text = self._code_span_re.sub(
-            lambda m: self._hash_span(m.string[m.start(): m.end()], code_hashes),
+            lambda m: self._hash_span(m.group(0).replace('<', lt_hash), code_hashes),
             text
         )
 
@@ -1726,7 +1733,8 @@ class Markdown:
             n = min(n + demote_headers, 6)
         header_id_attr = ""
         if "header-ids" in self.extras:
-            header_id = self.header_id_from_text(header_group,
+            header_id = self.header_id_from_text(
+                self._unescape_special_chars(header_group),
                 self.extras["header-ids"].get('prefix'), n)
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
@@ -3672,8 +3680,7 @@ class FencedCodeBlocks(Extra):
         formatter_opts = self.md.extras['fenced-code-blocks'] or {}
 
         def unhash_code(codeblock):
-            for key, sanitized in list(self.md.html_spans.items()):
-                codeblock = codeblock.replace(key, sanitized)
+            codeblock = self.md._unhash_html_spans(codeblock, code=True)
             replacements = [
                 ("&amp;", "&"),
                 ("&lt;", "<"),
