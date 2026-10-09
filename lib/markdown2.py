@@ -1171,23 +1171,19 @@ class Markdown:
             return True
 
         # check if number of open tags == number of close tags
-        # (a linear scan: `<tag.*?>` re-scans the rest of the line from every
-        # unclosed `<tag` and goes quadratic)
+        # find all open tags on each line. Tags split over multiple lines are
+        # ignored, as with the original <tag.*?> regex. Stopping at the first
+        # unclosed <tag on a line keeps the scan linear.
         open_tag = '<%s' % tag_name
         open_count = 0
-        line_end = -1
-        pos = text.find(open_tag)
-        while pos != -1:
-            if pos > line_end:
-                line_end = text.find('\n', pos)
-                if line_end == -1:
-                    line_end = len(text)
-            end = text.find('>', pos, line_end)
-            if end == -1:
-                pos = text.find(open_tag, line_end + 1)
-            else:
+        for line in text.splitlines():
+            pos = line.find(open_tag)
+            while pos != -1:
+                end = line.find('>', pos)
+                if end == -1:
+                    break
                 open_count += 1
-                pos = text.find(open_tag, end + 1)
+                pos = line.find(open_tag, end + 1)
         if open_count != text.count('</%s>' % tag_name):
             return False
 
