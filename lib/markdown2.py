@@ -105,10 +105,6 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
 * wavedrom: Support for generating Wavedrom digital timing diagrams
 * xml: Passes one-liner processing instructions and namespaced XML tags.
-
-Use --use-file-vars to enable extras declared in Emacs-style file variables
-(for example, <!-- -*- markdown-extras: header-ids -*- -->). This is a separate
-parser option, not an extra.
 """
 
 # Dev Notes:
