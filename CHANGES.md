@@ -2,6 +2,7 @@
 
 ## python-markdown2 2.5.6 (not yet released)
 
+- Clarify how to enable file variables in the Python API and command-line help (#269, #365).
 - [pull #730] Fix `tables` extra splitting multi-backtick code spans at a leading pipe and merging cells after a code span containing literal backticks.
 - [pull #729] Fix `tables` extra merging cells when a pipe directly follows a code span, as in compact rows like `|`-v`|verbose|`.
 - [pull #725] Fix `tables` extra dropping escaped pipes at the end of header and body rows.
