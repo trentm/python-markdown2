@@ -98,8 +98,6 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   PHP-Markdown Extra <https://michelf.ca/projects/php-markdown/extra/#table>.
 * toc: The returned HTML string gets a new "toc_html" attribute which is
   a Table of Contents for the document. (experimental)
-* use-file-vars: Look for an Emacs-style markdown-extras file variable to turn
-  on Extras.
 * wiki-links: Wiki-style `[[Page Name]]` links. The generated URL and CSS class
   can be configured via the "base_url", "end_url", "html_class" and "build_url"
   options.
