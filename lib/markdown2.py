@@ -1171,7 +1171,20 @@ class Markdown:
             return True
 
         # check if number of open tags == number of close tags
-        if len(re.findall('<%s(?:.*?)>' % tag_name, text)) != text.count('</%s>' % tag_name):
+        # find all open tags on each line. Tags split over multiple lines are
+        # ignored, as with the original <tag.*?> regex. Stopping at the first
+        # unclosed <tag on a line keeps the scan linear.
+        open_tag = '<%s' % tag_name
+        open_count = 0
+        for line in text.splitlines():
+            pos = line.find(open_tag)
+            while pos != -1:
+                end = line.find('>', pos)
+                if end == -1:
+                    break
+                open_count += 1
+                pos = line.find(open_tag, end + 1)
+        if open_count != text.count('</%s>' % tag_name):
             return False
 
         # check that close tag position is AFTER open tag
@@ -1349,8 +1362,7 @@ class Markdown:
                 (?:\w+)         # tag name
                 (?:             # attributes
                     \s+                           # whitespace after tag
-                    (?:[^\t<>"'=/]+:)?
-                    [^<>"'=/]+=                   # attr name
+                    [^\s<>"'=/][^<>"'=/]*=        # attr name, can't start with whitespace
                     (?:"[^"]*?"|'[^']*?'|[^<>"'=/\s]+)  # value, quoted or unquoted. If unquoted, no spaces allowed
                 )*
                 \s*/?>
