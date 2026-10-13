@@ -98,8 +98,6 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   PHP-Markdown Extra <https://michelf.ca/projects/php-markdown/extra/#table>.
 * toc: The returned HTML string gets a new "toc_html" attribute which is
   a Table of Contents for the document. (experimental)
-* use-file-vars: Look for an Emacs-style markdown-extras file variable to turn
-  on Extras.
 * wiki-links: Wiki-style `[[Page Name]]` links. The generated URL and CSS class
   can be configured via the "base_url", "end_url", "html_class" and "build_url"
   options.
@@ -1171,7 +1169,20 @@ class Markdown:
             return True
 
         # check if number of open tags == number of close tags
-        if len(re.findall('<%s(?:.*?)>' % tag_name, text)) != text.count('</%s>' % tag_name):
+        # find all open tags on each line. Tags split over multiple lines are
+        # ignored, as with the original <tag.*?> regex. Stopping at the first
+        # unclosed <tag on a line keeps the scan linear.
+        open_tag = '<%s' % tag_name
+        open_count = 0
+        for line in text.splitlines():
+            pos = line.find(open_tag)
+            while pos != -1:
+                end = line.find('>', pos)
+                if end == -1:
+                    break
+                open_count += 1
+                pos = line.find(open_tag, end + 1)
+        if open_count != text.count('</%s>' % tag_name):
             return False
 
         # check that close tag position is AFTER open tag
@@ -1349,8 +1360,7 @@ class Markdown:
                 (?:\w+)         # tag name
                 (?:             # attributes
                     \s+                           # whitespace after tag
-                    (?:[^\t<>"'=/]+:)?
-                    [^<>"'=/]+=                   # attr name
+                    [^\s<>"'=/][^<>"'=/]*=        # attr name, can't start with whitespace
                     (?:"[^"]*?"|'[^']*?'|[^<>"'=/\s]+)  # value, quoted or unquoted. If unquoted, no spaces allowed
                 )*
                 \s*/?>
@@ -1881,7 +1891,7 @@ class Markdown:
         (\n)?                   # leading line = \1
         (^[ \t]*)               # leading whitespace = \2
         (?P<marker>{}) [ \t]+   # list marker = \3
-        ((?:.+?)                # list item text = \4
+        ((?:.*?)                # list item text = \4 (may be empty)
         (\n{{1,2}}))              # eols = \5
         (?= \n* (\Z | \2 (?P<next_marker>{}) [ \t]+))
         '''.format(_marker_any, _marker_any),
@@ -4174,6 +4184,18 @@ class SmartyPants(Extra):
         <http://code.google.com/p/python-markdown2/issues/detail?id=42> for a
         discussion of some diversion from the original SmartyPants.
         """
+        # Swap out inline HTML tags and comments so their attribute quotes
+        # and `--` are left alone (#150). The placeholders are non-space, so
+        # the quote rules see the same context around them as before.
+        tags = {}
+
+        def hash_tag(match: re.Match[str]) -> str:
+            key = _hash_text(match.group(0))
+            tags[key] = match.group(0)
+            return key
+
+        text = self.md._sorta_html_tokenize_re.sub(hash_tag, text)
+
         if "'" in text:  # guard for perf
             text = self.contractions(text)
             text = self._opening_single_quote_re.sub("&#8216;", text)
@@ -4189,11 +4211,8 @@ class SmartyPants(Extra):
         text = text.replace(" . . . ", "&#8230;")
         text = text.replace(". . .", "&#8230;")
 
-        # TODO: Temporary hack to fix https://github.com/trentm/python-markdown2/issues/150
-        if "footnotes" in self.md.extras and "footnote-ref" in text:
-            # Quotes in the footnote back ref get converted to "smart" quotes
-            # Change them back here to ensure they work.
-            text = text.replace('class="footnote-ref&#8221;', 'class="footnote-ref"')
+        for key, tag in tags.items():
+            text = text.replace(key, tag)
 
         return text
 
