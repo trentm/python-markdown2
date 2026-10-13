@@ -43,6 +43,21 @@ def issue_668():
     return 'a_b **x***y* c_d'
 
 
+def issue_707_unclosed_tags():
+    # https://github.com/trentm/python-markdown2/issues/707
+    return '<p m="1"' * 15000
+
+
+def issue_707_namespaced_attrs():
+    # https://github.com/trentm/python-markdown2/issues/707
+    return 'x <p' + ' a:b=1' * 40
+
+
+def issue_707_spaced_attrs():
+    # https://github.com/trentm/python-markdown2/issues/707
+    return 'x <p' + '  a=1' * 40
+
+
 # whack everything in a dict for easy lookup later on
 CASES = {
     fn.__name__: (fn, extras)
@@ -54,6 +69,9 @@ CASES = {
         (issue493, None),
         (issue_633, None),
         (issue_668, ['code-friendly']),
+        (issue_707_unclosed_tags, None),
+        (issue_707_namespaced_attrs, None),
+        (issue_707_spaced_attrs, None),
     ]
 }
 
