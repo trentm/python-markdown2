@@ -2,7 +2,7 @@
 
 ## python-markdown2 2.5.6 (not yet released)
 
-- Fix `header-ids` extra putting sanitized HTML into header ids in safe mode, which allowed attribute injection (#649)
+- [pull #739] Fix `header-ids` extra putting sanitized HTML into header ids in safe mode, which allowed attribute injection (#649)
 - [pull #732] Fix excessive CPU use in the inline HTML tokenizer on repeated unclosed tag fragments (#707)
 - [pull #736] Clarify how to enable file variables in the Python API and command-line help (#269, #365).
 - [pull #730] Fix `tables` extra splitting multi-backtick code spans at a leading pipe and merging cells after a code span containing literal backticks.
