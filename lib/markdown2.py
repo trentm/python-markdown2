@@ -349,15 +349,7 @@ class Markdown:
             self.extras.update(extras)
         assert isinstance(self.extras, dict)
 
-        if "toc" in self.extras:
-            if "header-ids" not in self.extras:
-                self.extras["header-ids"] = None   # "toc" implies "header-ids"
-
-            if self.extras["toc"] is None:
-                self._toc_depth = 6
-            else:
-                self._toc_depth = self.extras["toc"].get("depth", 6)
-
+        self._setup_toc()
         self._normalize_header_ids()
 
         if 'break-on-newline' in self.extras:
@@ -404,6 +396,16 @@ class Markdown:
         self._setup_extras()
         self._toc = []
 
+    def _setup_toc(self):
+        if "toc" in self.extras:
+            if "header-ids" not in self.extras:
+                self.extras["header-ids"] = None   # "toc" implies "header-ids"
+
+            if self.extras["toc"] is None:
+                self._toc_depth = 6
+            else:
+                self._toc_depth = self.extras["toc"].get("depth", 6)
+
     def _normalize_header_ids(self):
         if 'header-ids' in self.extras:
             if not isinstance(self.extras['header-ids'], dict):
@@ -414,6 +416,7 @@ class Markdown:
                 }
 
     def _setup_extras(self):
+        self._setup_toc()
         self._normalize_header_ids()
         if "footnotes" in self.extras:
             # order of insertion matters for footnotes. Use ordered dict for Python < 3.7
