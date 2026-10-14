@@ -1743,8 +1743,11 @@ class Markdown:
             n = min(n + demote_headers, 6)
         header_id_attr = ""
         if "header-ids" in self.extras:
+            # in safe mode, inline HTML is hashed by now. Unhash it so the
+            # sanitized HTML doesn't get swapped back into the id attribute
+            header_text = self._unhash_html_spans(header_group)
             header_id = self.header_id_from_text(
-                self._unescape_special_chars(header_group),
+                self._unescape_special_chars(header_text),
                 self.extras["header-ids"].get('prefix'), n)
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
