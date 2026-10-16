@@ -630,17 +630,16 @@ class Markdown:
             (?:
                 {1}:(?:\n+[ \t]+.*)+  # indented lists
             )|(?:
-                (?:{1}:\s+>(?:\n\s+.*)+?)  # multiline long descriptions
-                (?=\n{1}:\s*.*\n|\s*\Z)  # match up until the start of the next key:value definition or the end of the input text
+                {1}:\s+>(?:\n+[ \t]+.*)+  # multiline long descriptions
             )|(?:
-                {1}:(?! >).*\n?  # simple key:value pair, leading spaces allowed
+                {1}:[^\n]*\n?  # simple key:value pair, leading spaces allowed
             )
         ){0}  # optional closing fence
-        '''.format(r'(?:---[\ \t]*\n)?', r'[\S \t]*\w[\S \t]*\s*'), re.MULTILINE | re.VERBOSE
+        '''.format(r'(?:---[\ \t]*\n)?', r'[ \t]*[^\s:\r\n][^:\r\n]*'), re.MULTILINE | re.VERBOSE
     )
 
     _key_val_list_pat = re.compile(
-        r"^-(?:[ \t]*([^\n]*)(?:[ \t]*[:-][ \t]*(\S+))?)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
+        r"^-[ \t]*([^\n]*)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
         re.MULTILINE,
     )
     _key_val_dict_pat = re.compile(
@@ -681,21 +680,28 @@ class Markdown:
             # List
             if vs.startswith("-"):
                 r: list[Any] = []
-                # the regex used has multiple capturing groups, so
-                # returned type from findall will be List[List[str]]
-                match: list[str]
+                # returned type from findall will be list[tuple[str, ...]]
                 for match in re.findall(self._key_val_list_pat, vs):
-                    if match[0] and not match[1] and not match[2]:
-                        r.append(match[0].strip())
-                    elif match[0] == ">" and not match[1] and match[2]:
-                        r.append(match[2].strip())
-                    elif match[0] and match[1]:
-                        r.append({match[0].strip(): match[1].strip()})
-                    elif not match[0] and not match[1] and match[2]:
-                        r.append(parse_structured_value(match[2]))
+                    if len(match) == 2:
+                        val, block = match[0], match[1]
+                        if val and not block:
+                            r.append(val.strip())
+                        elif val == ">" and block:
+                            r.append(block.strip())
+                        elif not val and block:
+                            r.append(parse_structured_value(block))
                     else:
-                        # Broken case
-                        pass
+                        if match[0] and not match[1] and not match[2]:
+                            r.append(match[0].strip())
+                        elif match[0] == ">" and not match[1] and match[2]:
+                            r.append(match[2].strip())
+                        elif match[0] and match[1]:
+                            r.append({match[0].strip(): match[1].strip()})
+                        elif not match[0] and not match[1] and match[2]:
+                            r.append(parse_structured_value(match[2]))
+                        else:
+                            # Broken case
+                            pass
 
                 return r
 
