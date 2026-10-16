@@ -422,6 +422,24 @@ versions of markdown2.py this was pathologically slow:</p>
         self.assertEqual(result, '<h1>Body</h1>\n')
     test_metadata_still_parsed_without_fence.tags = ["metadata"]
 
+    def test_metadata_redos_resilience(self):
+        import time
+        doc = "---\nkey: -" + " " * 32000 + "\n---\n\n# hello\n"
+        t = time.time()
+        result = markdown2.markdown(doc, extras=['metadata'])
+        self.assertLess(time.time() - t, 1.0)
+        self.assertEqual(result.metadata, {'key': '-'})
+    test_metadata_redos_resilience.tags = ["metadata", "redos"]
+
+    def test_metadata_list_redos_resilience(self):
+        import time
+        doc = "---\nitems:\n  - item" + " " * 32000 + "\n---\n\n# hello\n"
+        t = time.time()
+        result = markdown2.markdown(doc, extras=['metadata'])
+        self.assertLess(time.time() - t, 1.0)
+        self.assertEqual(result.metadata, {'items': ['item']})
+    test_metadata_list_redos_resilience.tags = ["metadata", "redos"]
+
     def test_toc_with_persistent_object(self):
         """
         Tests that the toc is the same every time it's run on HTML, even if the Markdown object isn't disposed of.
