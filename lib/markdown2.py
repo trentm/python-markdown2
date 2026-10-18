@@ -1661,6 +1661,8 @@ class Markdown:
             text = link_processor.run(text)
         return text
 
+    _html_tag_re = re.compile(r'<[^>]*>')
+
     def header_id_from_text(self,
         text: str,
         prefix: str,
@@ -1680,7 +1682,7 @@ class Markdown:
             None to not have an id attribute and to exclude this header from
             the TOC (if the "toc" extra is specified).
         """
-        header_id = _slugify(html.unescape(text))
+        header_id = _slugify(html.unescape(self._html_tag_re.sub('', text)))
         if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
 
@@ -1745,16 +1747,23 @@ class Markdown:
         if demote_headers:
             n = min(n + demote_headers, 6)
         header_id_attr = ""
+        html = self._run_span_gamut(header_group)
         if "header-ids" in self.extras:
-            # in safe mode, inline HTML is hashed by now. Unhash it so the
+            # build the id from the rendered header so that markdown syntax
+            # (link URLs, image paths, emphasis markers) doesn't end up in it.
+            # In safe mode, inline HTML is hashed by now. Unhash it so the
             # sanitized HTML doesn't get swapped back into the id attribute
-            header_text = self._unhash_html_spans(header_group)
+            header_text = self._unhash_html_spans(html)
+            if "footnotes" in self.extras:
+                # footnote refs are numbered later on. Drop the placeholder
+                # so it doesn't end up in the id
+                marker = self._footnote_marker + '-'
+                header_text = header_text.replace(marker, '')
             header_id = self.header_id_from_text(
                 self._unescape_special_chars(header_text),
                 self.extras["header-ids"].get('prefix'), n)
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
-        html = self._run_span_gamut(header_group)
         if "toc" in self.extras and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)

@@ -1,0 +1,6 @@
+# Header with a footnote[^1]
+
+# [Linked](http://example.com) header[^note]
+
+[^1]: The first note.
+[^note]: The second note.

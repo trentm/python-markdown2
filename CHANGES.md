@@ -23,6 +23,7 @@
 - [pull #734] Fix empty list items being parsed as nested lists (#167)
 - [pull #735] Fix `smarty-pants` extra converting quotes inside inline HTML tags and comments (#150)
 - [pull #737] Fix XSS from code spans that the span gamut doesn't treat as code spans in safe mode (#726)
+- [pull #XXX] Fix `header-ids` extra putting link URLs, image paths, inline HTML tags and emphasis markers into header ids (#192)
 
 
 ## python-markdown2 2.5.5
