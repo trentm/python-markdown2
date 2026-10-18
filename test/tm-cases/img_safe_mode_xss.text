@@ -1,0 +1,9 @@
+![xss](javascript:alert(1))
+
+![xss](JavaScript:alert(document.domain))
+
+![xss](vbscript:MsgBox(1))
+
+![safe](https://example.com/pic.png)
+
+![safe](./images/pic.png)
