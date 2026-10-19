@@ -3235,6 +3235,8 @@ class LinkProcessor(Extra):
                This section will be skipped by the link processor
         '''
         img_class_str = self.md._html_class_str_from_tag("img")
+        if self.md.safe_mode and not self.md._safe_href.match(url):
+            url = ''
         result = (
             f'<img src="{self.md._protect_url(url)}"'
             f' alt="{self.md._hash_span(_xml_escape_attr(link_text))}"'
