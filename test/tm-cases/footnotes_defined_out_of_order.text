@@ -1,0 +1,7 @@
+The first reference[^b] and the second[^a].
+
+> A quoted reference[^c].
+
+[^a]: Defined first, referenced second.
+[^c]: Defined second, referenced third.
+[^b]: Defined third, referenced first.
