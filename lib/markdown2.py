@@ -2278,10 +2278,8 @@ class Markdown:
             if not self.footnote_return_symbol:
                 self.footnote_return_symbol = "&#8617;"
 
-            # self.footnotes is generated in _strip_footnote_definitions, which runs re.sub on the whole
-            # text. This means that the dict keys are inserted in order of appearance. Use the dict to
-            # sort footnote ids by that same order
-            self.footnote_ids.sort(key=lambda a: list(self.footnotes.keys()).index(a))
+            # self.footnote_ids is filled by _do_footnote_marker in the order the references are
+            # numbered, so listing the notes in that order keeps each note at its number
             for i, id in enumerate(self.footnote_ids):
                 if i != 0:
                     footer.append('')
