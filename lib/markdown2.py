@@ -1686,7 +1686,7 @@ class Markdown:
             None to not have an id attribute and to exclude this header from
             the TOC (if the "toc" extra is specified).
         """
-        header_id = _slugify(html.unescape(text))
+        header_id = _slugify(html.unescape(self._unescape_special_chars(text)))
         if prefix and isinstance(prefix, str):
             header_id = prefix + '-' + header_id
 
@@ -2347,10 +2347,13 @@ class Markdown:
 
         def incomplete_tags_sub(match):
             text = match.group()
+            # hash the `&lt;` so that code blocks don't escape it a second time
+            lt_hash = self._hash_span('&lt;')
+            self._code_table['&lt;'] = lt_hash
             # ensure that we handle escaped incomplete tags properly by consuming and replacing the escapes
             if not self._is_unescaped_re.match(text):
-                text = text.replace('\\<', '&lt;')
-            return text.replace('<', '&lt;')
+                text = text.replace('\\<', lt_hash)
+            return text.replace('<', lt_hash)
 
         text = self._incomplete_tags_re.sub(incomplete_tags_sub, text)
 
