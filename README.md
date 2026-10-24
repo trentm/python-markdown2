@@ -106,9 +106,6 @@ as a script:
 The `footnotes` extra keeps the same number when a footnote is referenced more
 than once.
 
-The `link-patterns` extra leaves inline Markdown links and images unchanged,
-including when their labels wrap onto another line.
-
 The `tables` extra supports code spans delimited by single or multiple backticks,
 including an operator cell such as ```` ``|`` ````. A pipe immediately after the
 closing delimiter separates the next cell.
