@@ -3841,7 +3841,8 @@ class LinkPatterns(Extra):
     order = (Stage.LINKS,), ()
     options: _link_patterns
 
-    _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
+    # LinkProcessor's 3000-character sentinel includes both label brackets.
+    _basic_link_re = re.compile(r'!?\[(?s:.{0,2998}?)\]\(.*?\)')
 
     def run(self, text: str):
         link_from_hash = {}
