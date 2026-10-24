@@ -56,7 +56,9 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * footnotes: Support footnotes as in use on daringfireball.net and
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
-  the header text.
+  the header text. With `{"strip-syntax": True}`, the slug is made from the
+  rendered header, so link URLs, image paths, inline HTML tags and emphasis
+  markers are left out of it.
 * highlightjs-lang: Allows specifying the language which used for syntax
   highlighting when using fenced-code-blocks and highlightjs.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
@@ -1667,6 +1669,8 @@ class Markdown:
             text = link_processor.run(text)
         return text
 
+    _html_tag_re = re.compile(r'<[^>]*>')
+
     def header_id_from_text(self,
         text: str,
         prefix: str,
@@ -1751,16 +1755,26 @@ class Markdown:
         if demote_headers:
             n = min(n + demote_headers, 6)
         header_id_attr = ""
+        html = self._run_span_gamut(header_group)
         if "header-ids" in self.extras:
             # in safe mode, inline HTML is hashed by now. Unhash it so the
             # sanitized HTML doesn't get swapped back into the id attribute
-            header_text = self._unhash_html_spans(header_group)
+            if self.extras["header-ids"].get('strip-syntax'):
+                # build the id from the rendered header so that markdown syntax
+                # (link URLs, image paths, emphasis markers) doesn't end up in it.
+                header_text = self._html_tag_re.sub('', self._unhash_html_spans(html))
+                if "footnotes" in self.extras:
+                    # footnote refs are numbered later on. Drop the placeholder
+                    # so it doesn't end up in the id
+                    marker = self._footnote_marker + '-'
+                    header_text = header_text.replace(marker, '')
+            else:
+                header_text = self._unhash_html_spans(header_group)
             header_id = self.header_id_from_text(
                 self._unescape_special_chars(header_text),
                 self.extras["header-ids"].get('prefix'), n)
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
-        html = self._run_span_gamut(header_group)
         if "toc" in self.extras and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
