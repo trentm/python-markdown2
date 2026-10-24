@@ -1,1 +1,1 @@
-{"extras": ["header-ids"]}
+{"extras": {"header-ids": {"strip-syntax": True}}}
