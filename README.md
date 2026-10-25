@@ -110,12 +110,6 @@ The `tables` extra supports code spans delimited by single or multiple backticks
 including an operator cell such as ```` ``|`` ````. A pipe immediately after the
 closing delimiter separates the next cell.
 
-The `markdown-file-links` extra converts `.md` file links to `.html`, preserving
-query strings and fragments: `[guide](guide.md?view=print#install)` becomes a
-link to `guide.html?view=print#install`. It also converts reference link
-definitions unless `link_defs` is set to `False` in the extra's options. Inline
-images and `.md` text inside query strings or fragments are left unchanged.
-
 There are a number of currently implemented extras for tables, footnotes,
 syntax coloring of `<pre>`-blocks, auto-linking patterns, table of contents,
 Smarty Pants (for fancy quotes, dashes, etc.) and more. See the [Extras

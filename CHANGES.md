@@ -2,6 +2,7 @@
 
 ## python-markdown2 2.5.6 (not yet released)
 
+- [pull #746] Preserve query strings and fragments in `markdown-file-links` conversions, including reference-link targets.
 - [pull #739] Fix `header-ids` extra putting sanitized HTML into header ids in safe mode, which allowed attribute injection (#649)
 - [pull #732] Fix excessive CPU use in the inline HTML tokenizer on repeated unclosed tag fragments (#707)
 - [pull #736] Clarify how to enable file variables in the Python API and command-line help (#269, #365).
