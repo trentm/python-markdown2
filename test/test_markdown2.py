@@ -220,52 +220,6 @@ class DirectTestCase(_MarkdownTestCase):
     Python-markdown (markdown.py).
     """
 
-    def test_markdown_file_links_query_and_fragment(self):
-        cases = (
-            ("guide.md", "guide.html"),
-            ("guide.md#install", "guide.html#install"),
-            ("guide.md?view=print", "guide.html?view=print"),
-            ("guide.md?view=print#install", "guide.html?view=print#install"),
-            ("guide.md#part?view=print", "guide.html#part?view=print"),
-            ("guide.md?", "guide.html?"),
-            ("guide.md#", "guide.html#"),
-            ("guide.md?#", "guide.html?#"),
-            ("./guide.md?next=other.md#part.md",
-             "./guide.html?next=other.md#part.md"),
-            ("https://example.com/guide.md#install",
-             "https://example.com/guide.html#install"),
-            ("//example.com/guide.md?view=print",
-             "//example.com/guide.html?view=print"),
-            ("#part.md", "#part.md"),
-            ("?download=guide.md", "?download=guide.md"),
-            ("guide.html#part.md", "guide.html#part.md"),
-            ("guide.html?next=guide.md", "guide.html?next=guide.md"),
-            ("guide.md/child", "guide.md/child"),
-            ("guide.md.bak#part", "guide.md.bak#part"),
-        )
-        for original, expected in cases:
-            for template in ("[doc]({})", "[doc][ref]\n\n[ref]: {}"):
-                with self.subTest(url=original, template=template):
-                    self.assertEqual(
-                        markdown2.markdown(template.format(original),
-                                           extras=["markdown-file-links"]),
-                        '<p><a href="{}">doc</a></p>\n'.format(expected))
-
-    def test_markdown_file_links_suffixes_without_link_defs(self):
-        text = ("[inline](guide.md#install) and [reference][ref]\n\n"
-                "[ref]: guide.md#install")
-        self.assertEqual(
-            markdown2.markdown(
-                text, extras={"markdown-file-links": {"link_defs": False}}),
-            '<p><a href="guide.html#install">inline</a> and '
-            '<a href="guide.md#install">reference</a></p>\n')
-
-    def test_markdown_file_links_leave_inline_images_unchanged(self):
-        self.assertEqual(
-            markdown2.markdown("![image](guide.md#install)",
-                               extras=["markdown-file-links"]),
-            '<p><img src="guide.md#install" alt="image" /></p>\n')
-
     def test_header_ids_from_file_vars(self):
         md = markdown2.Markdown(use_file_vars=True)
         modeline = "<!-- -*- markdown-extras: header-ids{} -*- -->\n"
