@@ -3963,7 +3963,9 @@ class MarkdownFileLinks(LinkProcessor):
         if Stage.LINKS > self.md.order > Stage.LINK_DEFS and self.options.get('link_defs', True):
             # running just after link defs have been stripped
             for key, url in self.md.urls.items():
-                self.md.urls[key] = self._convert_url(url)
+                path = re.split(r'[?#]', url, maxsplit=1)[0]
+                if path.endswith('.md'):
+                    self.md.urls[key] = self._convert_url(url)
 
         return super().run(text)
 
