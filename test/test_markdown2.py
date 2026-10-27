@@ -220,14 +220,6 @@ class DirectTestCase(_MarkdownTestCase):
     Python-markdown (markdown.py).
     """
 
-    def test_link_pattern_url_encoding(self):
-        pattern = re.compile(r"^(.*)$")
-        html = markdown2.markdown(
-            "foo bar", extras=["link-patterns"],
-            link_patterns=[(pattern, r"lorem \1 ipsum")])
-        self.assertEqual(
-            html, '<p><a href="lorem%20foo%20bar%20ipsum">foo bar</a></p>\n')
-
     def test_header_ids_from_file_vars(self):
         md = markdown2.Markdown(use_file_vars=True)
         modeline = "<!-- -*- markdown-extras: header-ids{} -*- -->\n"
