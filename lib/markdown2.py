@@ -3935,7 +3935,8 @@ class _MarkdownFileLinksExtraOpts(_LinkProcessorExtraOpts, total=False):
 
 class MarkdownFileLinks(LinkProcessor):
     '''
-    Replace links to `.md` files with `.html` links
+    Replace links to `.md` files with `.html` links, preserving query strings
+    and fragments.
     '''
 
     name = 'markdown-file-links'
@@ -3949,24 +3950,37 @@ class MarkdownFileLinks(LinkProcessor):
 
     def parse_inline_anchor_or_image(self, text: str, _link_text: str, start_idx: int):
         result = super().parse_inline_anchor_or_image(text, _link_text, start_idx)
-        if not result or not result[1] or not result[1].endswith('.md'):
-            # return None for invalid markup, or links that don't end with '.md'
-            # so that we don't touch them, and other extras can process them freely
+        if not result or not result[1]:
             return
-        url = result[1].removesuffix('.md') + '.html'
+        url = self._convert_url(result[1])
+        if url == result[1]:
+            # Leave other links available for processing by other extras.
+            return
         return result[0], url, *result[2:]
+
+    @staticmethod
+    def _convert_url(url: str) -> str:
+        # Split before the suffix, keeping its spelling and empty delimiters.
+        path = re.split(r'[?#]', url, maxsplit=1)[0]
+        if path.endswith('.md'):
+            return path.removesuffix('.md') + '.html' + url[len(path):]
+        return url
 
     def run(self, text: str):
         if Stage.LINKS > self.md.order > Stage.LINK_DEFS and self.options.get('link_defs', True):
             # running just after link defs have been stripped
             for key, url in self.md.urls.items():
-                if url.endswith('.md'):
-                    self.md.urls[key] = url.removesuffix('.md') + '.html'
+                path = re.split(r'[?#]', url, maxsplit=1)[0]
+                if path.endswith('.md'):
+                    self.md.urls[key] = self._convert_url(url)
 
         return super().run(text)
 
     def test(self, text: str):
-        return super().test(text) and '.md' in text
+        # Link definitions have already been removed from text at this stage.
+        return super().test(text) and (
+            '.md' in text or self.md.stage == Stage.LINK_DEFS
+        )
 
 
 class Mermaid(FencedCodeBlocks):
