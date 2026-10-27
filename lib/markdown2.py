@@ -2421,18 +2421,35 @@ class Markdown:
 
     def _unescape_special_chars(self, text: str) -> str:
         # Swap back in all the special characters we've hidden.
-        hashmap = tuple(self._escape_table.items()) + tuple(self._code_table.items())
+        if 'md5-' not in text:
+            return text
+        # Build the hash -> original mapping directly, without intermediate tuples.
         # html_blocks table is in format {hash: item} compared to usual {item: hash}
-        hashmap += tuple(tuple(reversed(i)) for i in self.html_blocks.items())
-        replacements = {}
-        for ch, hash in hashmap:
+        replacements: dict[str, str] = {}
+        for ch, hash in self._escape_table.items():
             replacements.setdefault(hash, ch)
+        for ch, hash in self._code_table.items():
+            replacements.setdefault(hash, ch)
+        for hash, item in self.html_blocks.items():
+            replacements.setdefault(hash, item)
+
+        replaced = False
+
+        def _sub(match: re.Match) -> str:
+            nonlocal replaced
+            val = replacements.get(match[0])
+            if val is None:
+                return match[0]
+            replaced = True
+            return val
+
+        # Scan once per nesting level instead of once for every stored hash.
+        # Stop when a pass makes no replacement, rather than comparing the
+        # whole text against the previous pass.
         while True:
-            orig_text = text
-            # Scan once per nesting level instead of once for every stored hash.
-            text = re.sub(r'md5-[0-9a-f]{32}',
-                          lambda match: replacements.get(match[0], match[0]), text)
-            if text == orig_text:
+            replaced = False
+            text = re.sub(r'md5-[0-9a-f]{32}', _sub, text)
+            if not replaced:
                 break
         return text
 

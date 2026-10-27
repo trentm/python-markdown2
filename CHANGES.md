@@ -2,6 +2,7 @@
 
 ## python-markdown2 2.5.6 (not yet released)
 
+- [pull #748] Speed up `_unescape_special_chars` by skipping text with no hashes and dropping the full-text comparison per pass (#635)
 - [pull #746] Preserve query strings and fragments in `markdown-file-links` conversions, including reference-link targets.
 - [pull #739] Fix `header-ids` extra putting sanitized HTML into header ids in safe mode, which allowed attribute injection (#649)
 - [pull #732] Fix excessive CPU use in the inline HTML tokenizer on repeated unclosed tag fragments (#707)
