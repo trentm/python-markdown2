@@ -3,6 +3,10 @@
 ## python-markdown2 2.5.6 (not yet released)
 
 - [pull #748] Speed up `_unescape_special_chars` by skipping text with no hashes and dropping the full-text comparison per pass (#635)
+- [pull #746] Preserve query strings and fragments in `markdown-file-links` conversions, including reference-link targets.
+- [pull #739] Fix `header-ids` extra putting sanitized HTML into header ids in safe mode, which allowed attribute injection (#649)
+- [pull #732] Fix excessive CPU use in the inline HTML tokenizer on repeated unclosed tag fragments (#707)
+- [pull #736] Clarify how to enable file variables in the Python API and command-line help (#269, #365).
 - [pull #730] Fix `tables` extra splitting multi-backtick code spans at a leading pipe and merging cells after a code span containing literal backticks.
 - [pull #729] Fix `tables` extra merging cells when a pipe directly follows a code span, as in compact rows like `|`-v`|verbose|`.
 - [pull #725] Fix `tables` extra dropping escaped pipes at the end of header and body rows.
@@ -18,6 +22,11 @@
 - [pull #720] Add `wiki-links` extra for `[[Page Name]]` style links (#221)
 - [pull #722] Harden URL safety checks and sanitization in safe mode (#721)
 - [pull #728] Fix XSS from zero-padded colon entities in link URLs (#726)
+- [pull #734] Fix empty list items being parsed as nested lists (#167)
+- [pull #735] Fix `smarty-pants` extra converting quotes inside inline HTML tags and comments (#150)
+- [pull #737] Fix XSS from code spans that the span gamut doesn't treat as code spans in safe mode (#726)
+- [pull #743] Add a `strip-syntax` option to the `header-ids` extra that leaves link URLs, image paths, inline HTML tags and emphasis markers out of header ids (#192)
+- [pull #747] Fix `link-patterns` extra linking text inside Markdown links and images whose label wraps onto another line
 
 
 ## python-markdown2 2.5.5

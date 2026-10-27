@@ -72,9 +72,12 @@ I think pip-based installation will enable this as well:
 $ markdown2 foo.md > foo.html
 ```
 
-Use `--use-file-vars` to enable extras declared in Emacs-style file variables,
-such as `<!-- -*- markdown-extras: header-ids -*- -->` at the top of a file.
-This flag takes no value; file variables are ignored by default.
+Use `--use-file-vars` on the CLI, or `use_file_vars=True` with `markdown()`,
+`markdown_path()` or `Markdown()`, to enable extras declared in Emacs-style
+file variables such as `<!-- -*- markdown-extras: header-ids -*- -->` at the top
+of a file. For example, `<!-- -*- markdown-extras: toc -*- -->` enables a table
+of contents and heading IDs for that document. This option is disabled by
+default and is not an extra.
 
 ```shell
 $ markdown2 --use-file-vars foo.md > foo.html
