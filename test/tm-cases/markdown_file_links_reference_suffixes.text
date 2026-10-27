@@ -1,0 +1,51 @@
+[doc][suffix-1]
+
+[doc][suffix-2]
+
+[doc][suffix-3]
+
+[doc][suffix-4]
+
+[doc][suffix-5]
+
+[doc][suffix-6]
+
+[doc][suffix-7]
+
+[doc][suffix-8]
+
+[doc][suffix-9]
+
+[doc][suffix-10]
+
+[doc][suffix-11]
+
+[doc][suffix-12]
+
+[doc][suffix-13]
+
+[doc][suffix-14]
+
+[doc][suffix-15]
+
+[doc][suffix-16]
+
+[doc][suffix-17]
+
+[suffix-1]: guide.md
+[suffix-2]: guide.md#install
+[suffix-3]: guide.md?view=print
+[suffix-4]: guide.md?view=print#install
+[suffix-5]: guide.md#part?view=print
+[suffix-6]: guide.md?
+[suffix-7]: guide.md#
+[suffix-8]: guide.md?#
+[suffix-9]: ./guide.md?next=other.md#part.md
+[suffix-10]: https://example.com/guide.md#install
+[suffix-11]: //example.com/guide.md?view=print
+[suffix-12]: #part.md
+[suffix-13]: ?download=guide.md
+[suffix-14]: guide.html#part.md
+[suffix-15]: guide.html?next=guide.md
+[suffix-16]: guide.md/child
+[suffix-17]: guide.md.bak#part

@@ -1,4 +1,7 @@
 [This is a reference to a markdown file link][] but link definition swapping is disabled
 
 
+[inline](guide.md#install) and [reference][suffix-ref]
+
 [This is a reference to a markdown file link]: ./something.md
+[suffix-ref]: guide.md#install

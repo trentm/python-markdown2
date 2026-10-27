@@ -632,17 +632,16 @@ class Markdown:
             (?:
                 {1}:(?:\n+[ \t]+.*)+  # indented lists
             )|(?:
-                (?:{1}:\s+>(?:\n\s+.*)+?)  # multiline long descriptions
-                (?=\n{1}:\s*.*\n|\s*\Z)  # match up until the start of the next key:value definition or the end of the input text
+                {1}:\s+>(?:\n+[ \t]+.*)+  # multiline long descriptions
             )|(?:
-                {1}:(?! >).*\n?  # simple key:value pair, leading spaces allowed
+                {1}:[^\n]*\n?  # simple key:value pair, leading spaces allowed
             )
         ){0}  # optional closing fence
-        '''.format(r'(?:---[\ \t]*\n)?', r'[\S \t]*\w[\S \t]*\s*'), re.MULTILINE | re.VERBOSE
+        '''.format(r'(?:---[\ \t]*\n)?', r'[ \t]*[^\s:\r\n][^:\r\n]*'), re.MULTILINE | re.VERBOSE
     )
 
     _key_val_list_pat = re.compile(
-        r"^-(?:[ \t]*([^\n]*)(?:[ \t]*[:-][ \t]*(\S+))?)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
+        r"^-[ \t]*([^\n]*)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
         re.MULTILINE,
     )
     _key_val_dict_pat = re.compile(
@@ -683,21 +682,28 @@ class Markdown:
             # List
             if vs.startswith("-"):
                 r: list[Any] = []
-                # the regex used has multiple capturing groups, so
-                # returned type from findall will be List[List[str]]
-                match: list[str]
+                # returned type from findall will be list[tuple[str, ...]]
                 for match in re.findall(self._key_val_list_pat, vs):
-                    if match[0] and not match[1] and not match[2]:
-                        r.append(match[0].strip())
-                    elif match[0] == ">" and not match[1] and match[2]:
-                        r.append(match[2].strip())
-                    elif match[0] and match[1]:
-                        r.append({match[0].strip(): match[1].strip()})
-                    elif not match[0] and not match[1] and match[2]:
-                        r.append(parse_structured_value(match[2]))
+                    if len(match) == 2:
+                        val, block = match[0], match[1]
+                        if val and not block:
+                            r.append(val.strip())
+                        elif val == ">" and block:
+                            r.append(block.strip())
+                        elif not val and block:
+                            r.append(parse_structured_value(block))
                     else:
-                        # Broken case
-                        pass
+                        if match[0] and not match[1] and not match[2]:
+                            r.append(match[0].strip())
+                        elif match[0] == ">" and not match[1] and match[2]:
+                            r.append(match[2].strip())
+                        elif match[0] and match[1]:
+                            r.append({match[0].strip(): match[1].strip()})
+                        elif not match[0] and not match[1] and match[2]:
+                            r.append(parse_structured_value(match[2]))
+                        else:
+                            # Broken case
+                            pass
 
                 return r
 
@@ -3849,7 +3855,8 @@ class LinkPatterns(Extra):
     order = (Stage.LINKS,), ()
     options: _link_patterns
 
-    _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
+    # LinkProcessor's 3000-character sentinel includes both label brackets.
+    _basic_link_re = re.compile(r'!?\[(?s:.{0,2998}?)\]\(.*?\)')
 
     def run(self, text: str):
         link_from_hash = {}
@@ -3942,7 +3949,8 @@ class _MarkdownFileLinksExtraOpts(_LinkProcessorExtraOpts, total=False):
 
 class MarkdownFileLinks(LinkProcessor):
     '''
-    Replace links to `.md` files with `.html` links
+    Replace links to `.md` files with `.html` links, preserving query strings
+    and fragments.
     '''
 
     name = 'markdown-file-links'
@@ -3956,24 +3964,37 @@ class MarkdownFileLinks(LinkProcessor):
 
     def parse_inline_anchor_or_image(self, text: str, _link_text: str, start_idx: int):
         result = super().parse_inline_anchor_or_image(text, _link_text, start_idx)
-        if not result or not result[1] or not result[1].endswith('.md'):
-            # return None for invalid markup, or links that don't end with '.md'
-            # so that we don't touch them, and other extras can process them freely
+        if not result or not result[1]:
             return
-        url = result[1].removesuffix('.md') + '.html'
+        url = self._convert_url(result[1])
+        if url == result[1]:
+            # Leave other links available for processing by other extras.
+            return
         return result[0], url, *result[2:]
+
+    @staticmethod
+    def _convert_url(url: str) -> str:
+        # Split before the suffix, keeping its spelling and empty delimiters.
+        path = re.split(r'[?#]', url, maxsplit=1)[0]
+        if path.endswith('.md'):
+            return path.removesuffix('.md') + '.html' + url[len(path):]
+        return url
 
     def run(self, text: str):
         if Stage.LINKS > self.md.order > Stage.LINK_DEFS and self.options.get('link_defs', True):
             # running just after link defs have been stripped
             for key, url in self.md.urls.items():
-                if url.endswith('.md'):
-                    self.md.urls[key] = url.removesuffix('.md') + '.html'
+                path = re.split(r'[?#]', url, maxsplit=1)[0]
+                if path.endswith('.md'):
+                    self.md.urls[key] = self._convert_url(url)
 
         return super().run(text)
 
     def test(self, text: str):
-        return super().test(text) and '.md' in text
+        # Link definitions have already been removed from text at this stage.
+        return super().test(text) and (
+            '.md' in text or self.md.stage == Stage.LINK_DEFS
+        )
 
 
 class Mermaid(FencedCodeBlocks):
