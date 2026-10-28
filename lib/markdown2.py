@@ -3861,9 +3861,25 @@ class LinkPatterns(Extra):
     def run(self, text: str):
         link_from_hash = {}
         for regex, repl in self.options:
+            # Spans of inline HTML markup in the current text: tags,
+            # comments, processing instructions and `<...>` auto-link
+            # tokens (as recognized by the same tokenizer that
+            # `_escape_special_chars` uses). Matches inside them must
+            # not be linkified: that is markup, not prose, and replacing
+            # inside it corrupts attributes and destroys auto-links
+            # (e.g. `<word@example.com>`, `<img alt="word">`).
+            markup_spans = [
+                m.span(1)
+                for m in self.md._sorta_html_tokenize_re.finditer(text)
+                if self.md._is_unescaped_re.match(m.group(1))
+            ]
             replacements = []
             for match in regex.finditer(text):
                 if any(self.md._match_overlaps_substr(text, match, h) for h in link_from_hash):
+                    continue
+
+                # Do not match inside inline HTML markup.
+                if any(s <= match.start() and match.end() <= e for s, e in markup_spans):
                     continue
 
                 if callable(repl):
