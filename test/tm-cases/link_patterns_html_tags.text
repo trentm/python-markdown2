@@ -1,0 +1,7 @@
+Inline HTML attributes must not be linkified:
+
+<span title="foo bar">baz</span>
+
+<img src="/qux.png" alt="foo">
+
+But plain foo in prose is linkified.
