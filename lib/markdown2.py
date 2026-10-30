@@ -4639,11 +4639,18 @@ def calculate_toc_html(toc: Union[list[tuple[int, str, str]], None]) -> Optional
         elif level == h_stack[-1]:
             lines[-1] += "</li>"
         else:
-            while level < h_stack[-1]:
+            # Close nested lists until we're back in the one this header
+            # belongs in. The outermost list is never closed, so a header
+            # above the first one's level (eg: an h1 after an opening h2)
+            # stays at the top level.
+            while len(h_stack) > 2 and level <= h_stack[-2]:
                 h_stack.pop()
                 if not lines[-1].endswith("</li>"):
                     lines[-1] += "</li>"
                 lines.append("%s</ul></li>" % indent())
+            if not lines[-1].endswith("</li>"):
+                lines[-1] += "</li>"
+            h_stack[-1] = level
         lines.append('{}<li><a href="#{}">{}</a>'.format(
             indent(), id, name))
     while len(h_stack) > 1:
