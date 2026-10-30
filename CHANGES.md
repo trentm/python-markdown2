@@ -26,6 +26,7 @@
 - [pull #737] Fix XSS from code spans that the span gamut doesn't treat as code spans in safe mode (#726)
 - [pull #743] Add a `strip-syntax` option to the `header-ids` extra that leaves link URLs, image paths, inline HTML tags and emphasis markers out of header ids (#192)
 - [pull #747] Fix `link-patterns` extra linking text inside Markdown links and images whose label wraps onto another line
+- [pull #755] Fix hard breaks and the `breaks` extra inserting `<br />` inside inline HTML tags and link titles that span several lines
 
 
 ## python-markdown2 2.5.5
