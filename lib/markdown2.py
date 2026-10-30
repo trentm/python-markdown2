@@ -1357,7 +1357,32 @@ class Markdown:
         text = self._do_italics_and_bold(text)
 
         # Do hard breaks
-        text = re.sub(r" {2,}\n(?!\<(?:\/?(ul|ol|li))\>)", "<br%s\n" % self.empty_element_suffix, text)
+        text = self._do_hard_breaks(text)
+
+        return text
+
+    def _do_hard_breaks(self, text: str, pattern: str = r' {2,}') -> str:
+        '''
+        Replace line endings matching `pattern` with `<br>` tags. Line endings
+        inside a multi-line HTML tag (eg: an `<img>` with its attributes on
+        separate lines) are left alone, as a `<br>` there would break the tag.
+        '''
+        tags = {}
+
+        def hash_tag(match: re.Match[str]) -> str:
+            if '\n' not in match.group(0):
+                return match.group(0)
+            key = _hash_text(match.group(0))
+            tags[key] = match.group(0)
+            return key
+
+        if '<' in text and '\n' in text:  # guard for perf
+            text = self._sorta_html_tokenize_re.sub(hash_tag, text)
+
+        text = re.sub(pattern + r"\n(?!\<(?:\/?(ul|ol|li))\>)", "<br%s\n" % self.empty_element_suffix, text)
+
+        for key, tag in tags.items():
+            text = text.replace(key, tag)
 
         return text
 
@@ -3575,10 +3600,7 @@ class Breaks(Extra):
         else:
             pattern = r' {2,}'
 
-        break_tag = "<br%s\n" % self.md.empty_element_suffix
-        text = re.sub(pattern + r"\n(?!\<(?:\/?(ul|ol|li))\>)", break_tag, text)
-
-        return text
+        return self.md._do_hard_breaks(text, pattern)
 
 
 class CodeFriendly(GFMItalicAndBoldProcessor):
