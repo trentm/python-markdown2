@@ -110,6 +110,9 @@ The `tables` extra supports code spans delimited by single or multiple backticks
 including an operator cell such as ```` ``|`` ````. A pipe immediately after the
 closing delimiter separates the next cell.
 
+Inline code spans can wrap onto the next line in hard-wrapped text. The
+line ending remains inside the generated `<code>` element.
+
 There are a number of currently implemented extras for tables, footnotes,
 syntax coloring of `<pre>`-blocks, auto-linking patterns, table of contents,
 Smarty Pants (for fancy quotes, dashes, etc.) and more. See the [Extras
