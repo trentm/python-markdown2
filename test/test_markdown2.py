@@ -249,6 +249,19 @@ class DirectTestCase(_MarkdownTestCase):
         self.assertIn('<a href="#fn-second">1</a>', html)
         self.assertIn('<li id="fn-second">', html)
 
+    def test_multiline_code_spans(self):
+        for safe_mode in (None, "escape", "replace"):
+            with self.subTest(safe_mode=safe_mode):
+                self.assertEqual(
+                    markdown2.markdown("Call the `foo\nbar()` function.",
+                                       safe_mode=safe_mode),
+                    "<p>Call the <code>foo\nbar()</code> function.</p>\n")
+
+    def test_multiline_code_span_does_not_hide_link_definition_html(self):
+        source = '`\n<img src onerror="alert(origin)">\n[x]: `'
+        self.assertEqual(markdown2.markdown(source, safe_mode="replace"),
+                         "<p>`\n[HTML_REMOVED]</p>\n")
+
     def test_many_distinct_code_spans(self):
         source = '\n\n'.join('`value_%s`' % i for i in range(1000))
         expected = '\n\n'.join('<p><code>value_%s</code></p>' % i for i in range(1000)) + '\n'

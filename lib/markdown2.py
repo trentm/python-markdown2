@@ -1468,7 +1468,7 @@ class Markdown:
         code_hashes = {}
         lt_hash = _hash_text('&lt;')
         self._code_table['&lt;'] = lt_hash
-        text = self._code_span_re.sub(
+        text = self._safe_mode_code_span_re.sub(
             lambda m: self._hash_span(m.group(0).replace('<', lt_hash), code_hashes),
             text
         )
@@ -2119,7 +2119,10 @@ class Markdown:
             (?<!`)
             \1          # Matching closer
             (?!`)
-        ''', re.X)
+        ''', re.X | re.S)
+    # Later block parsing can split multiline spans (e.g. link definitions).
+    # Let safe mode sanitize HTML in them before the span gamut runs.
+    _safe_mode_code_span_re = re.compile(_code_span_re.pattern, re.X)
 
     def _code_span_sub(self, match: re.Match[str]) -> str:
         c = match.group(2).strip(" \t")
