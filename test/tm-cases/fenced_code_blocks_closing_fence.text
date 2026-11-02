@@ -1,0 +1,23 @@
+```
+def greet():
+    """Say hello.
+
+    ```
+    greet()
+    ```
+    """
+```
+
+Some *text* between the blocks.
+
+```
+Wrap code in ```
+```
+
+```
+closing fence indented by three spaces
+   ```
+
+```
+closing fence longer than the opening one
+````
