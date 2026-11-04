@@ -1581,6 +1581,20 @@ class Markdown:
         out - the same number of open_c and close_c are encountered - or the
         end of string if it's reached before the balance point is found.
         """
+        # If no `close_c` remains in the text, the loop below runs to the end,
+        # and the link scanner calls this once per `[...](`, which is quadratic
+        # for unclosed brackets. Skip the scan using a per-text cache of the
+        # last `close_c` position.
+        cache = getattr(self, "_balanced_last_close", None)
+        if cache is None or cache[0] is not text:
+            cache = [text, {}]
+            self._balanced_last_close = cache
+        last = cache[1].get(close_c)
+        if last is None:
+            last = text.rfind(close_c)
+            cache[1][close_c] = last
+        if start > last:
+            return len(text)
         i = start
         l = len(text)
         count = 1
@@ -3157,6 +3171,10 @@ class LinkProcessor(Extra):
         if has_anglebrackets:
             end_idx = self.md._find_balanced(text, end_idx+1, "<", ">")
         end_idx = self.md._find_balanced(text, end_idx, "(", ")")
+        if text[end_idx - 1] != ")":
+            # The destination's "(" never closed, so `_inline_link_title` (which
+            # ends in `\)$`) cannot match; skip the search.
+            return
         match = self.md._inline_link_title.search(text, idx, end_idx)
         if not match:
             return
