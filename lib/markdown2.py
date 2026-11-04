@@ -133,6 +133,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Ty
 from collections.abc import Collection
 from enum import IntEnum, auto
 from os import urandom
+from urllib.parse import quote
 
 # ---- type defs
 _safe_mode = Literal['replace', 'escape']
@@ -3903,7 +3904,7 @@ class LinkPatterns(Extra):
                     continue
 
                 escaped_href = (
-                    href.replace('"', '&quot;')  # b/c of attr quote
+                    quote(href, safe=":/?#[]@!$&'()*+,;=%")
                         # To avoid markdown <em> and <strong>:
                         .replace('*', self.md._escape_table['*'])
                         .replace('_', self.md._escape_table['_']))
