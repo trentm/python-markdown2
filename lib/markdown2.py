@@ -3248,6 +3248,17 @@ class LinkProcessor(Extra):
             2. The length of the opening HTML tag in the string. For `<img>` it's the whole string.
                This section will be skipped by the link processor
         '''
+        if self.md.safe_mode and not self.md._safe_href.match(url):
+            # same check as links, but keep allowing base64 image data URLs
+            data_url = self.md._data_url_re.match(url)
+            if not (
+                data_url
+                and (data_url.group('mime') or '').startswith('image/')
+                and data_url.group('token') == ';base64'
+                and re.fullmatch(r'[A-Za-z0-9+/=]*', data_url.group('data'))
+            ):
+                url = '#'
+
         img_class_str = self.md._html_class_str_from_tag("img")
         result = (
             f'<img src="{self.md._protect_url(url)}"'

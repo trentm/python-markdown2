@@ -1,0 +1,28 @@
+# Safe images
+
+![Safe image 1](https://www.example.com/a.png)
+
+![Safe image 2](/a.png)
+
+![Safe image 3](data:image/png;base64,iVBORw0KGgo=)
+
+# Bad protocols
+
+![Unsafe image 1](javascript:alert(1))
+
+![Unsafe image 2](JaVaScRiPt:alert(1))
+
+![Unsafe image 3](vbscript:msgbox(1))
+
+![Unsafe image 4](data:text/html,hello)
+
+# Reference images
+
+![Safe ref][safe]
+
+![Unsafe ref][unsafe]
+
+[safe]: https://www.example.com/a.png
+[unsafe]: javascript:alert(1)
+
+![Unsafe image 5](data:image/png;base64,`x" onerror="alert(1)//`)
