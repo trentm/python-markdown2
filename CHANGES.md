@@ -2,6 +2,7 @@
 
 ## python-markdown2 2.5.6 (not yet released)
 
+- [pull #767] Fix `wavedrom` extra bypassing `safe_mode` for the content of its fenced blocks (#765)
 - [pull #762] Speed up documents with many links by skipping the backslash-escape scan for text without a backslash
 - [pull #746] Preserve query strings and fragments in `markdown-file-links` conversions, including reference-link targets.
 - [pull #739] Fix `header-ids` extra putting sanitized HTML into header ids in safe mode, which allowed attribute injection (#649)

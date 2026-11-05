@@ -4466,6 +4466,10 @@ class Wavedrom(Extra):
             except ImportError:
                 pass
 
+        # the block is hashed below, so safe_mode would never see its content
+        if self.md.safe_mode:
+            waves = self.md._sanitize_html(waves)
+
         # hash SVG to prevent <> chars being messed with
         self.md._escape_table[waves] = _hash_text(waves)
 
