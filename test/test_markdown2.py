@@ -254,6 +254,17 @@ class DirectTestCase(_MarkdownTestCase):
         expected = '\n\n'.join('<p><code>value_%s</code></p>' % i for i in range(1000)) + '\n'
         self.assertEqual(markdown2.markdown(source), expected)
 
+    def test_many_links_with_backslash_escapes(self):
+        link = 'Paragraph %s has [a link](https://example.com/%s).'
+        html = ('<p>Paragraph %s has '
+                '<a href="https://example.com/%s">a link</a>.</p>')
+        escaped = r'An \*escaped\* star and a C:\dir path.'
+        source = '\n\n'.join([link % (i, i) for i in range(1000)] + [escaped])
+        expected = '\n\n'.join(
+            [html % (i, i) for i in range(1000)]
+            + [r'<p>An *escaped* star and a C:\dir path.</p>']) + '\n'
+        self.assertEqual(markdown2.markdown(source), expected)
+
     def test_unescape_nested_tokens(self):
         md = markdown2.Markdown()
         md.reset()
