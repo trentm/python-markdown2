@@ -1,0 +1,11 @@
+```wavedrom
+<script>alert("wavedrom-safe-mode-bypass")</script>
+```
+
+```wavedrom
+<img src=x onerror=alert(1)>
+```
+
+```wavedrom
+{ "signal": [{ "name": "Alfa", "wave": "01.zx=ud.23.456789" }] }</script><script>alert(1)</script>
+```
