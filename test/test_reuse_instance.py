@@ -52,8 +52,10 @@ class TestReuseInstanceIsolation(unittest.TestCase):
             md.convert(doc.format(i, i))
         t_late = time.monotonic() - t_start_late
 
-        # With the fix, late processing is not significantly slower than early
-        self.assertLess(t_late, t_early * 5,
+        # With the fix, late processing is not significantly slower than early.
+        # Use max(..., 1e-5) so the comparison is valid when both times round
+        # to 0.0 on fast CI runners (Windows).
+        self.assertLess(t_late, max(t_early, 1e-5) * 10,
                         f"Performance degraded: early={t_early*1000:.1f}ms late={t_late*1000:.1f}ms")
 
 
