@@ -382,6 +382,9 @@ class Markdown:
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
         self.cli = cli
 
+        self._reset_tables()
+
+    def _reset_tables(self):
         self._escape_table = g_escape_table.copy()
         self._code_table = {}
         if "smarty-pants" in self.extras:
@@ -395,6 +398,7 @@ class Markdown:
         self.html_spans = {}
         self.list_level = 0
         self.extras = self._instance_extras.copy()
+        self._reset_tables()
         self._setup_extras()
         self._toc = []
 
