@@ -2436,8 +2436,6 @@ class Markdown:
         for hash, item in self.html_blocks.items():
             replacements.setdefault(hash, item)
 
-        replaced = False
-
         def _sub(match: re.Match) -> str:
             nonlocal replaced
             val = replacements.get(match[0])
@@ -2449,11 +2447,10 @@ class Markdown:
         # Scan once per nesting level instead of once for every stored hash.
         # Stop when a pass makes no replacement, rather than comparing the
         # whole text against the previous pass.
-        while True:
+        replaced = True
+        while replaced:
             replaced = False
             text = re.sub(r'md5-[0-9a-f]{32}', _sub, text)
-            if not replaced:
-                break
         return text
 
     def _outdent(self, text: str) -> str:
