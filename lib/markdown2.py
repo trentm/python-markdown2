@@ -2371,6 +2371,9 @@ class Markdown:
         return text
 
     def _encode_backslash_escapes(self, text: str) -> str:
+        # Every search string below starts with a backslash.
+        if '\\' not in text:
+            return text
         for ch, escape in list(self._escape_table.items()):
             text = text.replace("\\"+ch, escape)
         return text
@@ -3702,7 +3705,7 @@ class FencedCodeBlocks(Extra):
 
     fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?|(?<=\n))
-        (^[ \t]*`{3,})\s{0,99}?([\w+-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
+        (^[ \t]*`{3,})\s{0,99}?([\w+\#.-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
         (.*?)                             # $3 = code block content
         \1[ \t]*\n                      # closing fence
         ''', re.M | re.X | re.S)
