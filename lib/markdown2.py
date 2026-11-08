@@ -4482,6 +4482,8 @@ class WikiLinks(Extra):
     '''
     Wiki-style links. `[[Page Name]]` becomes a link to another page. This is
     modelled on the wikilinks extension shipped with Python-Markdown.
+    Wiki syntax inside existing links, image descriptions, or HTML attributes
+    is left as literal text.
 
     The generated URL and CSS class can be tuned with the following options:
 
@@ -4500,12 +4502,24 @@ class WikiLinks(Extra):
     yields ``<a href="/Foo_Bar.html" class="localLink">Foo Bar</a>``.
     '''
     name = 'wiki-links'
-    order = (Stage.LINKS,), ()
+    order = (), (Stage.LINKS,)
 
     _wiki_link_re = re.compile(r'\[\[([\w0-9_ -]+)\]\]', re.UNICODE)
 
     def run(self, text: str) -> str:
-        return self._wiki_link_re.sub(self.sub, text)
+        # Resolve Markdown links first, then only link text outside existing
+        # anchors and HTML markup (including image attributes).
+        tokens = self.md._sorta_html_tokenize_re.split(text)
+        in_anchor = False
+        for index, token in enumerate(tokens):
+            if index % 2:
+                if re.match(r'<a(?:\s|>)', token, re.I):
+                    in_anchor = True
+                elif re.match(r'</a\s*>', token, re.I):
+                    in_anchor = False
+            elif not in_anchor:
+                tokens[index] = self._wiki_link_re.sub(self.sub, token)
+        return ''.join(tokens)
 
     def build_url(self, label: str) -> str:
         base_url = self.options.get('base_url', '/')
