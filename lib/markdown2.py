@@ -2372,6 +2372,9 @@ class Markdown:
         return text
 
     def _encode_backslash_escapes(self, text: str) -> str:
+        # Every search string below starts with a backslash.
+        if '\\' not in text:
+            return text
         for ch, escape in list(self._escape_table.items()):
             text = text.replace("\\"+ch, escape)
         return text
