@@ -3690,7 +3690,7 @@ class FencedCodeBlocks(Extra):
         (?:\n+|\A\n?|(?<=\n))
         (^[ \t]*`{3,})\s{0,99}?([\w+\#.-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
         (.*?)                             # $3 = code block content
-        \1[ \t]*\n                      # closing fence
+        ^[ ]{0,3}\1`*[ \t]*\n           # closing fence
         ''', re.M | re.X | re.S)
 
     def test(self, text: str):
