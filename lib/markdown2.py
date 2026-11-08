@@ -2280,7 +2280,8 @@ class Markdown:
         return "\n\n".join(grafs)
 
     def _add_footnotes(self, text: str) -> str:
-        if self.footnotes:
+        # Only referenced footnotes are listed, so there is nothing to add without any reference
+        if self.footnote_ids:
             footer = [
                 '<div class="footnotes">',
                 '<hr' + self.empty_element_suffix,
