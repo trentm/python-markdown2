@@ -3,3 +3,6 @@
 
 ## Commonly raised issues we're not accepting PRs for:
 - Issue #712 XSS via unfiltered javascript, checking img sources for XSS, URI schemes like javascript:, vbscript:, data:. Check PR #766 #714 #744
+
+## PR instructions
+- Follow existing format for CHANGES.md additions
