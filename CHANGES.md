@@ -4,6 +4,7 @@
 
 - [pull #762] Speed up documents with many links by skipping the backslash-escape scan for text without a backslash
 - [pull #748] Speed up `_unescape_special_chars` by skipping text with no hashes and dropping the full-text comparison per pass (#635)
+- [pull #758] Fix `footnotes` extra adding an empty footnotes block when no footnote is referenced.
 - [pull #746] Preserve query strings and fragments in `markdown-file-links` conversions, including reference-link targets.
 - [pull #739] Fix `header-ids` extra putting sanitized HTML into header ids in safe mode, which allowed attribute injection (#649)
 - [pull #732] Fix excessive CPU use in the inline HTML tokenizer on repeated unclosed tag fragments (#707)
@@ -29,6 +30,7 @@
 - [pull #743] Add a `strip-syntax` option to the `header-ids` extra that leaves link URLs, image paths, inline HTML tags and emphasis markers out of header ids (#192)
 - [pull #747] Fix `link-patterns` extra linking text inside Markdown links and images whose label wraps onto another line
 - [pull #759] Fix `fenced-code-blocks` extra not recognizing code blocks whose language name contains `#` or `.`, such as `c#`, `f#` and `vb.net`
+- [pull #760] Fix `fenced-code-blocks` extra ending a code block early at a line inside it that ends with backticks, such as an indented fence in a docstring
 
 
 ## python-markdown2 2.5.5
