@@ -11,3 +11,4 @@
 
 ## Code guidelines
 - Changes to the behaviour of an extra, or other syntax feature, should go in the Wiki page for that extra/feature, not in the README
+- Avoid using characters that can't be easily typed on a keyboard, unless required. Prefer plain ASCII in source code
