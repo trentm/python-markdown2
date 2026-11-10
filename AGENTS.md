@@ -6,3 +6,5 @@
 
 ## PR instructions
 - Follow existing format for CHANGES.md additions
+- If the PR fixes an existing issue, link it to that issue so that the issue can be automatically closed on merge
+- Do not create a new issue to accompany a PR, it clogs up peoples inboxes
