@@ -4132,6 +4132,8 @@ class Numbering(Extra):
                 continue
             counter = match.group(1)
             text_before = match.group(2).strip()
+            if text_before:
+                text_before += ' '
             ref_id = match.group(3)
             text_after = match.group(4)
             number = counters.get(counter, 1)
