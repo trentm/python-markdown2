@@ -2088,7 +2088,7 @@ class Markdown:
     @mark_stage(Stage.CODE_BLOCKS)
     def _do_code_blocks(self, text: str) -> str:
         """Process Markdown `<pre><code>` blocks."""
-        code_block_re = re.compile(r'''
+        code_block_pat = r'''
             (?:\n\n|\A\n?)
             (               # $1 = the code block -- one or more lines, starting with a space/tab
               (?:
@@ -2097,11 +2097,13 @@ class Markdown:
               )+
             )
             ((?=^[ ]{0,%d}\S)|\Z)   # Lookahead for non-space at line-start, or end of doc
+            ''' % (self.tab_width, self.tab_width)
+        if '</code>' in text:
             # Lookahead to make sure this block isn't already in a code block.
-            # Needed when syntax highlighting is being used.
-            (?!([^<]|<(/?)span)*\</code\>)
-            ''' % (self.tab_width, self.tab_width),
-            re.M | re.X)
+            # Needed when syntax highlighting is being used. It scans ahead
+            # after every block, so leave it out when it can't match.
+            code_block_pat += r'(?!([^<]|<(/?)span)*\</code\>)'
+        code_block_re = re.compile(code_block_pat, re.M | re.X)
         return code_block_re.sub(self._code_block_sub, text)
 
     # Rules for a code span:
