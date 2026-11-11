@@ -1858,61 +1858,87 @@ class Markdown:
     def _do_lists(self, text: str) -> str:
         # Form HTML ordered (numbered) and unordered (bulleted) lists.
 
-        # Iterate over each *non-overlapping* list match.
-        pos = 0
-        while True:
-            # Find the *first* hit for either list style (ul or ol). We
-            # match ul and ol separately to avoid adjacent lists of different
-            # types running into each other (see issue #16).
-            hits = []
-            for marker_pat in (self._marker_ul, self._marker_ol):
-                less_than_tab = self.tab_width - 1
-                other_marker_pat = self._marker_ul if marker_pat == self._marker_ol else self._marker_ol
-                whole_list = r'''
-                    (                   # \1 = whole list
-                      (                 # \2
-                        ([ ]{0,%d})     # \3 = the indentation level of the list item marker
-                        (%s)            # \4 = first list item marker
-                        [ \t]+
-                        (?!\ *\4\ )     # '- - - ...' isn't a list. See 'not_quite_a_list' test case.
+        less_than_tab = self.tab_width - 1
+        if self.list_level:  # sub-list
+            prefix = "^"
+        else:
+            prefix = r"(?:(?<=\n\n)|\A\n?)"
+        # We match ul and ol separately to avoid adjacent lists of different
+        # types running into each other (see issue #16).
+        list_res = []
+        bare_list_res = []
+        for marker_pat, other_marker_pat in ((self._marker_ul, self._marker_ol),
+                                             (self._marker_ol, self._marker_ul)):
+            whole_list = r'''
+                (                   # \1 = whole list
+                  (                 # \2
+                    ([ ]{0,%d})     # \3 = the indentation level of the list item marker
+                    (%s)            # \4 = first list item marker
+                    [ \t]+
+                    (?!\ *\4\ )     # '- - - ...' isn't a list. See 'not_quite_a_list' test case.
+                  )
+                  (?:.+?)
+                  (                 # \5
+                      \Z
+                    |
+                      \n{2,}
+                      (?=\S)
+                      (?!           # Negative lookahead for another list item marker
+                        [ \t]*
+                        %s[ \t]+
                       )
-                      (?:.+?)
-                      (                 # \5
-                          \Z
-                        |
-                          \n{2,}
-                          (?=\S)
-                          (?!           # Negative lookahead for another list item marker
-                            [ \t]*
-                            %s[ \t]+
-                          )
-                        |
-                          \n+
-                          (?=
-                            \3          # lookahead for a different style of list item marker
-                            %s[ \t]+
-                          )
+                    |
+                      \n+
+                      (?=
+                        \3          # lookahead for a different style of list item marker
+                        %s[ \t]+
                       )
-                    )
-                ''' % (less_than_tab, marker_pat, marker_pat, other_marker_pat)
-                if self.list_level:  # sub-list
-                    list_re = re.compile("^"+whole_list, re.X | re.M | re.S)
-                else:
-                    list_re = re.compile(r"(?:(?<=\n\n)|\A\n?)"+whole_list,
-                                         re.X | re.M | re.S)
-                match = list_re.search(text, pos)
-                if match:
-                    hits.append((match.start(), match))
-            if not hits:
-                break
-            hits.sort()
-            match = hits[0][1]
-            start, end = match.span()
-            middle = self._list_sub(match)
-            text = text[:start] + middle + text[end:]
-            pos = start + len(middle)  # start pos for next attempted match
+                  )
+                )
+            ''' % (less_than_tab, marker_pat, marker_pat, other_marker_pat)
+            list_res.append(re.compile(prefix + whole_list, re.X | re.M | re.S))
+            bare_list_res.append(re.compile(whole_list, re.X | re.M | re.S))
+        # Every list starts with an indented marker. Find the next marker
+        # first and try both list styles there, instead of searching the rest
+        # of the text for each style after every list.
+        list_start_re = re.compile(prefix + r"[ ]{0,%d}%s[ \t]+" % (less_than_tab, self._marker_any),
+                                   re.M)
 
-        return text
+        # Iterate over each *non-overlapping* list match. Converted lists are
+        # collected in `pieces` rather than spliced into `text`, which would
+        # copy the whole text once per list.
+        pieces = []
+        pos = 0
+        list_end = None
+        while True:
+            match = None
+            if pos == list_end:
+                # A converted list ends with a newline (a blank line at the
+                # top level), so another list may start right after it.
+                for list_re in bare_list_res:
+                    match = list_re.match(text, pos)
+                    if match:
+                        break
+            if not match:
+                list_start = list_start_re.search(text, pos)
+                if not list_start:
+                    break
+                for list_re in list_res:
+                    match = list_re.match(text, list_start.start())
+                    if match:
+                        break
+                if not match:
+                    pos = list_start.start() + 1
+                    continue
+            start, end = match.span()
+            pieces.append(text[list_end or 0:start])
+            pieces.append(self._list_sub(match))
+            pos = list_end = end
+
+        if not pieces:
+            return text
+        pieces.append(text[list_end:])
+        return ''.join(pieces)
 
     _list_item_re = re.compile(r'''
         (\n)?                   # leading line = \1
