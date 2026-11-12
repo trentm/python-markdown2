@@ -3704,13 +3704,13 @@ class FencedCodeBlocks(Extra):
 
     fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?|(?<=\n))
-        (^[ \t]*`{3,})\s{0,99}?([\w+\#.-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
+        (^[ \t]*(?:`{3,}|~{3,}))\s{0,99}?([\w+\#.-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
         (.*?)                             # $3 = code block content
-        ^[ ]{0,3}\1`*[ \t]*\n           # closing fence
+        ^[ ]{0,3}\1[`~]*[ \t]*\n         # closing fence
         ''', re.M | re.X | re.S)
 
     def test(self, text: str):
-        if '```' not in text:
+        if '```' not in text and '~~~' not in text:
             return False
         if self.md.stage == Stage.PREPROCESS and not self.md.safe_mode:
             # if safe mode is off then run before HASH_HTML and not worry about the tags getting messed up
