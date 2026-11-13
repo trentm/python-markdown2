@@ -3918,6 +3918,18 @@ class LinkPatterns(Extra):
                         continue
                     break
 
+                if not is_inside_link:
+                    # Also exclude markdown2's own inline HTML markup tokens
+                    # (tags, comments, processing instructions, and
+                    # <word@example.com> style auto-links): a match inside
+                    # one of them would corrupt the markup or destroy the
+                    # auto-link (e.g. linkifying an attribute value).
+                    for match in self.md._sorta_html_tokenize_re.finditer(text):
+                        m_start, m_end = match.span(1)
+                        if m_start <= start and end <= m_end:
+                            is_inside_link = True
+                            break
+
                 if is_inside_link:
                     continue
 
