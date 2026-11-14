@@ -3423,6 +3423,9 @@ class LinkProcessor(Extra):
                 if self.md.safe_mode:
                     # expose span contents for escaping - fix #691, #703
                     title = self.md._unhash_html_spans(title, spans=True, code=True)
+                # A backslash-escaped quote is just a quote. Left in, `\"` becomes `\&quot;`, which the
+                # escaped-ampersand handling then turns into a literal `&quot;` in the title.
+                title = title.replace('\\"', '"').replace("\\'", "'")
                 title = (
                     _xml_escape_attr(title)
                     .replace('*', self.md._escape_table['*'])

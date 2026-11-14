@@ -1,0 +1,9 @@
+[Inline](http://example.com "Say \"hi\"")
+
+[Single](http://example.com 'It\'s here')
+
+[Reference][ref]
+
+![Image](a.png "A \"quoted\" title")
+
+[ref]: http://example.com "Say \"hi\""
