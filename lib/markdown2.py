@@ -427,6 +427,7 @@ class Markdown:
             self.footnotes = OrderedDict()
             self.footnote_ids = []
             self._footnote_numbers = {}
+            self._footnote_ref_counts = {}
             self._footnote_marker = _hash_text('<<footnote>>')
         if "header-ids" in self.extras:
             if not hasattr(self, '_count_from_header_id') or self.extras['header-ids'].get('reset-count', False):
@@ -598,6 +599,15 @@ class Markdown:
                 )
             return str(self._footnote_numbers[normed_id])
 
+        def footnote_ref_id_sub(match):
+            # Every reference needs its own id. The first one in the document keeps `fnref-<id>`,
+            # which the footnote's back link points to, and later ones get `fnref2-<id>` and so on.
+            normed_id = match.group(1)
+            count = self._footnote_ref_counts.get(normed_id, 0) + 1
+            self._footnote_ref_counts[normed_id] = count
+            return 'fnref-%s' % normed_id if count == 1 else 'fnref%d-%s' % (count, normed_id)
+
+        text = re.sub(r'%s-ref-([^"]*)' % self._footnote_marker, footnote_ref_id_sub, text)
         return re.sub(r'%s-(.*?)(?=</a></sup>)' % self._footnote_marker, footnote_sub, text)
 
     @mark_stage(Stage.POSTPROCESS)
@@ -3373,7 +3383,7 @@ class LinkProcessor(Extra):
                 normed_id = re.sub(r'\W', '-', link_text[1:])
                 if normed_id in self.md.footnotes:
                     result = (
-                        f'<sup class="footnote-ref" id="fnref-{normed_id}">'
+                        f'<sup class="footnote-ref" id="{self.md._footnote_marker}-ref-{normed_id}">'
                         # insert special footnote marker that's easy to find and match against later
                         f'<a href="#fn-{normed_id}">{self.md._footnote_marker}-{normed_id}</a></sup>'
                     )
