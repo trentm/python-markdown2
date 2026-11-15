@@ -3420,6 +3420,11 @@ class LinkProcessor(Extra):
                     continue
 
             if title:
+                if '"' in self.md._escape_table:
+                    # smarty-pants hashes backslash-escaped quotes. Unhashed inside the
+                    # attribute, the quote would close it early, so turn it back into a
+                    # quote for _xml_escape_attr to escape.
+                    title = title.replace(self.md._escape_table['"'], '"')
                 if self.md.safe_mode:
                     # expose span contents for escaping - fix #691, #703
                     title = self.md._unhash_html_spans(title, spans=True, code=True)
