@@ -4904,9 +4904,7 @@ def _xml_escape_attr(attr: str, skip_single_quote: bool = True) -> str:
     By default this doesn't bother with escaping `'` to `&#39;`, presuming that
     the tag attribute is surrounded by double quotes.
     """
-    escaped = _AMPERSAND_RE.sub('&amp;', attr)
-
-    escaped = (attr
+    escaped = (_AMPERSAND_RE.sub('&amp;', attr)
         .replace('"', '&quot;')
         .replace('<', '&lt;')
         .replace('>', '&gt;'))
