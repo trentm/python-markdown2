@@ -3543,13 +3543,13 @@ class Alerts(Extra):
     order = (), (Stage.BLOCK_QUOTES, )
 
     alert_re = re.compile(r'''
-        <blockquote>\s*
+        (?P<indent>^[ \t]*)<blockquote>\s*
         <p>
         \[!(?P<type>NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]
         (?P<closing_tag></p>[ \t]*\n?)?
         (?P<contents>[\s\S]+?)
-        </blockquote>
-    ''', re.X
+        ^(?P=indent)</blockquote>  # same quote depth as the opening tag
+    ''', re.X | re.M
     )
 
     def test(self, text: str):
@@ -3559,10 +3559,11 @@ class Alerts(Extra):
         typ = match["type"].lower()
         heading = f"<em>{match['type'].title()}</em>"
         contents = match["contents"].strip()
+        indent = match["indent"]
         if match["closing_tag"]:
-            return f'<div class="alert {typ}">\n{heading}\n{contents}\n</div>'
+            return f'{indent}<div class="alert {typ}">\n{heading}\n{contents}\n</div>'
         else:
-            return f'<div class="alert {typ}">\n{heading}\n<p>{contents}\n</div>'
+            return f'{indent}<div class="alert {typ}">\n{heading}\n<p>{contents}\n</div>'
 
     def run(self, text: str):
         return self.alert_re.sub(self.sub, text)

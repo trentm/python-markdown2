@@ -1,0 +1,40 @@
+> [!NOTE]
+> Before the quote.
+>
+> > Nested quote.
+>
+> After the quote.
+
+Outside the alert.
+
+> [!WARNING]
+>
+> > A quote as the first block.
+>
+> After the quote.
+
+> Outer quote.
+>
+> > [!TIP]
+> > Before.
+> >
+> > > Inner quote.
+> >
+> > After.
+
+- Item.
+
+    > [!IMPORTANT]
+    > Before.
+    >
+    > > Nested quote.
+    >
+    > After.
+
+> [!CAUTION]
+> Before.
+>
+> > [!TIP]
+> > Inner alert.
+>
+> After.
