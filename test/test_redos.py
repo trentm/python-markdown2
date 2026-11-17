@@ -58,6 +58,14 @@ def issue_707_spaced_attrs():
     return 'x <p' + '  a=1' * 40
 
 
+def issue_metadata_redos():
+    return "---\nkey: -" + " " * 32000 + "\n---\n\n# hello\n"
+
+
+def issue_metadata_list_redos():
+    return "---\nitems:\n  - " + " " * 32000 + "\n---\n\n# hello\n"
+
+
 # whack everything in a dict for easy lookup later on
 CASES = {
     fn.__name__: (fn, extras)
@@ -72,6 +80,8 @@ CASES = {
         (issue_707_unclosed_tags, None),
         (issue_707_namespaced_attrs, None),
         (issue_707_spaced_attrs, None),
+        (issue_metadata_redos, ['metadata']),
+        (issue_metadata_list_redos, ['metadata']),
     ]
 }
 

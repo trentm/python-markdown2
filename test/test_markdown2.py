@@ -230,6 +230,17 @@ class DirectTestCase(_MarkdownTestCase):
             self.assertIn('<h1 id="{}">Heading</h1>'.format(heading_id), html)
             self.assertEqual(md.convert("# Heading\n"), "<h1>Heading</h1>\n")
 
+    def test_toc_from_file_vars(self):
+        md = markdown2.Markdown(use_file_vars=True)
+        for option in ("toc", "header-ids, toc"):
+            with self.subTest(option=option):
+                modeline = "<!-- -*- markdown-extras: %s -*- -->\n" % option
+                html = md.convert(modeline + "# Heading\n")
+                self.assertIn('<h1 id="heading">Heading</h1>', html)
+                self.assertIn('<a href="#heading">Heading</a>', html.toc_html)
+                plain_html = md.convert("# Heading\n")
+                self.assertEqual(plain_html, "<h1>Heading</h1>\n")
+
     def test_footnote_numbers_reset_between_conversions(self):
         md = markdown2.Markdown(extras=["footnotes"])
         md.convert("First[^first], second[^second].\n\n"
@@ -241,6 +252,17 @@ class DirectTestCase(_MarkdownTestCase):
     def test_many_distinct_code_spans(self):
         source = '\n\n'.join('`value_%s`' % i for i in range(1000))
         expected = '\n\n'.join('<p><code>value_%s</code></p>' % i for i in range(1000)) + '\n'
+        self.assertEqual(markdown2.markdown(source), expected)
+
+    def test_many_links_with_backslash_escapes(self):
+        link = 'Paragraph %s has [a link](https://example.com/%s).'
+        html = ('<p>Paragraph %s has '
+                '<a href="https://example.com/%s">a link</a>.</p>')
+        escaped = r'An \*escaped\* star and a C:\dir path.'
+        source = '\n\n'.join([link % (i, i) for i in range(1000)] + [escaped])
+        expected = '\n\n'.join(
+            [html % (i, i) for i in range(1000)]
+            + [r'<p>An *escaped* star and a C:\dir path.</p>']) + '\n'
         self.assertEqual(markdown2.markdown(source), expected)
 
     def test_unescape_nested_tokens(self):

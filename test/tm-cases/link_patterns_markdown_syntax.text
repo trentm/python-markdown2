@@ -5,3 +5,15 @@
 [Recipe 123]
 
 Recipe 123
+
+[See
+Recipe 123](https://example.com/recipe)
+
+![See
+Recipe 123](recipe.png)
+
+Recipe 123 before [See
+Recipe 456](https://example.com/other) and Recipe 789 after.
+
+[Recipe 123 [nested]
+label](https://example.com/nested)

@@ -1,0 +1,15 @@
+# [Inline link](https://github.com)
+
+# [Reference link][ref]
+
+# ![logo](logo.png) Image
+
+# **[Bold link](http://example.com "Title")**
+
+# <span>Inline</span> HTML
+
+# __Strong__ and _em_
+
+# `code_span` stays
+
+[ref]: http://example.com

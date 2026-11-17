@@ -56,7 +56,9 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * footnotes: Support footnotes as in use on daringfireball.net and
   implemented in other Markdown processors (tho not in Markdown.pl v1.0.1).
 * header-ids: Adds "id" attributes to headers. The id value is a slug of
-  the header text.
+  the header text. With `{"strip-syntax": True}`, the slug is made from the
+  rendered header, so link URLs, image paths, inline HTML tags and emphasis
+  markers are left out of it.
 * highlightjs-lang: Allows specifying the language which used for syntax
   highlighting when using fenced-code-blocks and highlightjs.
 * html-classes: Takes a dict mapping html tag names (lowercase) to a
@@ -131,6 +133,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Ty
 from collections.abc import Collection
 from enum import IntEnum, auto
 from os import urandom
+from urllib.parse import quote
 
 # ---- type defs
 _safe_mode = Literal['replace', 'escape']
@@ -349,15 +352,7 @@ class Markdown:
             self.extras.update(extras)
         assert isinstance(self.extras, dict)
 
-        if "toc" in self.extras:
-            if "header-ids" not in self.extras:
-                self.extras["header-ids"] = None   # "toc" implies "header-ids"
-
-            if self.extras["toc"] is None:
-                self._toc_depth = 6
-            else:
-                self._toc_depth = self.extras["toc"].get("depth", 6)
-
+        self._setup_toc()
         self._normalize_header_ids()
 
         if 'break-on-newline' in self.extras:
@@ -404,6 +399,16 @@ class Markdown:
         self._setup_extras()
         self._toc = []
 
+    def _setup_toc(self):
+        if "toc" in self.extras:
+            if "header-ids" not in self.extras:
+                self.extras["header-ids"] = None   # "toc" implies "header-ids"
+
+            if self.extras["toc"] is None:
+                self._toc_depth = 6
+            else:
+                self._toc_depth = self.extras["toc"].get("depth", 6)
+
     def _normalize_header_ids(self):
         if 'header-ids' in self.extras:
             if not isinstance(self.extras['header-ids'], dict):
@@ -414,6 +419,7 @@ class Markdown:
                 }
 
     def _setup_extras(self):
+        self._setup_toc()
         self._normalize_header_ids()
         if "footnotes" in self.extras:
             # order of insertion matters for footnotes. Use ordered dict for Python < 3.7
@@ -627,17 +633,16 @@ class Markdown:
             (?:
                 {1}:(?:\n+[ \t]+.*)+  # indented lists
             )|(?:
-                (?:{1}:\s+>(?:\n\s+.*)+?)  # multiline long descriptions
-                (?=\n{1}:\s*.*\n|\s*\Z)  # match up until the start of the next key:value definition or the end of the input text
+                {1}:\s+>(?:\n+[ \t]+.*)+  # multiline long descriptions
             )|(?:
-                {1}:(?! >).*\n?  # simple key:value pair, leading spaces allowed
+                {1}:[^\n]*\n?  # simple key:value pair, leading spaces allowed
             )
         ){0}  # optional closing fence
-        '''.format(r'(?:---[\ \t]*\n)?', r'[\S \t]*\w[\S \t]*\s*'), re.MULTILINE | re.VERBOSE
+        '''.format(r'(?:---[\ \t]*\n)?', r'[ \t]*[^\s:\r\n][^:\r\n]*'), re.MULTILINE | re.VERBOSE
     )
 
     _key_val_list_pat = re.compile(
-        r"^-(?:[ \t]*([^\n]*)(?:[ \t]*[:-][ \t]*(\S+))?)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
+        r"^-[ \t]*([^\n]*)(?:\n((?:[ \t]+[^\n]+\n?)+))?",
         re.MULTILINE,
     )
     _key_val_dict_pat = re.compile(
@@ -678,21 +683,28 @@ class Markdown:
             # List
             if vs.startswith("-"):
                 r: list[Any] = []
-                # the regex used has multiple capturing groups, so
-                # returned type from findall will be List[List[str]]
-                match: list[str]
+                # returned type from findall will be list[tuple[str, ...]]
                 for match in re.findall(self._key_val_list_pat, vs):
-                    if match[0] and not match[1] and not match[2]:
-                        r.append(match[0].strip())
-                    elif match[0] == ">" and not match[1] and match[2]:
-                        r.append(match[2].strip())
-                    elif match[0] and match[1]:
-                        r.append({match[0].strip(): match[1].strip()})
-                    elif not match[0] and not match[1] and match[2]:
-                        r.append(parse_structured_value(match[2]))
+                    if len(match) == 2:
+                        val, block = match[0], match[1]
+                        if val and not block:
+                            r.append(val.strip())
+                        elif val == ">" and block:
+                            r.append(block.strip())
+                        elif not val and block:
+                            r.append(parse_structured_value(block))
                     else:
-                        # Broken case
-                        pass
+                        if match[0] and not match[1] and not match[2]:
+                            r.append(match[0].strip())
+                        elif match[0] == ">" and not match[1] and match[2]:
+                            r.append(match[2].strip())
+                        elif match[0] and match[1]:
+                            r.append({match[0].strip(): match[1].strip()})
+                        elif not match[0] and not match[1] and match[2]:
+                            r.append(parse_structured_value(match[2]))
+                        else:
+                            # Broken case
+                            pass
 
                 return r
 
@@ -1658,6 +1670,8 @@ class Markdown:
             text = link_processor.run(text)
         return text
 
+    _html_tag_re = re.compile(r'<[^>]*>')
+
     def header_id_from_text(self,
         text: str,
         prefix: str,
@@ -1742,13 +1756,26 @@ class Markdown:
         if demote_headers:
             n = min(n + demote_headers, 6)
         header_id_attr = ""
+        html = self._run_span_gamut(header_group)
         if "header-ids" in self.extras:
+            # in safe mode, inline HTML is hashed by now. Unhash it so the
+            # sanitized HTML doesn't get swapped back into the id attribute
+            if self.extras["header-ids"].get('strip-syntax'):
+                # build the id from the rendered header so that markdown syntax
+                # (link URLs, image paths, emphasis markers) doesn't end up in it.
+                header_text = self._html_tag_re.sub('', self._unhash_html_spans(html))
+                if "footnotes" in self.extras:
+                    # footnote refs are numbered later on. Drop the placeholder
+                    # so it doesn't end up in the id
+                    marker = self._footnote_marker + '-'
+                    header_text = header_text.replace(marker, '')
+            else:
+                header_text = self._unhash_html_spans(header_group)
             header_id = self.header_id_from_text(
-                self._unescape_special_chars(header_group),
+                self._unescape_special_chars(header_text),
                 self.extras["header-ids"].get('prefix'), n)
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
-        html = self._run_span_gamut(header_group)
         if "toc" in self.extras and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
@@ -2254,7 +2281,8 @@ class Markdown:
         return "\n\n".join(grafs)
 
     def _add_footnotes(self, text: str) -> str:
-        if self.footnotes:
+        # Only referenced footnotes are listed, so there is nothing to add without any reference
+        if self.footnote_ids:
             footer = [
                 '<div class="footnotes">',
                 '<hr' + self.empty_element_suffix,
@@ -2348,6 +2376,9 @@ class Markdown:
         return text
 
     def _encode_backslash_escapes(self, text: str) -> str:
+        # Every search string below starts with a backslash.
+        if '\\' not in text:
+            return text
         for ch, escape in list(self._escape_table.items()):
             text = text.replace("\\"+ch, escape)
         return text
@@ -2398,19 +2429,33 @@ class Markdown:
 
     def _unescape_special_chars(self, text: str) -> str:
         # Swap back in all the special characters we've hidden.
-        hashmap = tuple(self._escape_table.items()) + tuple(self._code_table.items())
+        if 'md5-' not in text:
+            return text
+        # Build the hash -> original mapping directly, without intermediate tuples.
         # html_blocks table is in format {hash: item} compared to usual {item: hash}
-        hashmap += tuple(tuple(reversed(i)) for i in self.html_blocks.items())
-        replacements = {}
-        for ch, hash in hashmap:
+        replacements: dict[str, str] = {}
+        for ch, hash in self._escape_table.items():
             replacements.setdefault(hash, ch)
-        while True:
-            orig_text = text
-            # Scan once per nesting level instead of once for every stored hash.
-            text = re.sub(r'md5-[0-9a-f]{32}',
-                          lambda match: replacements.get(match[0], match[0]), text)
-            if text == orig_text:
-                break
+        for ch, hash in self._code_table.items():
+            replacements.setdefault(hash, ch)
+        for hash, item in self.html_blocks.items():
+            replacements.setdefault(hash, item)
+
+        def _sub(match: re.Match) -> str:
+            nonlocal replaced
+            val = replacements.get(match[0])
+            if val is None:
+                return match[0]
+            replaced = True
+            return val
+
+        # Scan once per nesting level instead of once for every stored hash.
+        # Stop when a pass makes no replacement, rather than comparing the
+        # whole text against the previous pass.
+        replaced = True
+        while replaced:
+            replaced = False
+            text = re.sub(r'md5-[0-9a-f]{32}', _sub, text)
         return text
 
     def _outdent(self, text: str) -> str:
@@ -3662,9 +3707,9 @@ class FencedCodeBlocks(Extra):
 
     fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?|(?<=\n))
-        (^[ \t]*`{3,})\s{0,99}?([\w+-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
+        (^[ \t]*`{3,})\s{0,99}?([\w+\#.-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
         (.*?)                             # $3 = code block content
-        \1[ \t]*\n                      # closing fence
+        ^[ ]{0,3}\1`*[ \t]*\n           # closing fence
         ''', re.M | re.X | re.S)
 
     def test(self, text: str):
@@ -3832,7 +3877,8 @@ class LinkPatterns(Extra):
     order = (Stage.LINKS,), ()
     options: _link_patterns
 
-    _basic_link_re = re.compile(r'!?\[.*?\]\(.*?\)')
+    # LinkProcessor's 3000-character sentinel includes both label brackets.
+    _basic_link_re = re.compile(r'!?\[(?s:.{0,2998}?)\]\(.*?\)')
 
     def run(self, text: str):
         link_from_hash = {}
@@ -3879,7 +3925,7 @@ class LinkPatterns(Extra):
                     continue
 
                 escaped_href = (
-                    href.replace('"', '&quot;')  # b/c of attr quote
+                    quote(href, safe=":/?#[]@!$&'()*+,;=%")
                         # To avoid markdown <em> and <strong>:
                         .replace('*', self.md._escape_table['*'])
                         .replace('_', self.md._escape_table['_']))
@@ -3925,7 +3971,8 @@ class _MarkdownFileLinksExtraOpts(_LinkProcessorExtraOpts, total=False):
 
 class MarkdownFileLinks(LinkProcessor):
     '''
-    Replace links to `.md` files with `.html` links
+    Replace links to `.md` files with `.html` links, preserving query strings
+    and fragments.
     '''
 
     name = 'markdown-file-links'
@@ -3939,24 +3986,37 @@ class MarkdownFileLinks(LinkProcessor):
 
     def parse_inline_anchor_or_image(self, text: str, _link_text: str, start_idx: int):
         result = super().parse_inline_anchor_or_image(text, _link_text, start_idx)
-        if not result or not result[1] or not result[1].endswith('.md'):
-            # return None for invalid markup, or links that don't end with '.md'
-            # so that we don't touch them, and other extras can process them freely
+        if not result or not result[1]:
             return
-        url = result[1].removesuffix('.md') + '.html'
+        url = self._convert_url(result[1])
+        if url == result[1]:
+            # Leave other links available for processing by other extras.
+            return
         return result[0], url, *result[2:]
+
+    @staticmethod
+    def _convert_url(url: str) -> str:
+        # Split before the suffix, keeping its spelling and empty delimiters.
+        path = re.split(r'[?#]', url, maxsplit=1)[0]
+        if path.endswith('.md'):
+            return path.removesuffix('.md') + '.html' + url[len(path):]
+        return url
 
     def run(self, text: str):
         if Stage.LINKS > self.md.order > Stage.LINK_DEFS and self.options.get('link_defs', True):
             # running just after link defs have been stripped
             for key, url in self.md.urls.items():
-                if url.endswith('.md'):
-                    self.md.urls[key] = url.removesuffix('.md') + '.html'
+                path = re.split(r'[?#]', url, maxsplit=1)[0]
+                if path.endswith('.md'):
+                    self.md.urls[key] = self._convert_url(url)
 
         return super().run(text)
 
     def test(self, text: str):
-        return super().test(text) and '.md' in text
+        # Link definitions have already been removed from text at this stage.
+        return super().test(text) and (
+            '.md' in text or self.md.stage == Stage.LINK_DEFS
+        )
 
 
 class Mermaid(FencedCodeBlocks):
