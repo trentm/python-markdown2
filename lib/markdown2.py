@@ -451,7 +451,9 @@ class Markdown:
     _a_nofollow_or_blank_links = re.compile(r"""
         <(a)
         (
+            \s      # only the <a> tag itself, not <abbr>, <area>, etc.
             [^>]*
+            (?<![\w-])  # a real href attribute, not data-href and the like
             href=   # href is required
             ['"]?   # HTML5 attribute values do not have to be quoted
             [^#'"]  # We don't want to match href values that start with # (like footnotes)
