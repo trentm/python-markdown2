@@ -1,0 +1,18 @@
+Forward reference [@second].
+
+A literal `[#fig @ignored: code caption]` must not use a number.
+
+Literal references `[@first]` and `[@missing]` remain code.
+
+[#fig @first: First caption]
+
+A literal ``[#fig @ignored_again: `nested` code]`` must not use a number.
+
+[#fig @second: Second caption]
+
+References [@first] and [@second].
+
+```
+[#fig @fenced: fenced caption]
+[@first]
+```

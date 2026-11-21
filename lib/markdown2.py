@@ -4116,6 +4116,31 @@ class Numbering(Extra):
     name = 'numbering'
     order = (Stage.LINK_DEFS,), ()
 
+    def _matches_outside_code(
+        self, pattern: re.Pattern[str], text: str, prefix: str
+    ) -> Iterator[re.Match[str]]:
+        """Find numbering tokens outside the code spans recognized by Markdown."""
+        if '`' not in text:
+            yield from pattern.finditer(text)
+            return
+
+        code_spans = iter(self.md._code_span_re.finditer(text))
+        code_span = next(code_spans, None)
+        offset = 0
+        while (offset := text.find(prefix, offset)) >= 0:
+            while code_span is not None and code_span.end() <= offset:
+                code_span = next(code_spans, None)
+            if code_span is not None and code_span.start() <= offset:
+                # Skip literal openers before matching their potentially distant end.
+                offset = code_span.end()
+                continue
+            match = pattern.match(text, offset)
+            if match is None:
+                offset += len(prefix)
+                continue
+            yield match
+            offset = match.end()
+
     def run(self, text: str):
         # First pass to define all the references
         regex_defns = re.compile(r'''
@@ -4130,7 +4155,7 @@ class Numbering(Extra):
         replacements = []
         definition_html = '<figcaption class="{}" id="counter-ref-{}">{}{}{}</figcaption>'
         reference_html = '<a class="{}" href="#counter-ref-{}">{}</a>'
-        for match in regex_defns.finditer(text):
+        for match in self._matches_outside_code(regex_defns, text, '[#'):
             # We must have four match groups otherwise this isn't a numbering reference
             if len(match.groups()) != 4:
                 continue
@@ -4155,7 +4180,7 @@ class Numbering(Extra):
         # value of the counter
         # Fwiw, it's vaguely annoying to have to turn the iterator into
         # a list and then reverse it but I can't think of a better thing to do.
-        for match in reversed(list(regex_subs.finditer(text))):
+        for match in reversed(list(self._matches_outside_code(regex_subs, text, '[@'))):
             number, counter = references.get(match.group(1), (None, None))
             if number is not None:
                 repl = reference_html.format(counter,
