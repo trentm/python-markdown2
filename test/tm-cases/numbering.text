@@ -2,15 +2,15 @@
 
 <p><img src="https://consequenceofsound.files.wordpress.com/2015/10/screen-shot-2015-10-17-at-6-57-13-pm.png?w=807"</img></p>
 
-<figcaption class="imagenumbers" id="counter-ref-rickroll">Image 1: Let's Rick Roll You</figcaption>
+[#imagenumbers Image @rickroll: Let's Rick Roll You]
 
-<p>And we can refer to the rickrolling image as Image <a class="imagenumbers" href="#counter-ref-rickroll">1</a>.  There is a second image of something else</p>
+And we can refer to the rickrolling image as Image [@rickroll].  There is a second image of something else
 
 <p><img src="https://wonderifyouwonder.files.wordpress.com/2012/02/anchor.jpg"></img></p>
 
-<figcaption class="imagenumbers" id="counter-ref-kent">Figure 2: I for one welcome our new insect overlords</figcaption>
+[#imagenumbers Figure @kent: I for one welcome our new insect overlords]
 
-<p>So we can refer to Figure <a class="imagenumbers" href="#counter-ref-rickroll">1</a> and Figure <a class="imagenumbers" href="#counter-ref-kent">2</a> separately.</p>
+So we can refer to Figure [@rickroll] and Figure [@kent] separately.
 
 <h1>Here is a table</h1>
 
@@ -33,8 +33,8 @@
 </tbody>
 </table>
 
-<figcaption class="tablenumbers" id="counter-ref-exampletable">Table 1: An example table</figcaption>
+[#tablenumbers Table @exampletable: An example table]
 
-<p>Which we can refer to as table <a class="tablenumbers" href="#counter-ref-exampletable">1</a></p>
+Which we can refer to as table [@exampletable]
 
 <p>And so we are done.</p>
