@@ -1,0 +1,17 @@
+<p>Forward reference <a class="fig" href="#counter-ref-second">2</a>.</p>
+
+<p>A literal <code>[#fig @ignored: code caption]</code> must not use a number.</p>
+
+<p>Literal references <code>[@first]</code> and <code>[@missing]</code> remain code.</p>
+
+<figcaption class="fig" id="counter-ref-first">1: First caption</figcaption>
+
+<p>A literal <code>[#fig @ignored_again: `nested` code]</code> must not use a number.</p>
+
+<figcaption class="fig" id="counter-ref-second">2: Second caption</figcaption>
+
+<p>References <a class="fig" href="#counter-ref-first">1</a> and <a class="fig" href="#counter-ref-second">2</a>.</p>
+
+<pre><code>[#fig @fenced: fenced caption]
+[@first]
+</code></pre>

@@ -1,0 +1,7 @@
+An incomplete caption opener `[#fig` is only code.
+
+[#fig @real: A real caption]
+
+An incomplete reference opener `[@` is only code.
+
+The reference [@real] is real.
