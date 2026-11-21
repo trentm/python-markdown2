@@ -2339,21 +2339,27 @@ class Markdown:
             return text
 
     _naked_lt_re = re.compile(r'<(?![a-z/?\$!])', re.I)
-    _naked_gt_re = re.compile(r'''(?<![a-z0-9?!/'"-])>''', re.I)
+    # Match the '>' first and look behind it, so that the regex engine can
+    # scan for the '>' instead of trying every position in the text.
+    _naked_gt_re = re.compile(r'''>(?<![a-z0-9?!/'"-]>)''', re.I)
 
     def _encode_amps_and_angles(self, text: str) -> str:
         # Smart processing for ampersands and angle brackets that need
         # to be encoded.
-        text = _AMPERSAND_RE.sub('&amp;', text)
-        text = _ESCAPED_AMPERSAND_RE.sub(r'&amp;\1', text)
+        # Skip each regex when the text doesn't contain its character.
+        if '&' in text:
+            text = _AMPERSAND_RE.sub('&amp;', text)
+            text = _ESCAPED_AMPERSAND_RE.sub(r'&amp;\1', text)
 
         # Encode naked <'s
-        text = self._naked_lt_re.sub('&lt;', text)
+        if '<' in text:
+            text = self._naked_lt_re.sub('&lt;', text)
 
         # Encode naked >'s
         # Note: Other markdown implementations (e.g. Markdown.pl, PHP
         # Markdown) don't do this.
-        text = self._naked_gt_re.sub('&gt;', text)
+        if '>' in text:
+            text = self._naked_gt_re.sub('&gt;', text)
         return text
 
     _incomplete_tags_re = re.compile(r"\\*<(!--|/?\w+?(?!\w)\s*?.*?(?:[\s/]+?|$))")
