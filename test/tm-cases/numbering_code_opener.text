@@ -5,3 +5,12 @@ An incomplete caption opener `[#fig` is only code.
 An incomplete reference opener `[@` is only code.
 
 The reference [@real] is real.
+
+More literal openers: `[#fig` `[#fig:` `[#fig` `[#fig:`
+`[#fig` `[#fig:` `[#fig` `[#fig:`
+`[#fig` `[#fig:` `[#fig` `[#fig:`
+`[#fig` `[#fig:` `[#fig` `[#fig:`.
+
+[#fig @later: A later caption]
+
+References [@real] and [@later].
