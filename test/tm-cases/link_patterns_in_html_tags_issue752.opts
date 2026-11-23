@@ -1,0 +1,5 @@
+{"extras": ["link-patterns"],
+ "link_patterns": [
+    (re.compile(r"\b(word)\b"), r"/w/\1"),
+ ],
+}
