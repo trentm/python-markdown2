@@ -4300,7 +4300,24 @@ class Strike(Extra):
     _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
 
     def run(self, text: str):
-        return self._strike_re.sub(r"<s>\1</s>", text)
+        # Hide inline HTML tags and comments so `~~` inside them is left alone
+        tags = {}
+
+        def hash_tag(match: re.Match[str]) -> str:
+            key = _hash_text(match.group(0))
+            tags[key] = match.group(0)
+            return key
+
+        text = self.md._sorta_html_tokenize_re.sub(hash_tag, text)
+        text = self._strike_re.sub(r"<s>\1</s>", text)
+
+        def restore_tag(match: re.Match[str]) -> str:
+            return tags.get(match.group(0), match.group(0))
+
+        if tags:
+            text = re.sub(r'md5-[0-9a-f]{32}', restore_tag, text)
+
+        return text
 
     def test(self, text: str):
         return '~~' in text

@@ -33,6 +33,7 @@
 - [pull #759] Fix `fenced-code-blocks` extra not recognizing code blocks whose language name contains `#` or `.`, such as `c#`, `f#` and `vb.net`
 - [pull #760] Fix `fenced-code-blocks` extra ending a code block early at a line inside it that ends with backticks, such as an indented fence in a docstring
 - [pull #768] reset _escape_table and _code_table on each convert() call
+- [pull #786] Fix `strike` extra striking text inside inline HTML tags, link titles and HTML comments
 
 
 ## python-markdown2 2.5.5

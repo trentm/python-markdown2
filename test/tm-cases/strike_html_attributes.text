@@ -1,0 +1,9 @@
+An inline image <img src="/img/a~~b~~c.png" alt="~~Alt~~"> keeps its attributes.
+
+A raw <span title="~~note~~">~~span~~</span> is struck only in its text.
+
+A [link](https://example.com/ "~~Title~~") and an ![image](/img/a.png "~~Title~~") keep their titles.
+
+An inline <!-- ~~comment~~ --> is left alone, but ~~this~~ is struck.
+
+~~Struck text around <b>a tag</b> still works.~~
