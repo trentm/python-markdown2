@@ -1,0 +1,7 @@
+An image <img src="/path/to/cat.png"
+    alt="A cat"> sits on this line,
+and this line still gets a break.
+
+A raw <a href="https://example.com/"
+title="Example">link</a> and a [Markdown link](https://example.com/ "A title
+that wraps") keep their attributes.
