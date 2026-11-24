@@ -30,6 +30,7 @@
 - [pull #737] Fix XSS from code spans that the span gamut doesn't treat as code spans in safe mode (#726)
 - [pull #743] Add a `strip-syntax` option to the `header-ids` extra that leaves link URLs, image paths, inline HTML tags and emphasis markers out of header ids (#192)
 - [pull #747] Fix `link-patterns` extra linking text inside Markdown links and images whose label wraps onto another line
+- [pull #754] Fix `toc` extra generating invalid HTML when a header is higher than the first one, and nesting headers under the wrong parent after a skipped level
 - [pull #759] Fix `fenced-code-blocks` extra not recognizing code blocks whose language name contains `#` or `.`, such as `c#`, `f#` and `vb.net`
 - [pull #760] Fix `fenced-code-blocks` extra ending a code block early at a line inside it that ends with backticks, such as an indented fence in a docstring
 - [pull #768] reset _escape_table and _code_table on each convert() call
