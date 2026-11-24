@@ -133,6 +133,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Ty
 from collections.abc import Collection
 from enum import IntEnum, auto
 from os import urandom
+from urllib.parse import quote
 
 # ---- type defs
 _safe_mode = Literal['replace', 'escape']
@@ -382,6 +383,9 @@ class Markdown:
         self._outdent_re = re.compile(r'^(\t|[ ]{1,%d})' % tab_width, re.M)
         self.cli = cli
 
+        self._reset_tables()
+
+    def _reset_tables(self):
         self._escape_table = g_escape_table.copy()
         self._code_table = {}
         if "smarty-pants" in self.extras:
@@ -395,6 +399,7 @@ class Markdown:
         self.html_spans = {}
         self.list_level = 0
         self.extras = self._instance_extras.copy()
+        self._reset_tables()
         self._setup_extras()
         self._toc = []
 
@@ -2305,7 +2310,8 @@ class Markdown:
         return "\n\n".join(grafs)
 
     def _add_footnotes(self, text: str) -> str:
-        if self.footnotes:
+        # Only referenced footnotes are listed, so there is nothing to add without any reference
+        if self.footnote_ids:
             footer = [
                 '<div class="footnotes">',
                 '<hr' + self.empty_element_suffix,
@@ -2396,6 +2402,9 @@ class Markdown:
         return text
 
     def _encode_backslash_escapes(self, text: str) -> str:
+        # Every search string below starts with a backslash.
+        if '\\' not in text:
+            return text
         for ch, escape in list(self._escape_table.items()):
             text = text.replace("\\"+ch, escape)
         return text
@@ -2446,19 +2455,33 @@ class Markdown:
 
     def _unescape_special_chars(self, text: str) -> str:
         # Swap back in all the special characters we've hidden.
-        hashmap = tuple(self._escape_table.items()) + tuple(self._code_table.items())
+        if 'md5-' not in text:
+            return text
+        # Build the hash -> original mapping directly, without intermediate tuples.
         # html_blocks table is in format {hash: item} compared to usual {item: hash}
-        hashmap += tuple(tuple(reversed(i)) for i in self.html_blocks.items())
-        replacements = {}
-        for ch, hash in hashmap:
+        replacements: dict[str, str] = {}
+        for ch, hash in self._escape_table.items():
             replacements.setdefault(hash, ch)
-        while True:
-            orig_text = text
-            # Scan once per nesting level instead of once for every stored hash.
-            text = re.sub(r'md5-[0-9a-f]{32}',
-                          lambda match: replacements.get(match[0], match[0]), text)
-            if text == orig_text:
-                break
+        for ch, hash in self._code_table.items():
+            replacements.setdefault(hash, ch)
+        for hash, item in self.html_blocks.items():
+            replacements.setdefault(hash, item)
+
+        def _sub(match: re.Match) -> str:
+            nonlocal replaced
+            val = replacements.get(match[0])
+            if val is None:
+                return match[0]
+            replaced = True
+            return val
+
+        # Scan once per nesting level instead of once for every stored hash.
+        # Stop when a pass makes no replacement, rather than comparing the
+        # whole text against the previous pass.
+        replaced = True
+        while replaced:
+            replaced = False
+            text = re.sub(r'md5-[0-9a-f]{32}', _sub, text)
         return text
 
     def _outdent(self, text: str) -> str:
@@ -3707,9 +3730,9 @@ class FencedCodeBlocks(Extra):
 
     fenced_code_block_re = re.compile(r'''
         (?:\n+|\A\n?|(?<=\n))
-        (^[ \t]*`{3,})\s{0,99}?([\w+-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
+        (^[ \t]*`{3,})\s{0,99}?([\w+\#.-]+)?\s{0,99}?\n  # $1 = opening fence (captured for back-referencing), $2 = optional lang
         (.*?)                             # $3 = code block content
-        \1[ \t]*\n                      # closing fence
+        ^[ ]{0,3}\1`*[ \t]*\n           # closing fence
         ''', re.M | re.X | re.S)
 
     def test(self, text: str):
@@ -3925,7 +3948,7 @@ class LinkPatterns(Extra):
                     continue
 
                 escaped_href = (
-                    href.replace('"', '&quot;')  # b/c of attr quote
+                    quote(href, safe=":/?#[]@!$&'()*+,;=%")
                         # To avoid markdown <em> and <strong>:
                         .replace('*', self.md._escape_table['*'])
                         .replace('_', self.md._escape_table['_']))

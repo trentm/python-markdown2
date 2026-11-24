@@ -254,6 +254,17 @@ class DirectTestCase(_MarkdownTestCase):
         expected = '\n\n'.join('<p><code>value_%s</code></p>' % i for i in range(1000)) + '\n'
         self.assertEqual(markdown2.markdown(source), expected)
 
+    def test_many_links_with_backslash_escapes(self):
+        link = 'Paragraph %s has [a link](https://example.com/%s).'
+        html = ('<p>Paragraph %s has '
+                '<a href="https://example.com/%s">a link</a>.</p>')
+        escaped = r'An \*escaped\* star and a C:\dir path.'
+        source = '\n\n'.join([link % (i, i) for i in range(1000)] + [escaped])
+        expected = '\n\n'.join(
+            [html % (i, i) for i in range(1000)]
+            + [r'<p>An *escaped* star and a C:\dir path.</p>']) + '\n'
+        self.assertEqual(markdown2.markdown(source), expected)
+
     def test_unescape_nested_tokens(self):
         md = markdown2.Markdown()
         md.reset()
@@ -467,6 +478,32 @@ versions of markdown2.py this was pathologically slow:</p>
 """
         self.assertEqual(expected_toc_html, md.convert(html).toc_html)
     test_toc_with_persistent_object.tags = ["toc", "issue208"]
+
+    def test_reused_instance_escapes_like_fresh_one(self):
+        md = markdown2.Markdown()
+        md.convert("[a link](https://example.com/page)")
+        text = r"Type \https://example.com/page to see it."
+        self.assertEqual(md.convert(text), markdown2.Markdown().convert(text))
+    test_reused_instance_escapes_like_fresh_one.tags = ["issue763"]
+
+    def test_reused_instance_code_spans_like_fresh_one(self):
+        md = markdown2.Markdown()
+        md.convert("`first_code_span`")
+        text = "plain `second_code_span` text"
+        self.assertEqual(md.convert(text), markdown2.Markdown().convert(text))
+    test_reused_instance_code_spans_like_fresh_one.tags = ["issue763"]
+
+    def test_reused_instance_tables_do_not_grow(self):
+        # Stale entries made each convert() slower than the last on a
+        # long-lived instance. Compare table sizes rather than timings.
+        doc = "[link{0}](https://example.com/{0}) `code{0}`\n"
+        md = markdown2.Markdown()
+        md.convert(doc.format(0))
+        sizes = (len(md._escape_table), len(md._code_table))
+        for i in range(1, 50):
+            md.convert(doc.format(i))
+        self.assertEqual((len(md._escape_table), len(md._code_table)), sizes)
+    test_reused_instance_tables_do_not_grow.tags = ["issue763"]
 
 
 class DocTestsTestCase(unittest.TestCase):

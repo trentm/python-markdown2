@@ -1,0 +1,5 @@
+{"extras": ["link-patterns"],
+ "link_patterns": [
+    (re.compile(r"^(.*)$"), r"lorem \1 ipsum"),
+ ],
+}
