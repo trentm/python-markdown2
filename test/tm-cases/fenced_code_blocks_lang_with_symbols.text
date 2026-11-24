@@ -1,0 +1,15 @@
+```c#
+#region Setup
+var x = 1;
+#endregion
+```
+
+Some *text* between the blocks.
+
+```f#
+let x = 1
+```
+
+```vb.net
+Dim x As Integer
+```
