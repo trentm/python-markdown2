@@ -162,7 +162,9 @@ g_escape_table = {ch: _hash_text(ch)
 # Ampersand-encoding based entirely on Nat Irons's Amputator MT plugin:
 #   http://bumppo.net/projects/amputator/
 _AMPERSAND_BODY_RE = r'#?[xX]?(?:[0-9a-fA-F]+|\w+);'
-_AMPERSAND_RE = re.compile(r'&(?!%s)' % _AMPERSAND_BODY_RE)
+# eg: `&` or `\&`
+_AMPERSAND_RE = re.compile(r'(?:\\\\)*\\?&(?!%s)' % _AMPERSAND_BODY_RE)
+# eg: `\&amp;`
 _ESCAPED_AMPERSAND_RE = re.compile(r'(?:\\\\)*\\&(%s)' % _AMPERSAND_BODY_RE)
 
 
