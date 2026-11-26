@@ -33,6 +33,13 @@ def issue493():
     return "**_" + "*_" * 38730 * 10 + "\x00"
 
 
+def issue_785_unclosed_backticks():
+    # https://github.com/trentm/python-markdown2/issues/785
+    # An unmatched run of backticks made _code_span_re try every opening
+    # length against every lazy expansion.
+    return "`" * 60_000
+
+
 def issue_633():
     # https://github.com/trentm/python-markdown2/issues/633
     return '<p m="1"' * 2500 + " " * 5000 + "</div"
@@ -75,6 +82,7 @@ CASES = {
         (pull_387_example_3, None),
         (pull_402, None),
         (issue493, None),
+        (issue_785_unclosed_backticks, None),
         (issue_633, None),
         (issue_668, ['code-friendly']),
         (issue_707_unclosed_tags, None),
