@@ -119,6 +119,7 @@ __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
 import argparse
+import bisect
 import html
 import logging
 import re
@@ -2155,7 +2156,75 @@ class Markdown:
         #       Turns to:
         #
         #         ... type <code>`bar`</code> ...
-        return self._code_span_re.sub(self._code_span_sub, text)
+        return self._sub_code_spans(text)
+
+    def _sub_code_spans(self, text: str) -> str:
+        """Apply code-span replacement without the regex backtracking.
+
+        ``_code_span_re`` has to try a back-reference for every possible
+        opening-run length, so an unmatched run of backticks costs quadratic
+        time.  Collecting the runs once and looking each candidate opening
+        length up in an index keeps the scan near linear while producing the
+        same matches as the regex.
+        """
+        n = len(text)
+        runs = []
+        i = 0
+        while i < n:
+            if text[i] == '`':
+                j = i + 1
+                while j < n and text[j] == '`':
+                    j += 1
+                runs.append((i, j))
+                i = j
+            else:
+                i += 1
+        if not runs:
+            return text
+
+        starts_by_length: dict[int, list[int]] = {}
+        for start, end in runs:
+            starts_by_length.setdefault(end - start, []).append(start)
+
+        parts = []
+        pos = 0
+        for start, end in runs:
+            if start < pos:
+                # already consumed as part of an earlier code span
+                continue
+            length = end - start
+            escaped = start > 0 and text[start - 1] == '\\'
+            newline = text.find('\n', end)
+            line_end = n if newline == -1 else newline
+
+            match = None
+            # ``(?<!\\)`` only rules out the full run; later positions in a
+            # run are preceded by a backtick and may still open a span.
+            for k in range(1 if escaped else 0, length):
+                run_len = length - k
+                starts = starts_by_length.get(run_len)
+                if not starts:
+                    continue
+                idx = bisect.bisect_left(starts, end + 1)
+                if idx < len(starts) and starts[idx] < line_end:
+                    match = (start + k, end, starts[idx])
+                    break
+
+            if match is None:
+                continue
+
+            open_start, open_end, close_start = match
+            close_end = close_start + (open_end - open_start)
+            parts.append(text[pos:open_start])
+            content = text[open_end:close_start].strip(' \t')
+            parts.append('<code{}>{}</code>'.format(
+                self._html_class_str_from_tag('code'),
+                self._encode_code(content),
+            ))
+            pos = close_end
+
+        parts.append(text[pos:])
+        return ''.join(parts)
 
     def _encode_code(self, text: str) -> str:
         """Encode/escape certain characters inside Markdown code runs.
