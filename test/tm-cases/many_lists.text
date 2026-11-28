@@ -1,0 +1,25 @@
+- first list at the start
+- of the document
+
+Some text between lists.
+
+* second list
+* with two items
+
+- - -
+
++ third list, after a horizontal rule
+
+I recommend upgrading to version
+8. This line is not a list.
+
+- an unordered list
+- directly followed by
+
+1. an ordered list
+2. with two items
+
+Closing paragraph.
+
+3. an ordered list
+4. not starting at 1

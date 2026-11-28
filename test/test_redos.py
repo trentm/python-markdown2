@@ -66,6 +66,11 @@ def issue_metadata_list_redos():
     return "---\nitems:\n  - " + " " * 32000 + "\n---\n\n# hello\n"
 
 
+def many_lists():
+    # not technically a redos: each list used to rescan the rest of the text
+    return "".join(f"- item {i}\n\nParagraph {i}.\n\n" for i in range(3000))
+
+
 # whack everything in a dict for easy lookup later on
 CASES = {
     fn.__name__: (fn, extras)
@@ -82,6 +87,7 @@ CASES = {
         (issue_707_spaced_attrs, None),
         (issue_metadata_redos, ['metadata']),
         (issue_metadata_list_redos, ['metadata']),
+        (many_lists, None),
     ]
 }
 
