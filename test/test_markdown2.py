@@ -220,6 +220,33 @@ class DirectTestCase(_MarkdownTestCase):
     Python-markdown (markdown.py).
     """
 
+    def test_wiki_links_in_links_and_images(self):
+        cases = [
+            ('[go [[Home]]](https://example.com)',
+             '<p><a href="https://example.com">go [[Home]]</a></p>\n'),
+            ('![go [[Home]]](img.png)',
+             '<p><img src="img.png" alt="go [[Home]]" /></p>\n'),
+            ('[go [[Home]]][target]\n\n[target]: https://example.com',
+             '<p><a href="https://example.com">go [[Home]]</a></p>\n'),
+            ('<a href="/old">[[Home]]</a>',
+             '<p><a href="/old">[[Home]]</a></p>\n'),
+            ('<A HREF="/old"><em>[[Home]]</em></A> [[Page]]',
+             '<p><A HREF="/old"><em>[[Home]]</em></A> <a href="/Page/" class="wikilink">Page</a></p>\n'),
+            ('![go [[Home]]][img]\n\n[img]: pic.png',
+             '<p><img src="pic.png" alt="go [[Home]]" /></p>\n'),
+            ('[![go [[Home]]](img.png)](/go)',
+             '<p><a href="/go"><img src="img.png" alt="go [[Home]]" /></a></p>\n'),
+            (r'\[[Home]] `[[Home]]` [[Page]]',
+             '<p>[[Home]] <code>[[Home]]</code> <a href="/Page/" class="wikilink">Page</a></p>\n'),
+            ('<span title="[[Home]]">[[Page]]</span>',
+             '<p><span title="[[Home]]"><a href="/Page/" class="wikilink">Page</a></span></p>\n'),
+            ('[go](https://example.com) [[Home]]',
+             '<p><a href="https://example.com">go</a> <a href="/Home/" class="wikilink">Home</a></p>\n'),
+        ]
+        for source, expected in cases:
+            with self.subTest(source=source):
+                self.assertEqual(markdown2.markdown(source, extras=['wiki-links']), expected)
+
     def test_header_ids_from_file_vars(self):
         md = markdown2.Markdown(use_file_vars=True)
         modeline = "<!-- -*- markdown-extras: header-ids{} -*- -->\n"
